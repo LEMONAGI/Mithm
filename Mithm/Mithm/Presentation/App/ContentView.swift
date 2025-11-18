@@ -13,11 +13,21 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
-            
-            CalendarView()
-            
-            SettingView()
+            Tab(value: 0) {
+                HomeView()
+            } label: {
+                Label("홈", systemImage: "house")
+            }
+            Tab(value: 1) {
+                CalendarView()
+            } label: {
+                Label("달력", systemImage: "calendar")
+            }
+            Tab(value: 2) {
+                SettingView()
+            } label: {
+                Label("설정", systemImage: "gearshape")
+            }
         }
     }
 }
