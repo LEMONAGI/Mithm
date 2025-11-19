@@ -23,10 +23,21 @@ struct MithmApp: App {
 //        }
 //    }()
 
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
+//    var body: some Scene {
+//        WindowGroup {
+//            ContentView()
+//        }
+//        //.modelContainer(sharedModelContainer)
+//    }
+    
+    @Environment(\.openURL) private var openURL
+        
+        var body: some Scene {
+            WindowGroup {
+                CalendarDebugView()
+                    .onOpenURL { url in
+                        DeepLinkHandler.shared.handle(url)
+                    }
+            }
         }
-        //.modelContainer(sharedModelContainer)
-    }
 }
