@@ -33,9 +33,17 @@
 		39415C492ECCA3BE0056A3F8 /* Exceptions for "Mithm" folder in "Mithm" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Core/CycleRecordHelper/Test/CyclePredictionEngineTests.swift,
 				Info.plist,
 			);
 			target = 39415C002ECC65610056A3F8 /* Mithm */;
+		};
+		39CF24BB2ECE2CBB002E17FA /* Exceptions for "Mithm" folder in "MithmTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Core/CycleRecordHelper/Test/CyclePredictionEngineTests.swift,
+			);
+			target = 39415C0F2ECC65620056A3F8 /* MithmTests */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -44,6 +52,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				39415C492ECCA3BE0056A3F8 /* Exceptions for "Mithm" folder in "Mithm" target */,
+				39CF24BB2ECE2CBB002E17FA /* Exceptions for "Mithm" folder in "MithmTests" target */,
 			);
 			path = Mithm;
 			sourceTree = "<group>";
