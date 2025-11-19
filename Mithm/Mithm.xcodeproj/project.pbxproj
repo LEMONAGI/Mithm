@@ -29,9 +29,22 @@
 		39415C1A2ECC65620056A3F8 /* MithmUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MithmUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		39415C492ECCA3BE0056A3F8 /* Exceptions for "Mithm" folder in "Mithm" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 39415C002ECC65610056A3F8 /* Mithm */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		39415C032ECC65610056A3F8 /* Mithm */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				39415C492ECCA3BE0056A3F8 /* Exceptions for "Mithm" folder in "Mithm" target */,
+			);
 			path = Mithm;
 			sourceTree = "<group>";
 		};
@@ -400,6 +413,9 @@
 				DEVELOPMENT_TEAM = D23XDL6TZZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Mithm/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "미듬";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "이 앱은 월경 주기와 가임기 일정을 캘린더에 표시하여 더 편리하게 일정 관리할 수 있도록 캘린더 접근 권한이 필요합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -432,6 +448,9 @@
 				DEVELOPMENT_TEAM = D23XDL6TZZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Mithm/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "미듬";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "이 앱은 월경 주기와 가임기 일정을 캘린더에 표시하여 더 편리하게 일정 관리할 수 있도록 캘린더 접근 권한이 필요합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
