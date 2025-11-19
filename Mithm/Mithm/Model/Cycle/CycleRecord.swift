@@ -13,3 +13,14 @@ struct CycleRecord: Identifiable, Hashable {
     let startDate: Date
     let endDate: Date
 }
+
+extension CycleRecord {
+    /// 이 월경 기록의 길이(일수)
+    var dayCount: Int {
+        let cal = Calendar.current
+        let s = cal.startOfDay(for: startDate)
+        let e = cal.startOfDay(for: endDate)
+        let comps = cal.dateComponents([.day], from: s, to: e)
+        return (comps.day ?? 0) + 1   // 양끝 포함
+    }
+}
