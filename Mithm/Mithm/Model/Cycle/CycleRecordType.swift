@@ -6,17 +6,18 @@
 //
 
 enum CycleRecordType {
-    case menstrualRecord        // 과거 월경 기록
-    case ovulationEstimated        // 과거 배란일 추정값
-    case menstrualPrediction    // 미래 월경 예정
-    case ovulationPrediction    // 미래 배란일 예측
+    case menstrualRecord             // 과거 월경 기록
+    case ovulationEstimated          // 과거 배란일 추정 (하루)
+    case menstrualPrediction         // 미래 월경 예정
+    case ovulationPrediction         // 미래 배란일 예측 (하루)
+    
+    case ovulationFertileWindowEstimated   // 과거 기록 기반 배란기(추정)
+    case ovulationFertileWindowPrediction  // 미래 예측 기반 배란기(예상)
 }
 
 // MARK: - Metadata
-
 extension CycleRecordType {
     
-    /// 캘린더 이벤트 제목
     var title: String {
         switch self {
         case .menstrualRecord:
@@ -27,10 +28,13 @@ extension CycleRecordType {
             return "월경 예정 기간"
         case .ovulationPrediction:
             return "배란일(예상)"
+        case .ovulationFertileWindowEstimated:
+            return "배란기(추정)"
+        case .ovulationFertileWindowPrediction:
+            return "배란기(예상)"
         }
     }
     
-    /// 이벤트 설명 (notes)
     var notes: String? {
         switch self {
         case .menstrualRecord:
@@ -41,10 +45,13 @@ extension CycleRecordType {
             return "앱에서 예측한 월경 예정 기간입니다."
         case .ovulationPrediction:
             return "앱에서 예측한 배란일입니다."
+        case .ovulationFertileWindowEstimated:
+            return "월경 기록을 기반으로 추정한 배란기(가임기)입니다."
+        case .ovulationFertileWindowPrediction:
+            return "예측된 월경 예정일을 바탕으로 계산한 배란기(가임기)입니다."
         }
     }
     
-    /// URL 식별자 type 문자열
     var typeString: String {
         switch self {
         case .menstrualRecord:
@@ -55,6 +62,23 @@ extension CycleRecordType {
             return "menstrual_prediction"
         case .ovulationPrediction:
             return "ovulation_prediction"
+        case .ovulationFertileWindowEstimated:
+            return "ovulation_fertile_window_estimated"
+        case .ovulationFertileWindowPrediction:
+            return "ovulation_fertile_window_prediction"
+        }
+    }
+    
+    /// 예측 데이터인지 여부
+    var isPrediction: Bool {
+        switch self {
+        case .menstrualPrediction,
+             .ovulationPrediction,
+             .ovulationFertileWindowEstimated,
+             .ovulationFertileWindowPrediction:
+            return true
+        default:
+            return false
         }
     }
 }

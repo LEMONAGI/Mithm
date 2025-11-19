@@ -157,7 +157,7 @@ actor EventDataStore {
     
     /// 우리 앱 전용 캘린더에서,
     /// 이전 기록 + 예측을 전부 싹 지우고 입력받은 [CycleRecord] 기반으로 다시 생성.
-    func replaceAllEvents(with records: [CycleRecord]) throws {
+    func replaceAllEvents(with records: [CycleRecord]) async throws {
         guard !records.isEmpty else { return }
         
         let calendar = try fetchOrCreateCalendar()
@@ -193,7 +193,9 @@ actor EventDataStore {
             
             // 3) 새로운 기록/예측 전부 생성
             for record in records {
-                let (title, notes, typeString) = titleNotesAndType(for: record.type)
+                let (title, notes, typeString) = await MainActor.run {
+                    (record.type.title, record.type.notes, record.type.typeString)
+                }
                 
                 let event = makeEvent(
                     title: title,
@@ -213,36 +215,4 @@ actor EventDataStore {
             throw EventKitError.eventCreationFail(error)
         }
     }
-    
-    /// kind에 따라 title/notes/HealthKit용 type 문자열 결정
-    private func titleNotesAndType(for kind: CycleRecordType)
-    -> (String, String?, String) {
-        switch kind {
-        case .menstrualRecord:
-            return (
-                "월경 기록",
-                "사용자 기록에 기반한 실제 월경 기간입니다.",
-                "menstrual_record"
-            )
-        case .ovulationEstimated:
-            return (
-                "배란일(추정)",
-                "앱이 건강 기록을 기반으로 사후적으로 추정한 배란일입니다.",
-                "ovulation_estimated"
-            )
-        case .menstrualPrediction:
-            return (
-                "월경 예정 기간",
-                "앱에서 예측한 월경 예정 기간입니다.",
-                "menstrual_prediction"
-            )
-        case .ovulationPrediction:
-            return (
-                "배란일(예상)",
-                "앱에서 예측한 배란일입니다.",
-                "ovulation_prediction"
-            )
-        }
-    }
 }
-
