@@ -184,7 +184,7 @@ actor EventDataStore {
         
         
         let allEvents = eventStore.events(matching: predicate).filter(isOurEvent)
-        print(allEvents.count)
+        
         do {
             // 2) 기존 이벤트 전부 삭제 (commit은 마지막에 한 번만)
             for event in allEvents {
