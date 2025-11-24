@@ -11,12 +11,13 @@ struct CycleRecord: Identifiable, Hashable {
     let id = UUID()
     let type: CycleRecordType
     let startDate: Date
-    let endDate: Date
+    let endDate: Date?
 }
 
 extension CycleRecord {
     /// 이 월경 기록의 길이(일수)
-    var dayCount: Int {
+    var dayCount: Int? {
+        guard let endDate else { return nil }
         let cal = Calendar.current
         let s = cal.startOfDay(for: startDate)
         let e = cal.startOfDay(for: endDate)

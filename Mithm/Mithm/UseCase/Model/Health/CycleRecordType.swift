@@ -73,12 +73,22 @@ extension CycleRecordType {
     var isPrediction: Bool {
         switch self {
         case .menstrualPrediction,
-             .ovulationPrediction,
-             .ovulationFertileWindowEstimated,
-             .ovulationFertileWindowPrediction:
+                .ovulationPrediction,
+                .ovulationFertileWindowEstimated,
+                .ovulationFertileWindowPrediction:
             return true
         default:
             return false
+        }
+    }
+    
+    var healthDataType: HealthDataType? {
+        switch self {
+        case .menstrualPrediction,
+                .menstrualRecord:
+            return .menstrualCycle
+        default:
+            return nil
         }
     }
 }

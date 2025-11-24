@@ -34,7 +34,7 @@ struct MithmApp: App {
         
         var body: some Scene {
             WindowGroup {
-                CalendarDebugView()
+                ContentView()
                     .onOpenURL { url in
                         DeepLinkHandler.shared.handle(url)
                     }

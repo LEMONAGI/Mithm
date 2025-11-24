@@ -8,6 +8,7 @@
 import Foundation
 
 final class DeepLinkHandler {
+    private init() { }
     static let shared = DeepLinkHandler()
     
     func handle(_ url: URL) {
