@@ -164,7 +164,7 @@ actor EventDataStore {
         
         // 1) records의 범위 계산 (너무 멀리 말고, 실제 사용하는 기간만)
         let starts = records.map(\.startDate)
-        let ends = records.map(\.endDate)
+        let ends = records.compactMap(\.endDate)
         
         guard let minStart = starts.min(),
               let maxEnd = ends.max() else {
@@ -197,11 +197,13 @@ actor EventDataStore {
                     (record.type.title, record.type.notes, record.type.typeString)
                 }
                 
+                guard let endDate = record.endDate else { continue }
+                
                 let event = makeEvent(
                     title: title,
                     notes: notes,
                     start: record.startDate,
-                    end: record.endDate,
+                    end: endDate,
                     type: typeString,
                     in: calendar
                 )
