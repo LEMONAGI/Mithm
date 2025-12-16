@@ -111,9 +111,9 @@ enum HealthKitMapper {
     static func menstrualCycleRecords(from samples: [HKCategorySample]) -> [CycleRecord] {
         guard !samples.isEmpty else { return [] }
         
-        let days = samples
-            .map { calendar.startOfDay(for: $0.startDate) }
-            .sorted()
+        let days = Array(
+            Set(samples.map { calendar.startOfDay(for: $0.startDate) })
+        ).sorted()
         
         var records: [CycleRecord] = []
         var currentStart = days[0]
