@@ -1,11 +1,11 @@
 //
-//  CycleRecordType.swift
+//  MenstrualRecordType.swift
 //  Mithm
 //
 //  Created by YunhakLee on 11/19/25.
 //
 
-enum CycleRecordType {
+enum MenstrualRecordType {
     case menstrualRecord             // 과거 월경 기록
     case ovulationEstimated          // 과거 배란일 추정 (하루)
     case menstrualPrediction         // 미래 월경 예정
@@ -16,7 +16,7 @@ enum CycleRecordType {
 }
 
 // MARK: - Metadata
-extension CycleRecordType {
+extension MenstrualRecordType {
     
     var title: String {
         switch self {

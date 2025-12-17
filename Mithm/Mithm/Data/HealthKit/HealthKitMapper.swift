@@ -64,7 +64,7 @@ enum HealthKitMapper {
     
     
     /// 하나의 월경 기록을 여러 날에 걸쳐 있는 menstrualFlow 샘플들로 분리한다.
-    static func hkMenstrualCycleSamples(from record: CycleRecord) throws -> [HKCategorySample] {
+    static func hkMenstrualCycleSamples(from record: MenstrualRecord) throws -> [HKCategorySample] {
         let startDay = calendar.startOfDay(for: record.startDate)
         let endDay   = calendar.startOfDay(for: record.endDate ?? record.startDate)
         guard let healthType = record.type.healthDataType else { return [] }
@@ -108,14 +108,14 @@ enum HealthKitMapper {
     // MARK: - DTO -> Entity
     
     /// 여러 날에 걸쳐 있는 menstrualFlow 샘플들을 "연속된 날짜"를 기준으로 하나의 월경 기록으로 묶는다.
-    static func menstrualCycleRecords(from samples: [HKCategorySample]) -> [CycleRecord] {
+    static func menstrualCycleRecords(from samples: [HKCategorySample]) -> [MenstrualRecord] {
         guard !samples.isEmpty else { return [] }
         
         let days = Array(
             Set(samples.map { calendar.startOfDay(for: $0.startDate) })
         ).sorted()
         
-        var records: [CycleRecord] = []
+        var records: [MenstrualRecord] = []
         var currentStart = days[0]
         var currentEnd = days[0]
         
@@ -129,7 +129,7 @@ enum HealthKitMapper {
             } else {
                 // 끊기는 지점에서 하나의 기록 확정
                 records.append(
-                    CycleRecord(
+                    MenstrualRecord(
                         type: .menstrualRecord,
                         startDate: currentStart,
                         endDate: currentEnd
@@ -144,7 +144,7 @@ enum HealthKitMapper {
         // 마지막에는 끊기는 지점을 찾지 못하고 넘어가므로, 예외처리 추가
         if calendar.isDate(currentEnd, inSameDayAs: Date()) {   // currentEnd가 오늘이어서, 월경 종료 여부를 확인할 수 없는 경우
             records.append(
-                CycleRecord(
+                MenstrualRecord(
                     type: .menstrualRecord,
                     startDate: currentStart,
                     endDate: nil
@@ -152,7 +152,7 @@ enum HealthKitMapper {
             )
         } else {
             records.append(
-                CycleRecord(
+                MenstrualRecord(
                     type: .menstrualRecord,
                     startDate: currentStart,
                     endDate: currentEnd

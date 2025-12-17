@@ -30,12 +30,12 @@ protocol HealthKitRepository {
     func readMenstrualCycleRecords(
         from startDate: Date,
         to endDate: Date
-    ) async throws -> [CycleRecord] 
+    ) async throws -> [MenstrualRecord] 
     
     /// 해당 월경 기록을 healthKit에 업데이트 한다
     ///
     /// - 기록 범위에 있는 healthKit 월경 기록을 삭제하고, 입력받은 월경 기록을 새로 저장한다.
     func updateMenstrualCycleRecord(
-        _ record: CycleRecord
+        _ record: MenstrualRecord
     ) async throws
 }
