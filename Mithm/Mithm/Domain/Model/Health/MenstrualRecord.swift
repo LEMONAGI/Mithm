@@ -1,5 +1,5 @@
 //
-//  CycleRecord.swift
+//  MenstrualRecord.swift
 //  Mithm
 //
 //  Created by YunhakLee on 11/19/25.
@@ -7,14 +7,14 @@
 
 import Foundation
 
-struct CycleRecord: Identifiable, Hashable {
+struct MenstrualRecord: Identifiable, Hashable {
     let id = UUID()
-    let type: CycleRecordType
+    let type: MenstrualRecordType
     let startDate: Date
     let endDate: Date?
 }
 
-extension CycleRecord {
+extension MenstrualRecord {
     /// 이 월경 기록의 길이(일수)
     var dayCount: Int? {
         guard let endDate else { return nil }

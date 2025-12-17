@@ -157,7 +157,7 @@ actor EventDataStore {
     
     /// 우리 앱 전용 캘린더에서,
     /// 이전 기록 + 예측을 전부 싹 지우고 입력받은 [CycleRecord] 기반으로 다시 생성.
-    func replaceAllEvents(with records: [CycleRecord]) async throws {
+    func replaceAllEvents(with records: [MenstrualRecord]) async throws {
         guard !records.isEmpty else { return }
         
         let calendar = try fetchOrCreateCalendar()

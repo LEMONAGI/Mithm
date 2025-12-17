@@ -66,7 +66,7 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
     func readMenstrualCycleRecords(
         from startDate: Date,
         to endDate: Date
-    ) async throws -> [CycleRecord] {
+    ) async throws -> [MenstrualRecord] {
         let samples: [HKCategorySample] = try await dataStore.readSamples(
             type: HealthKitMapper.hkSampleType(from: .menstrualCycle),
             from: startDate,
@@ -77,7 +77,7 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
     }
     
     func updateMenstrualCycleRecord(
-        _ record: CycleRecord
+        _ record: MenstrualRecord
     ) async throws {
         let objectType = HealthKitMapper.hkObjectType(from: .menstrualCycle)
         try await dataStore.deleteSamples(type: objectType, from: record.startDate, to: record.endDate ?? record.startDate)

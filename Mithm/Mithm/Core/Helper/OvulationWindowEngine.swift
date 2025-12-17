@@ -34,7 +34,7 @@ struct OvulationWindowEngine {
     /// - 배란일(.ovulationEstimated/.ovulationPrediction)
     /// - 배란기(.ovulationFertileWindowEstimated/.ovulationFertileWindowPrediction)
     /// 레코드를 생성해서 반환
-    func makeOvulationRecords(from records: [CycleRecord]) -> [CycleRecord] {
+    func makeOvulationRecords(from records: [MenstrualRecord]) -> [MenstrualRecord] {
         let calendar = Calendar.current
         
         // 월경 기록 + 월경 예측만 사용
@@ -42,7 +42,7 @@ struct OvulationWindowEngine {
             .filter { $0.type == .menstrualRecord || $0.type == .menstrualPrediction }
             .sorted { $0.startDate < $1.startDate }
         
-        var result: [CycleRecord] = []
+        var result: [MenstrualRecord] = []
         
         for base in bases {
             let startOfDay = calendar.startOfDay(for: base.startDate)
@@ -70,8 +70,8 @@ struct OvulationWindowEngine {
             }
             
             // 타입 결정: 과거 기록 기반인지, 예측 기반인지
-            let ovulationDayType: CycleRecordType
-            let windowType: CycleRecordType
+            let ovulationDayType: MenstrualRecordType
+            let windowType: MenstrualRecordType
             
             switch base.type {
             case .menstrualRecord:
@@ -85,14 +85,14 @@ struct OvulationWindowEngine {
             }
             
             // 3) 배란일(하루짜리) 레코드
-            let ovulationRecord = CycleRecord(
+            let ovulationRecord = MenstrualRecord(
                 type: ovulationDayType,
                 startDate: ovulationDay,
                 endDate: ovulationDay
             )
             
             // 4) 배란기(기간) 레코드
-            let fertileWindowRecord = CycleRecord(
+            let fertileWindowRecord = MenstrualRecord(
                 type: windowType,
                 startDate: windowStart,
                 endDate: windowEnd
