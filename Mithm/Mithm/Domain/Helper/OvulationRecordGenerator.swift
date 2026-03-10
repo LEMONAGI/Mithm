@@ -1,5 +1,5 @@
 //
-//  OvulationWindowEngine.swift
+//  OvulationRecordGenerator.swift
 //  Mithm
 //
 //  Created by YunhakLee on 11/19/25.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct OvulationWindowEngine {
+struct OvulationRecordGenerator {
     
     struct Config {
         /// 월경 시작일 기준 배란일까지 거꾸로 가는 일수 (일반적으로 14일)
@@ -30,11 +30,8 @@ struct OvulationWindowEngine {
         self.config = config
     }
     
-    /// 월경 기록/예측으로부터
-    /// - 배란일(.ovulationEstimated/.ovulationPrediction)
-    /// - 배란기(.ovulationFertileWindowEstimated/.ovulationFertileWindowPrediction)
-    /// 레코드를 생성해서 반환
-    func makeOvulationRecords(from records: [MenstrualRecord]) -> [MenstrualRecord] {
+    /// 월경 기록/예측으로부터 배란일과 배란기 기록을 더해 생성한다.
+    func generate(from records: [MenstrualRecord]) -> [MenstrualRecord] {
         let calendar = Calendar.current
         
         // 월경 기록 + 월경 예측만 사용

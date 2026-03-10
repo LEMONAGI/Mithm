@@ -1,5 +1,5 @@
 //
-//  HealthKitCycleDataStore.swift
+//  HealthKitDataStoreImpl.swift
 //  Mithm
 //
 //  Created by YunhakLee on 11/19/25.
@@ -21,7 +21,7 @@ final class HealthKitDataStoreImpl: HealthKitDataStore {
     }
     
     func requestAuthorization(
-        writeTypes : Set<HKSampleType>,
+        writeTypes: Set<HKSampleType>,
         readTypes: Set<HKObjectType>
     ) async throws {
         try await healthStore.requestAuthorization(toShare: writeTypes, read: readTypes)
@@ -42,39 +42,23 @@ final class HealthKitDataStoreImpl: HealthKitDataStore {
         try await healthStore.save(samples)
     }
     
-    func readSamples(
-        type: HKSampleType,
+    func readCategorySamples(
+        type: HKCategoryType,
         from startDate: Date,
         to endDate: Date
     ) async throws -> [HKCategorySample] {
-        
         let predicate = HKQuery.predicateForSamples(
             withStart: startDate,
-            end: endDate,
-            options: []
+            end: endDate
+        )
+        let sortDescriptor = SortDescriptor(\HKCategorySample.startDate, order: .forward)
+        
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.categorySample(type: type, predicate: predicate)],
+            sortDescriptors: [sortDescriptor]
         )
         
-        return try await withCheckedThrowingContinuation { continuation in
-            
-            let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
-            
-            let query = HKSampleQuery(
-                sampleType: type,
-                predicate: predicate,
-                limit: HKObjectQueryNoLimit,
-                sortDescriptors: [sort]
-            ) { _, samples, error in
-                
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    let categorySamples = samples as? [HKCategorySample] ?? []
-                    continuation.resume(returning: categorySamples)
-                }
-            }
-            
-            healthStore.execute(query)
-        }
+        return try await descriptor.result(for: healthStore)
     }
     
     func deleteSamples(
@@ -96,12 +80,9 @@ final class HealthKitDataStoreImpl: HealthKitDataStore {
         let predicate = HKQuery.predicateForSamples(
             withStart: startDay,
             end: endOfLastDay,
-            options: []    // 겹치는 샘플 전부 포함
+            options: []
         )
         
-        // 삭제된 개수 반환값 무시
         _ = try await healthStore.deleteObjects(of: type, predicate: predicate)
-        
-        return
     }
 }

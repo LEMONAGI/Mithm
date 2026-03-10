@@ -11,7 +11,6 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
     
     private let calendar = Calendar.current
     private let healthKitRepository: HealthKitRepository
-    private let menstrualPredictionEngine = MenstrualPredictionEngine()
     
     init(healthKitRepository: HealthKitRepository) {
         self.healthKitRepository = healthKitRepository
@@ -27,7 +26,7 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
             to: to
         )
         
-        return menstrualPredictionEngine.makePredictions(from: records)
+        return records
     }
     
     func saveMenstrualRecored(_ record: MenstrualRecord) async throws {
