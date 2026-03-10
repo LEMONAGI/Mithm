@@ -75,6 +75,19 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
         
         return HealthKitMapper.menstrualCycleRecords(from: samples)
     }
+
+    func readWristTemperatureRecords(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [WristTemperatureRecord] {
+        let samples: [HKQuantitySample] = try await dataStore.readQuantitySamples(
+            type: try HealthKitMapper.hkQuantityType(from: .wristTemperature),
+            from: startDate,
+            to: endDate
+        )
+
+        return HealthKitMapper.wristTemperatureRecords(from: samples)
+    }
     
     func updateMenstrualCycleRecord(
         _ record: MenstrualRecord

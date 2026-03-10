@@ -61,6 +61,16 @@ protocol HealthKitDataStore {
         from startDate: Date,
         to endDate: Date
     ) async throws -> [HKCategorySample]
+
+    /// HealthKit에서 특정 기간의 수치형 샘플 읽기.
+    ///
+    /// - 손목 온도처럼 `HKQuantityType` 기반 데이터를 조회할 때 사용한다.
+    /// - 읽기 권한이 없어도 에러 대신 빈 배열이 반환될 수 있다.
+    func readQuantitySamples(
+        type: HKQuantityType,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [HKQuantitySample]
     
     /// 특정 날짜 구간에 걸치는 모든 기존 샘플 삭제.
     ///

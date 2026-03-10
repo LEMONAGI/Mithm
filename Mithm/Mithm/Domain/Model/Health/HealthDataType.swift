@@ -8,6 +8,5 @@
 
 enum HealthDataType: Hashable {
     case menstrualCycle       // 월경 주기
-    case basalTemperature     // 손목 온도
+    case wristTemperature     // 수면 중 손목 온도
 }
-

@@ -18,8 +18,8 @@ enum HealthKitMapper {
         switch type {
         case .menstrualCycle:
             return HKCategoryType(.menstrualFlow)
-        case .basalTemperature:
-            return HKQuantityType(.basalBodyTemperature)
+        case .wristTemperature:
+            return HKQuantityType(.appleSleepingWristTemperature)
         }
     }
  
@@ -56,10 +56,20 @@ enum HealthKitMapper {
     static func hkSampleTypes(from types: Set<HealthDataType>) throws -> Set<HKSampleType> {
         var result = Set<HKSampleType>()
         for t in types {
-            let sample = try hkSampleType(from: t)
+            guard let sample = try hkWritableSampleType(from: t) else { continue }
             result.insert(sample)
         }
         return result
+    }
+
+    /// HealthKit에 저장 가능한 샘플 타입만 반환한다.
+    static func hkWritableSampleType(from type: HealthDataType) throws -> HKSampleType? {
+        switch type {
+        case .wristTemperature:
+            return nil
+        case .menstrualCycle:
+            return try hkSampleType(from: type)
+        }
     }
     
     
@@ -162,5 +172,16 @@ enum HealthKitMapper {
         
         return records
     }
-}
 
+    static func wristTemperatureRecords(from samples: [HKQuantitySample]) -> [WristTemperatureRecord] {
+        let unit = HKUnit.degreeCelsius()
+
+        return samples.map {
+            WristTemperatureRecord(
+                startDate: $0.startDate,
+                endDate: $0.endDate,
+                valueInCelsius: $0.quantity.doubleValue(for: unit)
+            )
+        }
+    }
+}

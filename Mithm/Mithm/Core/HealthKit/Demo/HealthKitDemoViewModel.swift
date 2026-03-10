@@ -14,7 +14,8 @@ final class HealthKitDemoViewModel: ObservableObject {
     
     // MARK: - Published
     
-    @Published var samples: [HKCategorySample] = []
+    @Published var menstrualSamples: [HKCategorySample] = []
+    @Published var wristTemperatureSamples: [WristTemperatureRecord] = []
     @Published var lastSyncDate: Date?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
@@ -24,6 +25,7 @@ final class HealthKitDemoViewModel: ObservableObject {
     
     private let dataStore: HealthKitDataStore
     private let menstrualFlowType = HKCategoryType(.menstrualFlow)
+    private let wristTemperatureType = HKQuantityType(.appleSleepingWristTemperature)
     
     init(dataStore: HealthKitDataStore = HealthKitDataStoreImpl()) {
         self.dataStore = dataStore
@@ -57,7 +59,7 @@ final class HealthKitDemoViewModel: ObservableObject {
             if requestPermissionIfNeeded {
                 try await dataStore.requestAuthorization(
                     writeTypes: [menstrualFlowType],
-                    readTypes: [menstrualFlowType]
+                    readTypes: [menstrualFlowType, wristTemperatureType]
                 )
             }
             isAuthorized = true
@@ -66,12 +68,27 @@ final class HealthKitDemoViewModel: ObservableObject {
             let from = Calendar.current.date(byAdding: .year, value: -1, to: now)!
             let to = Calendar.current.date(byAdding: .month, value: 1, to: now)!
             
-            let fetched = try await dataStore.readCategorySamples(
+            let fetchedMenstrualSamples = try await dataStore.readCategorySamples(
                 type: menstrualFlowType,
                 from: from,
                 to: to
             )
-            samples = fetched.sorted { $0.startDate < $1.startDate }
+            let fetchedWristTemperatureSamples = try await dataStore.readQuantitySamples(
+                type: wristTemperatureType,
+                from: from,
+                to: to
+            )
+
+            menstrualSamples = fetchedMenstrualSamples.sorted { $0.startDate < $1.startDate }
+            wristTemperatureSamples = fetchedWristTemperatureSamples
+                .sorted { $0.startDate < $1.startDate }
+                .map {
+                    WristTemperatureRecord(
+                        startDate: $0.startDate,
+                        endDate: $0.endDate,
+                        valueInCelsius: $0.quantity.doubleValue(for: .degreeCelsius())
+                    )
+                }
             lastSyncDate = Date()
             errorMessage = nil
             
@@ -97,7 +114,7 @@ final class HealthKitDemoViewModel: ObservableObject {
             do {
                 try await dataStore.requestAuthorization(
                     writeTypes: [menstrualFlowType],
-                    readTypes: [menstrualFlowType]
+                    readTypes: [menstrualFlowType, wristTemperatureType]
                 )
                 
                 // 기존 데이터 삭제 후 저장
@@ -189,4 +206,3 @@ final class HealthKitDemoViewModel: ObservableObject {
         return result
     }
 }
-
