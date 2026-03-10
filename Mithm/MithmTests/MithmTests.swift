@@ -386,7 +386,7 @@ struct MenstrualPredictionEngineTests {
     @Test("Config로 predictionCount를 변경하면 해당 개수만큼 예측한다")
     func customPredictionCountConfig() {
         let customEngine = MenstrualPredictionEngine(config: {
-            var c = MenstrualPredictionEngine.Config.default
+            let c = MenstrualPredictionEngine.Config.default
             return MenstrualPredictionEngine.Config(
                 validPeriodRange: c.validPeriodRange,
                 validCycleRange: c.validCycleRange,
@@ -406,6 +406,8 @@ struct MenstrualPredictionEngineTests {
                 cycleWeightReduced: c.cycleWeightReduced,
                 periodWeightStable: c.periodWeightStable,
                 periodWeightIrregular: c.periodWeightIrregular,
+                userInputCycleBlendWeight: c.userInputCycleBlendWeight,
+                userInputPeriodBlendWeight: c.userInputPeriodBlendWeight,
                 shiftThreshold: c.shiftThreshold,
                 predictionCount: 5
             )
@@ -418,6 +420,72 @@ struct MenstrualPredictionEngineTests {
 
         let result = customEngine.predict(from: records, calendar: calendar)
         #expect(result.menstrualPredictions.count == 5)
+    }
+
+    @Test("사용자 입력 주기와 기간이 있으면 config 비율로 예측값과 blend한다")
+    func blendsPredictionsWithUserInput() {
+        let customEngine = MenstrualPredictionEngine(config: {
+            let c = MenstrualPredictionEngine.Config.default
+            return MenstrualPredictionEngine.Config(
+                validPeriodRange: c.validPeriodRange,
+                validCycleRange: c.validCycleRange,
+                outlierNormalThreshold: c.outlierNormalThreshold,
+                outlierMildThreshold: c.outlierMildThreshold,
+                outlierMildWeight: c.outlierMildWeight,
+                outlierSevereWeight: c.outlierSevereWeight,
+                variabilityRegularMaxRange: c.variabilityRegularMaxRange,
+                variabilityModerateMaxRange: c.variabilityModerateMaxRange,
+                ewmaAlphaRegular: c.ewmaAlphaRegular,
+                ewmaAlphaModerate: c.ewmaAlphaModerate,
+                ewmaAlphaIrregular: c.ewmaAlphaIrregular,
+                cycleWeightRegular: c.cycleWeightRegular,
+                cycleWeightModerate: c.cycleWeightModerate,
+                cycleWeightIrregular: c.cycleWeightIrregular,
+                cycleWeightShift: c.cycleWeightShift,
+                cycleWeightReduced: c.cycleWeightReduced,
+                periodWeightStable: c.periodWeightStable,
+                periodWeightIrregular: c.periodWeightIrregular,
+                userInputCycleBlendWeight: 0.5,
+                userInputPeriodBlendWeight: 0.5,
+                shiftThreshold: c.shiftThreshold,
+                predictionCount: c.predictionCount
+            )
+        }())
+
+        let records = [
+            makeRecord(type: .menstrualRecord, start: "2026-01-01", end: "2026-01-05"),
+            makeRecord(type: .menstrualRecord, start: "2026-01-30", end: "2026-02-03")
+        ]
+
+        let result = customEngine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 31, periodLength: 7),
+            calendar: calendar
+        )
+
+        #expect(result.predictedCycleLength == 30)
+        #expect(result.predictedPeriodLength == 6)
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate, calendar: calendar) == "2026-03-01")
+        #expect(Self.dayString(result.menstrualPredictions[0].endDate, calendar: calendar) == "2026-03-06")
+    }
+
+    @Test("예측값이 없더라도 유효한 사용자 입력이 있으면 해당 값으로 예측을 생성한다")
+    func usesUserInputWhenPredictionHistoryIsInsufficient() {
+        let records = [
+            makeRecord(type: .menstrualRecord, start: "2026-01-10", end: "2026-01-14")
+        ]
+
+        let result = engine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 30, periodLength: 6),
+            calendar: calendar
+        )
+
+        #expect(result.predictedCycleLength == 30)
+        #expect(result.predictedPeriodLength == 6)
+        #expect(result.menstrualPredictions.count == 3)
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate, calendar: calendar) == "2026-02-09")
+        #expect(Self.dayString(result.menstrualPredictions[0].endDate, calendar: calendar) == "2026-02-14")
     }
 
     private func makeRecord(type: MenstrualRecordType, start: String, end: String?) -> MenstrualRecord {

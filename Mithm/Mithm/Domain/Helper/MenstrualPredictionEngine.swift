@@ -33,6 +33,11 @@ enum PredictionConfidence {
     case high
 }
 
+struct MenstrualUserInput {
+    let cycleLength: Int?
+    let periodLength: Int?
+}
+
 struct MenstrualPredictionResult {
     /// 다음 월경 예측 (최대 predictionCount개)
     let menstrualPredictions: [MenstrualRecord]
@@ -105,6 +110,13 @@ struct MenstrualPredictionEngine {
         /// irregular 일 때
         let periodWeightIrregular: Double
 
+        // MARK: 사용자 입력 blend 비율 - user input weight
+
+        /// 사용자 입력 cycle length를 최종 예측에 반영하는 비율
+        let userInputCycleBlendWeight: Double
+        /// 사용자 입력 period length를 최종 예측에 반영하는 비율
+        let userInputPeriodBlendWeight: Double
+
         // MARK: Shift 감지
 
         /// 최근 3개 vs 이전 3~6개 중앙값 차이 임계값
@@ -120,22 +132,63 @@ struct MenstrualPredictionEngine {
         static let `default` = Config(
             validPeriodRange: 1...15,
             validCycleRange: 15...90,
+            
             outlierNormalThreshold: 5,
             outlierMildThreshold: 9,
             outlierMildWeight: 0.5,
             outlierSevereWeight: 0.2,
+            
             variabilityRegularMaxRange: 3,
             variabilityModerateMaxRange: 7,
+            
             ewmaAlphaRegular: 0.35,
             ewmaAlphaModerate: 0.45,
             ewmaAlphaIrregular: 0.55,
+            
             cycleWeightRegular: 0.45,
             cycleWeightModerate: 0.60,
             cycleWeightIrregular: 0.75,
             cycleWeightShift: 0.85,
             cycleWeightReduced: 0.70,
+            
             periodWeightStable: 0.40,
             periodWeightIrregular: 0.60,
+            
+            userInputCycleBlendWeight: 0.35,
+            userInputPeriodBlendWeight: 0.35,
+            
+            shiftThreshold: 4.0,
+            predictionCount: 3
+        )
+        
+        static let launchDefault = Config(
+            validPeriodRange: 2...8,
+            validCycleRange: 20...45,
+
+            outlierNormalThreshold: 4,
+            outlierMildThreshold: 8,
+            outlierMildWeight: 0.35,
+            outlierSevereWeight: 0.10,
+
+            variabilityRegularMaxRange: 4,
+            variabilityModerateMaxRange: 8,
+
+            ewmaAlphaRegular: 0.30,
+            ewmaAlphaModerate: 0.45,
+            ewmaAlphaIrregular: 0.60,
+
+            cycleWeightRegular: 0.40,
+            cycleWeightModerate: 0.60,
+            cycleWeightIrregular: 0.80,
+            cycleWeightShift: 0.90,
+            cycleWeightReduced: 0.65,
+
+            periodWeightStable: 0.35,
+            periodWeightIrregular: 0.55,
+            
+            userInputCycleBlendWeight: 0.35,
+            userInputPeriodBlendWeight: 0.35,
+
             shiftThreshold: 4.0,
             predictionCount: 3
         )
@@ -151,6 +204,7 @@ struct MenstrualPredictionEngine {
 
     func predict(
         from records: [MenstrualRecord],
+        userInput: MenstrualUserInput? = nil,
         calendar: Calendar = .current
     ) -> MenstrualPredictionResult {
         // 1) 실제 월경 기록 필터링 및 정렬
@@ -199,12 +253,14 @@ struct MenstrualPredictionEngine {
             ? classifyVariability(from: cleanCycles.map(\.cycleLength))
             : nil
         let predPeriod = predictPeriodLength(from: periodSamples, variability: variability)
+        let blendedCycle = blendCycleLength(predCycle, with: userInput?.cycleLength)
+        let blendedPeriod = blendPeriodLength(predPeriod, with: userInput?.periodLength)
 
-        guard let cycleLen = predCycle, let periodLen = predPeriod else {
+        guard let cycleLen = blendedCycle, let periodLen = blendedPeriod else {
             return MenstrualPredictionResult(
                 menstrualPredictions: [],
-                predictedCycleLength: predCycle,
-                predictedPeriodLength: predPeriod,
+                predictedCycleLength: blendedCycle,
+                predictedPeriodLength: blendedPeriod,
                 confidence: .low,
                 usedRecordCount: recordCount,
                 detectedShift: shift,
@@ -530,6 +586,46 @@ struct MenstrualPredictionEngine {
         case .regular:   return config.ewmaAlphaRegular
         case .moderate:  return config.ewmaAlphaModerate
         case .irregular: return config.ewmaAlphaIrregular
+        }
+    }
+
+    private func blendCycleLength(_ predicted: Int?, with userInput: Int?) -> Int? {
+        blendLength(
+            predicted,
+            userInput: userInput,
+            validRange: config.validCycleRange,
+            blendWeight: config.userInputCycleBlendWeight
+        )
+    }
+
+    private func blendPeriodLength(_ predicted: Int?, with userInput: Int?) -> Int? {
+        blendLength(
+            predicted,
+            userInput: userInput,
+            validRange: config.validPeriodRange,
+            blendWeight: config.userInputPeriodBlendWeight
+        )
+    }
+
+    private func blendLength(
+        _ predicted: Int?,
+        userInput: Int?,
+        validRange: ClosedRange<Int>,
+        blendWeight: Double
+    ) -> Int? {
+        let normalizedUserInput = userInput.flatMap { validRange.contains($0) ? $0 : nil }
+
+        switch (predicted, normalizedUserInput) {
+        case let (predicted?, userInput?):
+            let clampedWeight = min(max(blendWeight, 0), 1)
+            let blendedValue = (1 - clampedWeight) * Double(predicted) + clampedWeight * Double(userInput)
+            return Int(blendedValue.rounded())
+        case let (predicted?, nil):
+            return predicted
+        case let (nil, userInput?):
+            return userInput
+        case (nil, nil):
+            return nil
         }
     }
 
