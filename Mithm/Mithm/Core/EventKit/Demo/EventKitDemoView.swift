@@ -8,9 +8,9 @@
 import SwiftUI
 import EventKit
 
-struct CalendarDebugView: View {
+struct EventKitDemoView: View {
     
-    @StateObject private var viewModel = EventStoreViewModel()
+    @StateObject private var viewModel = EventKitDemoViewModel()
     
     private let dateFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -192,5 +192,5 @@ struct CalendarDebugView: View {
 }
 
 #Preview {
-    CalendarDebugView()
+    EventKitDemoView()
 }

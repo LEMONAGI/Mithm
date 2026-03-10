@@ -67,8 +67,8 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
         from startDate: Date,
         to endDate: Date
     ) async throws -> [MenstrualRecord] {
-        let samples: [HKCategorySample] = try await dataStore.readSamples(
-            type: HealthKitMapper.hkSampleType(from: .menstrualCycle),
+        let samples: [HKCategorySample] = try await dataStore.readCategorySamples(
+            type: try HealthKitMapper.hkCategoryType(from: .menstrualCycle),
             from: startDate,
             to: endDate
         )

@@ -28,8 +28,12 @@ actor EventKitDataStoreImpl: EventKitDataStore {
     
     // MARK: - Authorization
     
+    nonisolated var authorizationStatus: EKAuthorizationStatus {
+        EKEventStore.authorizationStatus(for: .event)
+    }
+    
     nonisolated var isFullAccessAuthorized: Bool {
-        EKEventStore.authorizationStatus(for: .event) == .fullAccess
+        authorizationStatus == .fullAccess
     }
     
     func verifyAuthorizationStatus() async throws -> Bool {
@@ -174,5 +178,24 @@ actor EventKitDataStoreImpl: EventKitDataStore {
             end: end,
             calendars: calendars
         )
+    }
+    
+    
+    // MARK: - Change Notification
+    
+    nonisolated var storeChangedNotifications: AsyncStream<Void> {
+        AsyncStream { continuation in
+            let observer = NotificationCenter.default.addObserver(
+                forName: .EKEventStoreChanged,
+                object: eventStore,
+                queue: .main
+            ) { _ in
+                continuation.yield()
+            }
+            
+            continuation.onTermination = { _ in
+                NotificationCenter.default.removeObserver(observer)
+            }
+        }
     }
 }

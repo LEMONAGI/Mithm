@@ -66,7 +66,7 @@ final class HealthKitDemoViewModel: ObservableObject {
             let from = Calendar.current.date(byAdding: .year, value: -1, to: now)!
             let to = Calendar.current.date(byAdding: .month, value: 1, to: now)!
             
-            let fetched = try await dataStore.readSamples(
+            let fetched = try await dataStore.readCategorySamples(
                 type: menstrualFlowType,
                 from: from,
                 to: to

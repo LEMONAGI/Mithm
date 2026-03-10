@@ -14,6 +14,9 @@ protocol EventKitDataStore {
     
     // MARK: - Authorization
     
+    /// 현재 캘린더 접근 권한 상태를 반환합니다.
+    var authorizationStatus: EKAuthorizationStatus { get }
+    
     /// 현재 캘린더 전체 접근 권한이 있는지 확인합니다.
     var isFullAccessAuthorized: Bool { get }
     
@@ -63,4 +66,10 @@ protocol EventKitDataStore {
         end: Date,
         calendars: [EKCalendar]
     ) -> NSPredicate
+    
+    
+    // MARK: - Change Notification
+    
+    /// 외부(캘린더 앱 등)에서 이벤트 데이터가 변경되었을 때 알림을 받는 AsyncStream.
+    var storeChangedNotifications: AsyncStream<Void> { get }
 }

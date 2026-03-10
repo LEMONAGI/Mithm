@@ -10,7 +10,7 @@ import EventKit
 import Combine
 
 @MainActor
-final class EventStoreViewModel: ObservableObject {
+final class EventKitDemoViewModel: ObservableObject {
     
     // MARK: - Published
     
@@ -26,7 +26,7 @@ final class EventStoreViewModel: ObservableObject {
     
     init(dataStore: EventKitDataStore = EventKitDataStoreImpl()) {
         self.dataStore = dataStore
-        self.authorizationStatus = EKEventStore.authorizationStatus(for: .event)
+        self.authorizationStatus = dataStore.authorizationStatus
     }
     
     var isAuthorized: Bool {
@@ -41,7 +41,7 @@ final class EventStoreViewModel: ObservableObject {
         Task {
             do {
                 let granted = try await dataStore.verifyAuthorizationStatus()
-                authorizationStatus = EKEventStore.authorizationStatus(for: .event)
+                authorizationStatus = dataStore.authorizationStatus
                 
                 if !granted {
                     errorMessage = "캘린더 전체 접근 권한이 허용되지 않았습니다."
@@ -49,7 +49,7 @@ final class EventStoreViewModel: ObservableObject {
                     errorMessage = nil
                 }
             } catch {
-                authorizationStatus = EKEventStore.authorizationStatus(for: .event)
+                authorizationStatus = dataStore.authorizationStatus
                 errorMessage = "캘린더 권한 요청 실패: \(error.localizedDescription)"
             }
         }
