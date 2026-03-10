@@ -1,124 +1,192 @@
-//// HealthKitDemoViewModel.swift
 //
-//import Foundation
-//import HealthKit
-//import Combine
+//  HealthKitDemoViewModel.swift
+//  Mithm
 //
-//@MainActor
-//final class HealthKitDemoViewModel: ObservableObject {
-//    
-//    @Published var records: [CycleRecord] = []
-//    @Published var lastSyncDate: Date?
-//    @Published var errorMessage: String?
-//    @Published var isLoading: Bool = false
-//    @Published var isAuthorized: Bool = false
-//    
-//    private let store = HealthKitDataStoreImpl()
-//    
-//    /// 온보딩/처음 버튼 눌렀을 때 호출
-//    func requestAndLoad() {
-//        Task {
-//            await loadRecords(requestPermissionIfNeeded: true)
-//        }
-//    }
-//    
-//    /// 나중에 "새로고침" 버튼에서는 권한 요청 없이 그냥 읽기만
-//    func reload() {
-//        Task {
-//            await loadRecords(requestPermissionIfNeeded: false)
-//        }
-//    }
-//    
-//    private func loadRecords(requestPermissionIfNeeded: Bool) async {
-//        isLoading = true
-//        defer { isLoading = false }
-//        
-//        do {
-//            if requestPermissionIfNeeded {
-//                try await store.verifyAuthorizationStatus()
-//            }
-//            isAuthorized = true
-//            
-//            let now = Date()
-//            // 예: 과거 1년 ~ 미래 1달
-//            let from = Calendar.current.date(byAdding: .year, value: -1, to: now)!
-//            let to   = Calendar.current.date(byAdding: .month, value: 1, to: now)!
-//            
-//            let fetched = try await store.fetchMenstrualRecords(from: from, to: to)
-//            records = fetched.sorted { $0.startDate < $1.startDate }
-//            lastSyncDate = Date()
-//            errorMessage = nil
-//            
-//        } catch let error as HealthKitError {
-//            handleHealthKitError(error)
-//            isAuthorized = false
-//        } catch {
-//            errorMessage = "HealthKit 데이터 로드 중 오류가 발생했습니다: \(error.localizedDescription)"
-//            isAuthorized = false
-//        }
-//    }
-//    
-//    // MARK: - 월경 기록 쓰기 (Health 앱에 저장)
-//    
-//    /// 데모용: 사용자가 선택한 시작/종료일을 Health 앱의 월경 데이터로 저장
-//    func addMenstrualRecord(
-//        startDate: Date,
-//        endDate: Date,
-//        flow: HKCategoryValueVaginalBleeding
-//    ) {
-//        Task {
-//            await addMenstrualRecordInternal(startDate: startDate, endDate: endDate, flow: flow)
-//        }
-//    }
-//    
-//    private func addMenstrualRecordInternal(
-//        startDate: Date,
-//        endDate: Date,
-//        flow: HKCategoryValueVaginalBleeding
-//    ) async {
-//        isLoading = true
-//        defer { isLoading = false }
-//        
-//        do {
-//            // 권한 확인 (요청 포함)
-//            try await store.verifyAuthorizationStatus()
-//            
-//            // Health 앱에 월경 샘플 저장
-//            try await store.saveMenstrualEpisode(
-//                startDate: startDate,
-//                endDate: endDate,
-//                flow: flow
-//            )
-//            
-//            // 방금 쓴 기록까지 포함해서 다시 읽어오기
-//            let now = Date()
-//            let from = Calendar.current.date(byAdding: .year, value: -1, to: now)!
-//            let to   = Calendar.current.date(byAdding: .month, value: 1, to: now)!
-//            
-//            let fetched = try await store.fetchMenstrualRecords(from: from, to: to)
-//            records = fetched.sorted { $0.startDate < $1.startDate }
-//            lastSyncDate = Date()
-//            errorMessage = nil    // 성공했으니 에러 메시지 제거
-//            
-//        } catch let error as HealthKitError {
-//            handleHealthKitError(error)
-//        } catch {
-//            errorMessage = "월경 기록 저장 중 오류가 발생했습니다: \(error.localizedDescription)"
-//        }
-//    }
-//    
-//    // MARK: - 공통 에러 처리
-//    
-//    private func handleHealthKitError(_ error: HealthKitError) {
-//        switch error {
-//        case .notAvailableOnDevice:
-//            errorMessage = "이 기기에서는 건강 앱/HealthKit을 사용할 수 없어요."
-//        case .authorizationDenied:
-//            errorMessage = "건강 앱 접근 권한이 거부되었습니다. 설정 앱에서 권한을 다시 허용해주세요."
-//        case .missingType:
-//            errorMessage = "HealthKit에 요청한 항목이 응답에 포함되지 않았습니다."
-//        case .noSharingPermission:
-//            errorMessage = "해당 데이터를 공유하도록 허용하지 않은 상태입니다. 건강 앱 권한 설정을 확인해주세요."
-//        }
-//    }
-//}
+//  Created by YunhakLee on 11/19/25.
+//
+
+import Foundation
+import HealthKit
+import Combine
+
+@MainActor
+final class HealthKitDemoViewModel: ObservableObject {
+    
+    // MARK: - Published
+    
+    @Published var samples: [HKCategorySample] = []
+    @Published var lastSyncDate: Date?
+    @Published var errorMessage: String?
+    @Published var isLoading: Bool = false
+    @Published var isAuthorized: Bool = false
+    
+    // MARK: - Dependencies
+    
+    private let dataStore: HealthKitDataStore
+    private let menstrualFlowType = HKCategoryType(.menstrualFlow)
+    
+    init(dataStore: HealthKitDataStore = HealthKitDataStoreImpl()) {
+        self.dataStore = dataStore
+    }
+    
+    
+    // MARK: - Authorization
+    
+    /// 권한 요청 + 데이터 불러오기
+    func requestAndLoad() {
+        Task {
+            await loadSamples(requestPermissionIfNeeded: true)
+        }
+    }
+    
+    /// 데이터만 다시 불러오기
+    func reload() {
+        Task {
+            await loadSamples(requestPermissionIfNeeded: false)
+        }
+    }
+    
+    
+    // MARK: - Read
+    
+    private func loadSamples(requestPermissionIfNeeded: Bool) async {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            if requestPermissionIfNeeded {
+                try await dataStore.requestAuthorization(
+                    writeTypes: [menstrualFlowType],
+                    readTypes: [menstrualFlowType]
+                )
+            }
+            isAuthorized = true
+            
+            let now = Date()
+            let from = Calendar.current.date(byAdding: .year, value: -1, to: now)!
+            let to = Calendar.current.date(byAdding: .month, value: 1, to: now)!
+            
+            let fetched = try await dataStore.readSamples(
+                type: menstrualFlowType,
+                from: from,
+                to: to
+            )
+            samples = fetched.sorted { $0.startDate < $1.startDate }
+            lastSyncDate = Date()
+            errorMessage = nil
+            
+        } catch {
+            errorMessage = "HealthKit 데이터 로드 실패: \(error.localizedDescription)"
+            isAuthorized = false
+        }
+    }
+    
+    
+    // MARK: - Write
+    
+    /// 월경 기록을 HealthKit에 저장
+    func addMenstrualRecord(
+        startDate: Date,
+        endDate: Date,
+        flow: HKCategoryValueVaginalBleeding
+    ) {
+        Task {
+            isLoading = true
+            defer { isLoading = false }
+            
+            do {
+                try await dataStore.requestAuthorization(
+                    writeTypes: [menstrualFlowType],
+                    readTypes: [menstrualFlowType]
+                )
+                
+                // 기존 데이터 삭제 후 저장
+                try await dataStore.deleteSamples(
+                    type: menstrualFlowType,
+                    from: startDate,
+                    to: endDate
+                )
+                
+                let hkSamples = makeMenstrualSamples(
+                    start: startDate,
+                    end: endDate,
+                    flow: flow
+                )
+                try await dataStore.saveSamples(samples: hkSamples)
+                
+                // 저장 후 다시 불러오기
+                await loadSamples(requestPermissionIfNeeded: false)
+                
+            } catch {
+                errorMessage = "월경 기록 저장 실패: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    
+    // MARK: - Delete
+    
+    /// 지정한 기간의 월경 기록 삭제
+    func deleteMenstrualRecord(startDate: Date, endDate: Date) {
+        Task {
+            isLoading = true
+            defer { isLoading = false }
+            
+            do {
+                try await dataStore.deleteSamples(
+                    type: menstrualFlowType,
+                    from: startDate,
+                    to: endDate
+                )
+                
+                await loadSamples(requestPermissionIfNeeded: false)
+                
+            } catch {
+                errorMessage = "월경 기록 삭제 실패: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    
+    // MARK: - Helpers
+    
+    /// 시작일~종료일을 하루 단위 HKCategorySample 배열로 변환
+    private func makeMenstrualSamples(
+        start: Date,
+        end: Date,
+        flow: HKCategoryValueVaginalBleeding
+    ) -> [HKObject] {
+        let cal = Calendar.current
+        let startDay = cal.startOfDay(for: start)
+        let endDay = cal.startOfDay(for: end)
+        
+        var result: [HKObject] = []
+        var current = startDay
+        
+        while current <= endDay {
+            var comps = cal.dateComponents([.year, .month, .day], from: current)
+            comps.hour = 23; comps.minute = 59; comps.second = 59
+            guard let endOfDay = cal.date(from: comps) else { break }
+            
+            let isCycleStart = (current == startDay)
+            let metadata: [String: Any] = [
+                HKMetadataKeyMenstrualCycleStart: isCycleStart
+            ]
+            
+            let sample = HKCategorySample(
+                type: menstrualFlowType,
+                value: flow.rawValue,
+                start: current,
+                end: endOfDay,
+                metadata: metadata
+            )
+            result.append(sample)
+            
+            guard let next = cal.date(byAdding: .day, value: 1, to: current) else { break }
+            current = next
+        }
+        
+        return result
+    }
+}
+
