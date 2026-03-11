@@ -12,15 +12,15 @@ struct OvulationRecordGenerator {
     struct Config {
         /// 월경 시작일 기준 배란일까지 거꾸로 가는 일수 (일반적으로 14일)
         let lutealPhaseLength: Int
-        /// 배란일 기준 "배란기 시작"까지 거꾸로 가는 일수 (4일 전)
+        /// 배란일 기준 "배란기 시작"까지 거꾸로 가는 일수 (5일 전)
         let windowBefore: Int
-        /// 배란일 기준 "배란기 끝"까지 앞으로 가는 일수 (2일 후)
+        /// 배란일 기준 "배란기 끝"까지 앞으로 가는 일수 (1일 후)
         let windowAfter: Int
         
         static let `default` = Config(
             lutealPhaseLength: 14,
-            windowBefore: 4,
-            windowAfter: 2
+            windowBefore: 5,
+            windowAfter: 1
         )
     }
     
@@ -31,8 +31,7 @@ struct OvulationRecordGenerator {
     }
     
     /// 월경 기록/예측으로부터 배란일과 배란기 기록을 더해 생성한다.
-    func generate(from records: [MenstrualRecord]) -> [MenstrualRecord] {
-        let calendar = Calendar.current
+    func generate(from records: [MenstrualRecord], calendar: Calendar = .current) -> [MenstrualRecord] {
         
         // 월경 기록 + 월경 예측만 사용
         let bases = records

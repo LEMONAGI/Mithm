@@ -21,6 +21,15 @@ struct HealthKitDemoView: View {
         f.timeStyle = .none
         return f
     }()
+
+    private let temperatureFormatter: MeasurementFormatter = {
+        let formatter = MeasurementFormatter()
+        formatter.unitStyle = .short
+        formatter.unitOptions = .providedUnit
+        formatter.numberFormatter.maximumFractionDigits = 2
+        formatter.numberFormatter.minimumFractionDigits = 1
+        return formatter
+    }()
     
     var body: some View {
         NavigationStack {
@@ -97,7 +106,11 @@ struct HealthKitDemoView: View {
                     .foregroundStyle(.secondary)
             }
             
-            Text("읽어온 샘플 수: \(viewModel.samples.count)개")
+            Text("월경 샘플 수: \(viewModel.menstrualSamples.count)개")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            Text("손목온도 샘플 수: \(viewModel.wristTemperatureSamples.count)개")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -163,39 +176,67 @@ struct HealthKitDemoView: View {
     }
     
     private var sampleListSection: some View {
-        Group {
-            if viewModel.samples.isEmpty {
-                Text("표시할 월경 기록이 없어요.")
-                    .foregroundStyle(.secondary)
-            } else {
-                List {
-                    Section("월경 샘플 (HealthKit)") {
-                        ForEach(viewModel.samples, id: \.uuid) { sample in
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Text("menstrualFlow")
-                                        .font(.headline)
-                                    Spacer()
-                                    if sample.metadata?[HKMetadataKeyMenstrualCycleStart] as? Bool == true {
-                                        Text("주기 시작")
-                                            .font(.caption)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(.red.opacity(0.2))
-                                            .clipShape(Capsule())
-                                    }
+        List {
+            Section("월경 샘플 (HealthKit)") {
+                if viewModel.menstrualSamples.isEmpty {
+                    Text("표시할 월경 기록이 없어요.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.menstrualSamples, id: \.uuid) { sample in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("menstrualFlow")
+                                    .font(.headline)
+                                Spacer()
+                                if sample.metadata?[HKMetadataKeyMenstrualCycleStart] as? Bool == true {
+                                    Text("주기 시작")
+                                        .font(.caption)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(.red.opacity(0.2))
+                                        .clipShape(Capsule())
                                 }
-                                
-                                Text("\(dateFormatter.string(from: sample.startDate)) ~ \(dateFormatter.string(from: sample.endDate))")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                
-                                Text("value: \(sample.value)")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
                             }
-                            .padding(.vertical, 4)
+
+                            Text("\(dateFormatter.string(from: sample.startDate)) ~ \(dateFormatter.string(from: sample.endDate))")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+
+                            Text("value: \(sample.value)")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
                         }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+
+            Section("손목온도 샘플 (HealthKit)") {
+                if viewModel.wristTemperatureSamples.isEmpty {
+                    Text("표시할 손목온도 기록이 없어요.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.wristTemperatureSamples) { sample in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("sleepingWristTemperature")
+                                .font(.headline)
+
+                            Text("\(dateFormatter.string(from: sample.startDate)) ~ \(dateFormatter.string(from: sample.endDate))")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+
+                            Text(
+                                temperatureFormatter.string(
+                                    from: Measurement(
+                                        value: sample.valueInCelsius,
+                                        unit: UnitTemperature.celsius
+                                    )
+                                )
+                            )
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 4)
                     }
                 }
             }

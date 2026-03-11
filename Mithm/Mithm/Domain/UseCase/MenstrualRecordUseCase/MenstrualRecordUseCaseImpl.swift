@@ -9,11 +9,21 @@ import Foundation
 
 struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
     
-    private let calendar = Calendar.current
+    private let calendar: Calendar
     private let healthKitRepository: HealthKitRepository
+    private let predictionEngine: MenstrualPredictionEngine
+    private let ovulationRecordGenerator: OvulationRecordGenerator
     
-    init(healthKitRepository: HealthKitRepository) {
+    init(
+        healthKitRepository: HealthKitRepository,
+        predictionEngine: MenstrualPredictionEngine = MenstrualPredictionEngine(),
+        ovulationRecordGenerator: OvulationRecordGenerator = OvulationRecordGenerator(),
+        calendar: Calendar = .current
+    ) {
         self.healthKitRepository = healthKitRepository
+        self.predictionEngine = predictionEngine
+        self.ovulationRecordGenerator = ovulationRecordGenerator
+        self.calendar = calendar
     }
     
     func fetchMenstrualRecords() async throws -> [MenstrualRecord] {
@@ -21,12 +31,31 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
         let from = calendar.date(byAdding: .year, value: -100, to: now)!
         let to = now
 
-        let records = try await healthKitRepository.readMenstrualCycleRecords(
+        let actualRecords = try await healthKitRepository.readMenstrualCycleRecords(
             from: from,
             to: to
         )
         
-        return records
+        let predictionResult = predictionEngine.predict(
+            from: actualRecords,
+            calendar: calendar
+        )
+        let predictedMenstrualRecords = predictionResult.menstrualPredictions
+
+        let normalizedActualRecords = actualRecords.filter { $0.endDate != nil }
+        let baseRecords = normalizedActualRecords + predictedMenstrualRecords
+        let ovulationRecords = ovulationRecordGenerator.generate(
+            from: baseRecords,
+            calendar: calendar
+        )
+
+        return (baseRecords + ovulationRecords)
+            .sorted { lhs, rhs in
+                if lhs.startDate == rhs.startDate {
+                    return (lhs.endDate ?? lhs.startDate) < (rhs.endDate ?? rhs.startDate)
+                }
+                return lhs.startDate < rhs.startDate
+            }
     }
     
     func saveMenstrualRecored(_ record: MenstrualRecord) async throws {

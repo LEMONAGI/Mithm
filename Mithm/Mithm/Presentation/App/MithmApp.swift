@@ -34,7 +34,7 @@ struct MithmApp: App {
         
         var body: some Scene {
             WindowGroup {
-                ContentView()
+                MenstrualRecordUseCaseDemoView()
             }
         }
 }

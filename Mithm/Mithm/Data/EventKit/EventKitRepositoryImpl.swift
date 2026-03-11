@@ -54,7 +54,10 @@ final class EventKitRepositoryImpl: EventKitRepository {
         let paddedEnd = calendarUtil.date(byAdding: .day, value: 100, to: maxEnd) ?? maxEnd
         
         // 도메인 모델 → 이벤트 파라미터 변환
-        let parameters = EventKitMapper.eventParameters(from: records)
+        let parameters = EventKitMapper.eventParameters(
+            from: records,
+            calendar: calendarUtil
+        )
         
         let predicate = dataStore.predicateForEvents(
             withStart: paddedStart,

@@ -57,7 +57,26 @@ final class HealthKitDataStoreImpl: HealthKitDataStore {
             predicates: [.categorySample(type: type, predicate: predicate)],
             sortDescriptors: [sortDescriptor]
         )
-        
+
+        return try await descriptor.result(for: healthStore)
+    }
+
+    func readQuantitySamples(
+        type: HKQuantityType,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [HKQuantitySample] {
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: endDate
+        )
+        let sortDescriptor = SortDescriptor(\HKQuantitySample.startDate, order: .forward)
+
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: type, predicate: predicate)],
+            sortDescriptors: [sortDescriptor]
+        )
+
         return try await descriptor.result(for: healthStore)
     }
     

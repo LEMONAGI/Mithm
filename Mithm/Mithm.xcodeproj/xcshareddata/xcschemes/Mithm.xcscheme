@@ -47,7 +47,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "39415C192ECC65620056A3F8"
-               BuildableName = "MithmUITests.xctest"
+               BuildableName = "MithmUITests"
                BlueprintName = "MithmUITests"
                ReferencedContainer = "container:Mithm.xcodeproj">
             </BuildableReference>

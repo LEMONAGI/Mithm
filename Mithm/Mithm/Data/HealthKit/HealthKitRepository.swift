@@ -31,6 +31,12 @@ protocol HealthKitRepository {
         from startDate: Date,
         to endDate: Date
     ) async throws -> [MenstrualRecord] 
+
+    /// from ~ to 기간 내의 손목 온도 기록을 HealthKit에서 받아온다.
+    func readWristTemperatureRecords(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [WristTemperatureRecord]
     
     /// 해당 월경 기록을 healthKit에 업데이트 한다
     ///

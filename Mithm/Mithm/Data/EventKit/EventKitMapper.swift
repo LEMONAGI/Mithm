@@ -23,15 +23,27 @@ enum EventKitMapper {
     
     /// MenstrualRecord 배열을 이벤트 파라미터 배열로 변환한다.
     /// endDate가 없는 레코드는 건너뛴다.
-    static func eventParameters(from records: [MenstrualRecord]) -> [EventParameters] {
+    static func eventParameters(
+        from records: [MenstrualRecord],
+        calendar: Calendar = .current
+    ) -> [EventParameters] {
         records.compactMap { record in
-            guard let endDate = record.endDate else { return nil }
+            guard let endDate = record.endDate,
+                  let calendarEventEndDate = calendar.date(
+                    byAdding: .day,
+                    value: 1,
+                    to: calendar.startOfDay(for: endDate)
+                  )
+            else {
+                return nil
+            }
+
             return EventParameters(
                 title: record.type.title,
                 notes: record.type.notes,
                 typeString: record.type.typeString,
-                startDate: record.startDate,
-                endDate: endDate
+                startDate: calendar.startOfDay(for: record.startDate),
+                endDate: calendarEventEndDate
             )
         }
     }
