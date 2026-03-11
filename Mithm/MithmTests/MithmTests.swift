@@ -956,6 +956,30 @@ struct IntegrationPredictionTests {
         #expect(result.usedRecordCount == 3)
     }
 
+    @Test("진행 중 기록(endDate nil)이 있으면 startDate를 반영해 예측하고 해당 기록을 월경 예정기간으로 치환한다")
+    func openEndedRecordIsReplacedWithPrediction() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            MenstrualRecord(
+                type: .menstrualRecord,
+                startDate: Self.date("2025-02-26", calendar: calendar),
+                endDate: nil
+            )
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.usedRecordCount == 3)
+        #expect(result.menstrualPredictions.count == 4)
+        #expect(result.menstrualPredictions[0].type == .menstrualPrediction)
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2025-02-26")
+        #expect(Self.dayString(result.menstrualPredictions[0].endDate) == "2025-03-02")
+        #expect(Self.dayString(result.menstrualPredictions[1].startDate) == "2025-03-26")
+    }
+
     // MARK: Case 4 — 유효 기록 4~5개 (축소 adaptive)
 
     @Test("기록 4개 → 축소 adaptive 모델(EWMA + median), medium confidence")
@@ -1462,6 +1486,38 @@ struct MenstrualRecordUseCaseTests {
         #expect(result.isEmpty)
     }
 
+    @Test("fetchMenstrualRecords는 진행 중 실제 기록(endDate nil)을 제거하고 예측 월경 예정기간으로 교체한다")
+    func fetchMenstrualRecordsReplacesOpenEndedActualRecord() async throws {
+        let repository = MockHealthKitRepository(records: [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            MenstrualRecord(
+                type: .menstrualRecord,
+                startDate: Self.date("2025-02-26", calendar: calendar),
+                endDate: nil
+            )
+        ])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            calendar: calendar
+        )
+
+        let result = try await useCase.fetchMenstrualRecords()
+
+        #expect(result.filter { $0.type == .menstrualRecord }.count == 2)
+        #expect(result.filter { $0.type == .menstrualPrediction }.count == 4)
+        #expect(result.contains {
+            $0.type == .menstrualPrediction &&
+            Self.dayString($0.startDate, calendar: calendar) == "2025-02-26" &&
+            Self.dayString($0.endDate, calendar: calendar) == "2025-03-02"
+        })
+        #expect(!result.contains {
+            $0.type == .menstrualRecord &&
+            Self.dayString($0.startDate, calendar: calendar) == "2025-02-26" &&
+            $0.endDate == nil
+        })
+    }
+
     private func makeRecord(start: String, end: String) -> MenstrualRecord {
         MenstrualRecord(
             type: .menstrualRecord,
@@ -1477,6 +1533,58 @@ struct MenstrualRecordUseCaseTests {
         formatter.timeZone = calendar.timeZone
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.date(from: value)!
+    }
+
+    private static func dayString(_ date: Date?, calendar: Calendar) -> String? {
+        guard let date else { return nil }
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - 17. EventKit Mapper
+
+struct EventKitMapperTests {
+    private let calendar = TestCalendar.make()
+
+    @Test("종일 캘린더 이벤트로 내보낼 때 endDate는 마지막 날의 다음 날로 변환된다")
+    func allDayEventUsesExclusiveEndDate() {
+        let record = MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date("2026-03-08", calendar: calendar),
+            endDate: Self.date("2026-03-11", calendar: calendar)
+        )
+
+        let parameters = EventKitMapper.eventParameters(
+            from: [record],
+            calendar: calendar
+        )
+
+        #expect(parameters.count == 1)
+        #expect(Self.dayString(parameters[0].startDate, calendar: calendar) == "2026-03-08")
+        #expect(Self.dayString(parameters[0].endDate, calendar: calendar) == "2026-03-12")
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+
+    private static func dayString(_ date: Date, calendar: Calendar) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
     }
 }
 

@@ -42,7 +42,8 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
         )
         let predictedMenstrualRecords = predictionResult.menstrualPredictions
 
-        let baseRecords = actualRecords + predictedMenstrualRecords
+        let normalizedActualRecords = actualRecords.filter { $0.endDate != nil }
+        let baseRecords = normalizedActualRecords + predictedMenstrualRecords
         let ovulationRecords = ovulationRecordGenerator.generate(
             from: baseRecords,
             calendar: calendar

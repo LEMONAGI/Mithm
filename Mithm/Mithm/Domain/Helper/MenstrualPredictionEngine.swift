@@ -223,23 +223,29 @@ struct MenstrualPredictionEngine {
     ) -> MenstrualPredictionResult {
         let effectiveUserInput = config.shouldBlendUserInput ? userInput : nil
         let actualRecords = Self.extractActualRecords(from: records)
+        let openActualRecord = Self.extractOpenRecord(from: records)
         let validRecords = validateRecords(actualRecords, calendar: calendar)
-        let recordCount = validRecords.count
-        let lastValidStartDay = validRecords.last.map { calendar.startOfDay(for: $0.startDate) }
+        let recordCount = validRecords.count + (openActualRecord == nil ? 0 : 1)
+        let lastObservedStartDay = openActualRecord.map { calendar.startOfDay(for: $0.startDate) }
+            ?? validRecords.last.map { calendar.startOfDay(for: $0.startDate) }
 
-        guard !validRecords.isEmpty else {
+        guard !validRecords.isEmpty || openActualRecord != nil else {
             return predictWithUserInputOnly(effectiveUserInput, calendar: calendar)
         }
 
         let periodSamples = makePeriodSamples(from: validRecords, calendar: calendar)
-        let rawCycleSamples = makeCycleSamples(from: validRecords, calendar: calendar)
+        let rawCycleSamples = makeCycleSamples(
+            from: validRecords,
+            openRecord: openActualRecord,
+            calendar: calendar
+        )
         let cleanCycles = cleanCycleSamples(rawCycleSamples)
 
-        if recordCount == 1 {
+        if recordCount == 1, openActualRecord == nil {
             return predictFromSingleRecord(
                 periodSamples: periodSamples,
                 userInput: effectiveUserInput,
-                lastStartDay: lastValidStartDay,
+                lastStartDay: lastObservedStartDay,
                 usedRecordCount: recordCount,
                 calendar: calendar
             )
@@ -275,9 +281,10 @@ struct MenstrualPredictionEngine {
         }
 
         let predictions = buildPredictions(
-            from: lastValidStartDay,
+            from: lastObservedStartDay,
             cycleLength: cycleLen,
             periodLength: periodLen,
+            replacing: openActualRecord,
             calendar: calendar
         )
 
@@ -450,17 +457,38 @@ struct MenstrualPredictionEngine {
         from anchorDate: Date?,
         cycleLength: Int,
         periodLength: Int,
+        replacing openRecord: MenstrualRecord? = nil,
         calendar: Calendar
     ) -> [MenstrualRecord] {
         guard let anchorDate else { return [] }
 
-        return Self.buildMenstrualPredictions(
+        let futurePredictions = Self.buildMenstrualPredictions(
             from: anchorDate,
             cycleLength: cycleLength,
             periodLength: periodLength,
             count: config.predictionCount,
             calendar: calendar
         )
+
+        guard let openRecord else {
+            return futurePredictions
+        }
+
+        guard let replacementEndDate = calendar.date(
+            byAdding: .day,
+            value: periodLength - 1,
+            to: calendar.startOfDay(for: openRecord.startDate)
+        ) else {
+            return futurePredictions
+        }
+
+        let replacementRecord = MenstrualRecord(
+            type: .menstrualPrediction,
+            startDate: calendar.startOfDay(for: openRecord.startDate),
+            endDate: replacementEndDate
+        )
+
+        return [replacementRecord] + futurePredictions
     }
 
     private func normalizedLength(
@@ -499,6 +527,13 @@ struct MenstrualPredictionEngine {
             .sorted { $0.startDate < $1.startDate }
     }
 
+    static func extractOpenRecord(from records: [MenstrualRecord]) -> MenstrualRecord? {
+        records
+            .filter { $0.type == .menstrualRecord && $0.endDate == nil }
+            .sorted { $0.startDate < $1.startDate }
+            .last
+    }
+
     // MARK: - Step 2: Validate Records
 
     func validateRecords(
@@ -535,25 +570,51 @@ struct MenstrualPredictionEngine {
 
     func makeCycleSamples(
         from records: [MenstrualRecord],
+        openRecord: MenstrualRecord? = nil,
         calendar: Calendar
     ) -> [CycleSample] {
-        guard records.count >= 2 else { return [] }
-
         var samples: [CycleSample] = []
-        for i in 1..<records.count {
-            let prevStart = calendar.startOfDay(for: records[i - 1].startDate)
-            let currStart = calendar.startOfDay(for: records[i].startDate)
-            let days = calendar.dateComponents([.day], from: prevStart, to: currStart).day ?? 0
 
-            guard config.validCycleRange.contains(days) else { continue }
+        if records.count >= 2 {
+            for i in 1..<records.count {
+                appendCycleSample(
+                    from: calendar.startOfDay(for: records[i - 1].startDate),
+                    to: calendar.startOfDay(for: records[i].startDate),
+                    into: &samples,
+                    calendar: calendar
+                )
+            }
+        }
 
-            samples.append(CycleSample(
-                startDate: currStart,
+        if let openRecord, let lastClosedRecord = records.last {
+            appendCycleSample(
+                from: calendar.startOfDay(for: lastClosedRecord.startDate),
+                to: calendar.startOfDay(for: openRecord.startDate),
+                into: &samples,
+                calendar: calendar
+            )
+        }
+
+        return samples
+    }
+
+    private func appendCycleSample(
+        from previousStart: Date,
+        to currentStart: Date,
+        into samples: inout [CycleSample],
+        calendar: Calendar
+    ) {
+        let days = calendar.dateComponents([.day], from: previousStart, to: currentStart).day ?? 0
+
+        guard config.validCycleRange.contains(days) else { return }
+
+        samples.append(
+            CycleSample(
+                startDate: currentStart,
                 cycleLength: days,
                 weightFactor: 1.0
-            ))
-        }
-        return samples
+            )
+        )
     }
 
     // MARK: - Step 4: Clean Cycle Samples
