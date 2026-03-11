@@ -9,483 +9,87 @@ import Foundation
 import Testing
 @testable import Mithm
 
-struct MenstrualPredictionEngineTests {
+// MARK: - 1. 기록 필터링 및 유효성 검증
+
+struct RecordFilteringTests {
     private let calendar = TestCalendar.make()
     private let engine = MenstrualPredictionEngine()
 
-    @Test("유효한 기록이 없으면 예측 없이 insufficient를 반환한다")
-    func noValidRecordsReturnsInsufficient() {
-        let records = [
-            makeRecord(type: .ovulationPrediction, start: "2026-01-10", end: "2026-01-10"),
-            makeRecord(type: .menstrualRecord, start: "2026-01-20", end: nil),
-            makeRecord(type: .menstrualRecord, start: "2026-02-01", end: "2026-01-30")
-        ]
+    // MARK: extractActualRecords
 
-        let result = engine.predict(from: records, calendar: calendar)
-
-        #expect(result.menstrualPredictions.isEmpty)
-        #expect(result.predictedCycleLength == nil)
-        #expect(result.predictedPeriodLength == nil)
-        #expect(result.confidence == .insufficient)
-        #expect(result.usedRecordCount == 0)
-        #expect(result.detectedShift == false)
-        #expect(result.usedDefaultRule == false)
-    }
-
-    @Test("유효 기록이 1개면 예측을 생성하지 않는다")
-    func oneValidRecordReturnsNoMenstrualPrediction() {
-        let records = [
-            makeRecord(type: .menstrualRecord, start: "2026-01-10", end: "2026-01-14")
-        ]
-
-        let result = engine.predict(from: records, calendar: calendar)
-
-        #expect(result.menstrualPredictions.isEmpty)
-        #expect(result.predictedCycleLength == nil)
-        #expect(result.predictedPeriodLength == nil)
-        #expect(result.confidence == .insufficient)
-        #expect(result.usedRecordCount == 1)
-    }
-
-    @Test("유효 기록이 2개면 단일 cycle로 다음 3개 월경을 예측한다")
-    func twoValidRecordsPredictThreeCycles() {
-        let records = [
-            makeRecord(type: .menstrualRecord, start: "2026-01-01", end: "2026-01-05"),
-            makeRecord(type: .menstrualRecord, start: "2026-01-30", end: "2026-02-03")
-        ]
-
-        let result = engine.predict(from: records, calendar: calendar)
-
-        #expect(result.predictedCycleLength == 29)
-        #expect(result.predictedPeriodLength == 5)
-        #expect(result.confidence == .low)
-        #expect(result.usedRecordCount == 2)
-        #expect(result.menstrualPredictions.count == 3)
-
-        // 1번째 예측: 01-30 + 29 = 02-28
-        #expect(result.menstrualPredictions[0].type == .menstrualPrediction)
-        #expect(Self.dayString(result.menstrualPredictions[0].startDate, calendar: calendar) == "2026-02-28")
-        #expect(Self.dayString(result.menstrualPredictions[0].endDate, calendar: calendar) == "2026-03-04")
-
-        // 2번째 예측: 02-28 + 29 = 03-29
-        #expect(Self.dayString(result.menstrualPredictions[1].startDate, calendar: calendar) == "2026-03-29")
-        #expect(Self.dayString(result.menstrualPredictions[1].endDate, calendar: calendar) == "2026-04-02")
-
-        // 3번째 예측: 03-29 + 29 = 04-27
-        #expect(Self.dayString(result.menstrualPredictions[2].startDate, calendar: calendar) == "2026-04-27")
-        #expect(Self.dayString(result.menstrualPredictions[2].endDate, calendar: calendar) == "2026-05-01")
-    }
-
-    @Test("예측 타입과 잘못된 길이 기록은 학습 데이터에서 제외한다")
-    func ignoresPredictionsAndInvalidDurations() {
+    @Test("extractActualRecords — 예측 타입 기록은 제외하고 실제 월경 기록만 추출한다")
+    func extractsOnlyActualMenstrualRecords() {
         let records = [
             makeRecord(type: .menstrualRecord, start: "2026-01-01", end: "2026-01-05"),
             makeRecord(type: .menstrualPrediction, start: "2026-01-28", end: "2026-02-01"),
-            makeRecord(type: .menstrualRecord, start: "2026-01-30", end: "2026-02-20"),
-            makeRecord(type: .menstrualRecord, start: "2026-02-01", end: "2026-02-05"),
-            makeRecord(type: .menstrualRecord, start: "2026-03-01", end: "2026-03-05")
+            makeRecord(type: .ovulationPrediction, start: "2026-02-10", end: "2026-02-10"),
+            makeRecord(type: .menstrualRecord, start: "2026-02-01", end: "2026-02-05")
         ]
 
-        let actualRecords = MenstrualPredictionEngine.extractActualRecords(from: records)
-        let validRecords = engine.validateRecords(actualRecords, calendar: calendar)
-        let cycleSamples = engine.makeCycleSamples(from: validRecords, calendar: calendar)
+        let actual = MenstrualPredictionEngine.extractActualRecords(from: records)
 
-        #expect(actualRecords.count == 4)
-        #expect(validRecords.count == 3)
-        #expect(cycleSamples.map(\.cycleLength) == [31, 28])
+        #expect(actual.count == 2)
+        #expect(actual.allSatisfy { $0.type == .menstrualRecord })
     }
 
-    @Test("최근 주기 변화가 크면 shift를 감지하고 confidence를 낮춘다")
-    func detectsShiftForRecentPatternChange() {
+    @Test("extractActualRecords — endDate가 nil인 기록은 제외한다")
+    func excludesRecordsWithNilEndDate() {
         let records = [
-            makeRecord(type: .menstrualRecord, start: "2025-01-01", end: "2025-01-05"),
-            makeRecord(type: .menstrualRecord, start: "2025-01-29", end: "2025-02-02"),
-            makeRecord(type: .menstrualRecord, start: "2025-02-26", end: "2025-03-02"),
-            makeRecord(type: .menstrualRecord, start: "2025-03-26", end: "2025-03-30"),
-            makeRecord(type: .menstrualRecord, start: "2025-04-27", end: "2025-05-01"),
-            makeRecord(type: .menstrualRecord, start: "2025-05-29", end: "2025-06-02"),
-            makeRecord(type: .menstrualRecord, start: "2025-07-04", end: "2025-07-08")
-        ]
-
-        let result = engine.predict(from: records, calendar: calendar)
-
-        #expect(result.detectedShift == true)
-        #expect(result.predictedCycleLength == 32)
-        #expect(result.predictedPeriodLength == 5)
-        #expect(result.confidence == .low)
-        #expect(result.menstrualPredictions.count == 3)
-        #expect(Self.dayString(result.menstrualPredictions[0].startDate, calendar: calendar) == "2025-08-05")
-    }
-
-    @Test("규칙적인 최근 6개 주기에서는 high confidence와 3개 예측을 반환한다")
-    func stableRegularCyclesReturnHighConfidence() {
-        let records = [
-            makeRecord(type: .menstrualRecord, start: "2025-01-01", end: "2025-01-05"),
-            makeRecord(type: .menstrualRecord, start: "2025-01-29", end: "2025-02-02"),
-            makeRecord(type: .menstrualRecord, start: "2025-02-26", end: "2025-03-02"),
-            makeRecord(type: .menstrualRecord, start: "2025-03-26", end: "2025-03-30"),
-            makeRecord(type: .menstrualRecord, start: "2025-04-23", end: "2025-04-27"),
-            makeRecord(type: .menstrualRecord, start: "2025-05-21", end: "2025-05-25"),
-            makeRecord(type: .menstrualRecord, start: "2025-06-18", end: "2025-06-22")
-        ]
-
-        let result = engine.predict(from: records, calendar: calendar)
-
-        #expect(result.detectedShift == false)
-        #expect(result.predictedCycleLength == 28)
-        #expect(result.predictedPeriodLength == 5)
-        #expect(result.confidence == .high)
-        #expect(result.usedRecordCount == 7)
-        #expect(result.menstrualPredictions.count == 3)
-
-        // 1번째: 06-18 + 28 = 07-16
-        #expect(Self.dayString(result.menstrualPredictions[0].startDate, calendar: calendar) == "2025-07-16")
-        #expect(Self.dayString(result.menstrualPredictions[0].endDate, calendar: calendar) == "2025-07-20")
-        // 2번째: 07-16 + 28 = 08-13
-        #expect(Self.dayString(result.menstrualPredictions[1].startDate, calendar: calendar) == "2025-08-13")
-        #expect(Self.dayString(result.menstrualPredictions[1].endDate, calendar: calendar) == "2025-08-17")
-        // 3번째: 08-13 + 28 = 09-10
-        #expect(Self.dayString(result.menstrualPredictions[2].startDate, calendar: calendar) == "2025-09-10")
-        #expect(Self.dayString(result.menstrualPredictions[2].endDate, calendar: calendar) == "2025-09-14")
-    }
-
-    @Test("최근 6개 주기의 range가 4에서 7 사이면 moderate로 분류한다")
-    func classifiesModerateVariabilityFromRecentRange() {
-        let variability = engine.classifyVariability(from: [28, 29, 31, 32, 30, 35])
-        #expect(variability == .moderate)
-    }
-
-    @Test("최근 6개 주기의 range가 8 이상이면 irregular로 분류한다")
-    func classifiesIrregularVariabilityFromRecentRange() {
-        let variability = engine.classifyVariability(from: [26, 28, 29, 33, 34, 37])
-        #expect(variability == .irregular)
-    }
-
-    @Test("최근 패턴 차이가 4일 미만이면 shift로 보지 않는다")
-    func doesNotDetectShiftWhenDifferenceIsBelowThreshold() {
-        let cycles = [28, 29, 29, 30, 31, 31]
-        let detected = engine.detectShift(from: cycles)
-        #expect(detected == false)
-    }
-
-    @Test("clean cycle은 중앙값 기준 편차에 따라 가중치를 낮춘다")
-    func cleanCyclesAssignWeightFactorsByDeviation() {
-        // median([27,28,29,36,45]) = 29, deviations: 2,1,0,7,16
-        let samples = [
-            CycleSample(startDate: Self.date("2025-01-29", calendar: calendar), cycleLength: 27, weightFactor: 1.0),
-            CycleSample(startDate: Self.date("2025-02-26", calendar: calendar), cycleLength: 28, weightFactor: 1.0),
-            CycleSample(startDate: Self.date("2025-03-26", calendar: calendar), cycleLength: 29, weightFactor: 1.0),
-            CycleSample(startDate: Self.date("2025-04-23", calendar: calendar), cycleLength: 36, weightFactor: 1.0),
-            CycleSample(startDate: Self.date("2025-05-21", calendar: calendar), cycleLength: 45, weightFactor: 1.0)
-        ]
-
-        let cleaned = engine.cleanCycleSamples(samples)
-
-        #expect(cleaned.map(\.cycleLength) == [27, 28, 29, 36, 45])
-        // deviation ≤5 → 1.0, 6…9 → 0.5, ≥10 → 0.2
-        #expect(cleaned.map(\.weightFactor) == [1.0, 1.0, 1.0, 0.5, 0.2])
-    }
-
-    @Test("15일 미만 또는 90일 초과 cycle은 학습용 cycle에서 제외한다")
-    func excludesOutOfRangeCycleLengths() {
-        let records = [
-            makeRecord(type: .menstrualRecord, start: "2025-01-01", end: "2025-01-05"),
-            makeRecord(type: .menstrualRecord, start: "2025-01-10", end: "2025-01-14"),
-            makeRecord(type: .menstrualRecord, start: "2025-04-20", end: "2025-04-24"),
-            makeRecord(type: .menstrualRecord, start: "2025-05-19", end: "2025-05-23")
-        ]
-
-        let actualRecords = MenstrualPredictionEngine.extractActualRecords(from: records)
-        let validRecords = engine.validateRecords(actualRecords, calendar: calendar)
-        let cycleSamples = engine.makeCycleSamples(from: validRecords, calendar: calendar)
-
-        #expect(validRecords.count == 4)
-        #expect(cycleSamples.map(\.cycleLength) == [29])
-    }
-
-    @Test("4개 기록에서는 축소 adaptive 모델로 다음 3개 월경을 예측한다")
-    func fourRecordsUseReducedAdaptivePrediction() {
-        // cycles: [28, 29, 30], variability=regular(range=2), alpha=0.35
-        // EWMA: 28 → 28.35 → 28.93, longTerm median=29
-        // pred = 0.70×28.93 + 0.30×29.0 = 28.95 → round = 29
-        let records = [
-            makeRecord(type: .menstrualRecord, start: "2025-01-01", end: "2025-01-05"),
-            makeRecord(type: .menstrualRecord, start: "2025-01-29", end: "2025-02-02"),
-            makeRecord(type: .menstrualRecord, start: "2025-02-27", end: "2025-03-03"),
-            makeRecord(type: .menstrualRecord, start: "2025-03-29", end: "2025-04-02")
-        ]
-
-        let result = engine.predict(from: records, calendar: calendar)
-
-        #expect(result.predictedCycleLength == 29)
-        #expect(result.predictedPeriodLength == 5)
-        #expect(result.confidence == .medium)
-        #expect(result.detectedShift == false)
-        #expect(result.menstrualPredictions.count == 3)
-        #expect(Self.dayString(result.menstrualPredictions[0].startDate, calendar: calendar) == "2025-04-27")
-        #expect(Self.dayString(result.menstrualPredictions[0].endDate, calendar: calendar) == "2025-05-01")
-    }
-
-    @Test("period 예측은 6개 이상 데이터에서 variability에 따라 short-term과 long-term을 혼합한다")
-    func periodPredictionUsesWeightedMixWhenEnoughHistoryExists() {
-        let periods = [
-            PeriodSample(startDate: Self.date("2025-01-01", calendar: calendar), periodLength: 4),
-            PeriodSample(startDate: Self.date("2025-01-29", calendar: calendar), periodLength: 4),
-            PeriodSample(startDate: Self.date("2025-02-26", calendar: calendar), periodLength: 5),
-            PeriodSample(startDate: Self.date("2025-03-26", calendar: calendar), periodLength: 5),
-            PeriodSample(startDate: Self.date("2025-04-23", calendar: calendar), periodLength: 6),
-            PeriodSample(startDate: Self.date("2025-05-21", calendar: calendar), periodLength: 6)
-        ]
-
-        let regular = engine.predictPeriodLength(from: periods, variability: .regular)
-        let irregular = engine.predictPeriodLength(from: periods, variability: .irregular)
-
-        #expect(regular == 5)
-        #expect(irregular == 6)
-    }
-
-    @Test("buildMenstrualPredictions는 지정된 개수만큼 연쇄 예측을 생성한다")
-    func buildMenstrualPredictionsGeneratesConsecutiveRecords() {
-        let anchor = Self.date("2026-04-01", calendar: calendar)
-
-        let predictions = MenstrualPredictionEngine.buildMenstrualPredictions(
-            from: anchor,
-            cycleLength: 28,
-            periodLength: 5,
-            count: 3,
-            calendar: calendar
-        )
-
-        #expect(predictions.count == 3)
-        #expect(predictions.allSatisfy { $0.type == .menstrualPrediction })
-
-        // 1번째: 04-01 + 28 = 04-29
-        #expect(Self.dayString(predictions[0].startDate, calendar: calendar) == "2026-04-29")
-        #expect(Self.dayString(predictions[0].endDate, calendar: calendar) == "2026-05-03")
-        // 2번째: 04-29 + 28 = 05-27
-        #expect(Self.dayString(predictions[1].startDate, calendar: calendar) == "2026-05-27")
-        #expect(Self.dayString(predictions[1].endDate, calendar: calendar) == "2026-05-31")
-        // 3번째: 05-27 + 28 = 06-24
-        #expect(Self.dayString(predictions[2].startDate, calendar: calendar) == "2026-06-24")
-        #expect(Self.dayString(predictions[2].endDate, calendar: calendar) == "2026-06-28")
-    }
-
-    @Test("유효 기록 3개면 cycle 2개의 중앙값으로 예측한다")
-    func threeRecordsUseCycleMedian() {
-        // cycles: [28, 30] → median = 29
-        let records = [
-            makeRecord(type: .menstrualRecord, start: "2025-01-01", end: "2025-01-05"),
-            makeRecord(type: .menstrualRecord, start: "2025-01-29", end: "2025-02-02"),
-            makeRecord(type: .menstrualRecord, start: "2025-02-28", end: "2025-03-04")
-        ]
-
-        let result = engine.predict(from: records, calendar: calendar)
-
-        #expect(result.predictedCycleLength == 29)
-        #expect(result.predictedPeriodLength == 5)
-        #expect(result.confidence == .low)
-        #expect(result.usedRecordCount == 3)
-        #expect(result.menstrualPredictions.count == 3)
-        #expect(Self.dayString(result.menstrualPredictions[0].startDate, calendar: calendar) == "2025-03-29")
-    }
-
-    @Test("clean cycle이 3개 미만이면 가중치 조정 없이 그대로 반환한다")
-    func cleanCyclesUnderThreeReturnUnchanged() {
-        let samples = [
-            CycleSample(startDate: Self.date("2025-01-29", calendar: calendar), cycleLength: 28, weightFactor: 1.0),
-            CycleSample(startDate: Self.date("2025-02-26", calendar: calendar), cycleLength: 50, weightFactor: 1.0)
-        ]
-
-        let cleaned = engine.cleanCycleSamples(samples)
-
-        #expect(cleaned.count == 2)
-        #expect(cleaned.map(\.weightFactor) == [1.0, 1.0])
-    }
-
-    @Test("moderate 변동성에서 full adaptive 예측을 수행한다")
-    func moderateVariabilityFullAdaptive() {
-        // cycles: [28, 31, 29, 32, 28, 31] → range=4 → moderate
-        let records = [
-            makeRecord(type: .menstrualRecord, start: "2025-01-01", end: "2025-01-05"),
-            makeRecord(type: .menstrualRecord, start: "2025-01-29", end: "2025-02-02"),
-            makeRecord(type: .menstrualRecord, start: "2025-03-01", end: "2025-03-05"),
-            makeRecord(type: .menstrualRecord, start: "2025-03-30", end: "2025-04-03"),
-            makeRecord(type: .menstrualRecord, start: "2025-05-01", end: "2025-05-05"),
-            makeRecord(type: .menstrualRecord, start: "2025-05-29", end: "2025-06-02"),
-            makeRecord(type: .menstrualRecord, start: "2025-06-29", end: "2025-07-03")
-        ]
-
-        let result = engine.predict(from: records, calendar: calendar)
-
-        #expect(result.confidence == .medium)
-        #expect(result.detectedShift == false)
-        #expect(result.predictedCycleLength != nil)
-        #expect(result.menstrualPredictions.count == 3)
-    }
-
-    @Test("빈 period 배열에서는 nil을 반환한다")
-    func emptyPeriodsReturnNil() {
-        let result = engine.predictPeriodLength(from: [], variability: .regular)
-        #expect(result == nil)
-    }
-
-    @Test("6개 이상 clean cycle + regular + shift가 있으면 confidence는 medium이다")
-    func highCycleCountWithShiftReturnsMedium() {
-        let confidence = engine.determineConfidence(
-            cleanCycleCount: 8,
-            variability: .regular,
-            shift: true
-        )
-        #expect(confidence == .medium)
-    }
-
-    @Test("6개 이상 clean cycle + moderate + shift 없으면 confidence는 medium이다")
-    func highCycleCountModerateReturnsMedium() {
-        let confidence = engine.determineConfidence(
-            cleanCycleCount: 7,
-            variability: .moderate,
-            shift: false
-        )
-        #expect(confidence == .medium)
-    }
-
-    @Test("range가 3 이하이면 regular로 분류한다")
-    func classifiesRegularVariability() {
-        let variability = engine.classifyVariability(from: [28, 29, 28, 30, 29, 28])
-        #expect(variability == .regular)
-    }
-
-    @Test("cycle이 6개 미만이면 shift를 감지하지 않는다")
-    func doesNotDetectShiftWithFewCycles() {
-        let detected = engine.detectShift(from: [28, 35, 35])
-        #expect(detected == false)
-    }
-
-    @Test("3개에서 5개의 clean cycle이고 irregular이면 confidence는 low를 반환한다")
-    func irregularCyclesReturnLowConfidence() {
-        let confidence = engine.determineConfidence(
-            cleanCycleCount: 4,
-            variability: .irregular,
-            shift: false
-        )
-
-        #expect(confidence == .low)
-    }
-
-    @Test("3개에서 5개의 clean cycle이고 regular면 confidence는 medium을 반환한다")
-    func smallButStableCycleHistoryReturnsMediumConfidence() {
-        let confidence = engine.determineConfidence(
-            cleanCycleCount: 4,
-            variability: .regular,
-            shift: false
-        )
-
-        #expect(confidence == .medium)
-    }
-
-    @Test("Config로 predictionCount를 변경하면 해당 개수만큼 예측한다")
-    func customPredictionCountConfig() {
-        let customEngine = MenstrualPredictionEngine(config: {
-            let c = MenstrualPredictionEngine.Config.default
-            return MenstrualPredictionEngine.Config(
-                validPeriodRange: c.validPeriodRange,
-                validCycleRange: c.validCycleRange,
-                outlierNormalThreshold: c.outlierNormalThreshold,
-                outlierMildThreshold: c.outlierMildThreshold,
-                outlierMildWeight: c.outlierMildWeight,
-                outlierSevereWeight: c.outlierSevereWeight,
-                variabilityRegularMaxRange: c.variabilityRegularMaxRange,
-                variabilityModerateMaxRange: c.variabilityModerateMaxRange,
-                ewmaAlphaRegular: c.ewmaAlphaRegular,
-                ewmaAlphaModerate: c.ewmaAlphaModerate,
-                ewmaAlphaIrregular: c.ewmaAlphaIrregular,
-                cycleWeightRegular: c.cycleWeightRegular,
-                cycleWeightModerate: c.cycleWeightModerate,
-                cycleWeightIrregular: c.cycleWeightIrregular,
-                cycleWeightShift: c.cycleWeightShift,
-                cycleWeightReduced: c.cycleWeightReduced,
-                periodWeightStable: c.periodWeightStable,
-                periodWeightIrregular: c.periodWeightIrregular,
-                userInputCycleBlendWeight: c.userInputCycleBlendWeight,
-                userInputPeriodBlendWeight: c.userInputPeriodBlendWeight,
-                shiftThreshold: c.shiftThreshold,
-                predictionCount: 5
-            )
-        }())
-
-        let records = [
-            makeRecord(type: .menstrualRecord, start: "2025-01-01", end: "2025-01-05"),
-            makeRecord(type: .menstrualRecord, start: "2025-01-29", end: "2025-02-02")
-        ]
-
-        let result = customEngine.predict(from: records, calendar: calendar)
-        #expect(result.menstrualPredictions.count == 5)
-    }
-
-    @Test("사용자 입력 주기와 기간이 있으면 config 비율로 예측값과 blend한다")
-    func blendsPredictionsWithUserInput() {
-        let customEngine = MenstrualPredictionEngine(config: {
-            let c = MenstrualPredictionEngine.Config.default
-            return MenstrualPredictionEngine.Config(
-                validPeriodRange: c.validPeriodRange,
-                validCycleRange: c.validCycleRange,
-                outlierNormalThreshold: c.outlierNormalThreshold,
-                outlierMildThreshold: c.outlierMildThreshold,
-                outlierMildWeight: c.outlierMildWeight,
-                outlierSevereWeight: c.outlierSevereWeight,
-                variabilityRegularMaxRange: c.variabilityRegularMaxRange,
-                variabilityModerateMaxRange: c.variabilityModerateMaxRange,
-                ewmaAlphaRegular: c.ewmaAlphaRegular,
-                ewmaAlphaModerate: c.ewmaAlphaModerate,
-                ewmaAlphaIrregular: c.ewmaAlphaIrregular,
-                cycleWeightRegular: c.cycleWeightRegular,
-                cycleWeightModerate: c.cycleWeightModerate,
-                cycleWeightIrregular: c.cycleWeightIrregular,
-                cycleWeightShift: c.cycleWeightShift,
-                cycleWeightReduced: c.cycleWeightReduced,
-                periodWeightStable: c.periodWeightStable,
-                periodWeightIrregular: c.periodWeightIrregular,
-                userInputCycleBlendWeight: 0.5,
-                userInputPeriodBlendWeight: 0.5,
-                shiftThreshold: c.shiftThreshold,
-                predictionCount: c.predictionCount
-            )
-        }())
-
-        let records = [
-            makeRecord(type: .menstrualRecord, start: "2026-01-01", end: "2026-01-05"),
-            makeRecord(type: .menstrualRecord, start: "2026-01-30", end: "2026-02-03")
-        ]
-
-        let result = customEngine.predict(
-            from: records,
-            userInput: MenstrualUserInput(cycleLength: 31, periodLength: 7),
-            calendar: calendar
-        )
-
-        #expect(result.predictedCycleLength == 30)
-        #expect(result.predictedPeriodLength == 6)
-        #expect(Self.dayString(result.menstrualPredictions[0].startDate, calendar: calendar) == "2026-03-01")
-        #expect(Self.dayString(result.menstrualPredictions[0].endDate, calendar: calendar) == "2026-03-06")
-    }
-
-    @Test("예측값이 없더라도 유효한 사용자 입력이 있으면 해당 값으로 예측을 생성한다")
-    func usesUserInputWhenPredictionHistoryIsInsufficient() {
-        let records = [
+            makeRecord(type: .menstrualRecord, start: "2026-01-01", end: nil),
             makeRecord(type: .menstrualRecord, start: "2026-01-10", end: "2026-01-14")
         ]
 
-        let result = engine.predict(
-            from: records,
-            userInput: MenstrualUserInput(cycleLength: 30, periodLength: 6),
-            calendar: calendar
-        )
+        let actual = MenstrualPredictionEngine.extractActualRecords(from: records)
 
-        #expect(result.predictedCycleLength == 30)
-        #expect(result.predictedPeriodLength == 6)
-        #expect(result.menstrualPredictions.count == 3)
-        #expect(Self.dayString(result.menstrualPredictions[0].startDate, calendar: calendar) == "2026-02-09")
-        #expect(Self.dayString(result.menstrualPredictions[0].endDate, calendar: calendar) == "2026-02-14")
+        #expect(actual.count == 1)
+    }
+
+    @Test("extractActualRecords — 결과는 startDate 기준 오름차순으로 정렬된다")
+    func sortsRecordsByStartDateAscending() {
+        let records = [
+            makeRecord(type: .menstrualRecord, start: "2026-03-01", end: "2026-03-05"),
+            makeRecord(type: .menstrualRecord, start: "2026-01-01", end: "2026-01-05"),
+            makeRecord(type: .menstrualRecord, start: "2026-02-01", end: "2026-02-05")
+        ]
+
+        let actual = MenstrualPredictionEngine.extractActualRecords(from: records)
+
+        #expect(actual.count == 3)
+        #expect(actual[0].startDate < actual[1].startDate)
+        #expect(actual[1].startDate < actual[2].startDate)
+    }
+
+    // MARK: validateRecords
+
+    @Test("validateRecords — endDate가 startDate보다 이른 기록은 무효 처리한다")
+    func rejectsRecordsWhereEndDateBeforeStartDate() {
+        let records = [
+            makeRecord(type: .menstrualRecord, start: "2026-02-01", end: "2026-01-30")
+        ]
+
+        let actual = MenstrualPredictionEngine.extractActualRecords(from: records)
+        let valid = engine.validateRecords(actual, calendar: calendar)
+
+        #expect(valid.isEmpty)
+    }
+
+    @Test("validateRecords — period length가 유효 범위(2~8일)를 벗어나면 제외한다")
+    func rejectsRecordsWithPeriodLengthOutOfRange() {
+        let records = [
+            makeRecord(type: .menstrualRecord, start: "2026-01-01", end: "2026-01-05"),  // 5일 → 유효
+            makeRecord(type: .menstrualRecord, start: "2026-02-01", end: "2026-02-20")   // 20일 → 무효
+        ]
+
+        let actual = MenstrualPredictionEngine.extractActualRecords(from: records)
+        let valid = engine.validateRecords(actual, calendar: calendar)
+
+        #expect(valid.count == 1)
+    }
+
+    @Test("validateRecords — 빈 배열을 넣으면 빈 배열을 반환한다")
+    func emptyInputReturnsEmpty() {
+        let valid = engine.validateRecords([], calendar: calendar)
+        #expect(valid.isEmpty)
     }
 
     private func makeRecord(type: MenstrualRecordType, start: String, end: String?) -> MenstrualRecord {
@@ -504,17 +108,1406 @@ struct MenstrualPredictionEngineTests {
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.date(from: value)!
     }
+}
 
-    private static func dayString(_ date: Date?, calendar: Calendar) -> String? {
-        guard let date else { return nil }
+// MARK: - 2. Cycle / Period 샘플 생성
+
+struct SampleGenerationTests {
+    private let calendar = TestCalendar.make()
+    private let engine = MenstrualPredictionEngine()
+
+    @Test("makeCycleSamples — 기록이 1개이면 cycle을 생성할 수 없어 빈 배열을 반환한다")
+    func singleRecordReturnEmptyCycles() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05")
+        ]
+        let samples = engine.makeCycleSamples(from: records, calendar: calendar)
+        #expect(samples.isEmpty)
+    }
+
+    @Test("makeCycleSamples — 유효 범위(20~45일) 밖의 cycle은 제외한다")
+    func excludesCycleLengthsOutOfValidRange() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-10", end: "2025-01-14"),  // 9일 → 범위 밖
+            makeRecord(start: "2025-04-20", end: "2025-04-24"),  // 100일 → 범위 밖
+            makeRecord(start: "2025-05-19", end: "2025-05-23")   // 29일 → 유효
+        ]
+
+        let samples = engine.makeCycleSamples(from: records, calendar: calendar)
+
+        #expect(samples.map(\.cycleLength) == [29])
+    }
+
+    @Test("makeCycleSamples — 연속 기록의 cycle length를 정확히 계산한다")
+    func calculatesCorrectCycleLengths() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),  // 28일
+            makeRecord(start: "2025-02-28", end: "2025-03-04")   // 30일
+        ]
+
+        let samples = engine.makeCycleSamples(from: records, calendar: calendar)
+
+        #expect(samples.map(\.cycleLength) == [28, 30])
+        #expect(samples.allSatisfy { $0.weightFactor == 1.0 })
+    }
+
+    @Test("makePeriodSamples — 각 기록의 period length(양끝 포함 일수)를 정확히 계산한다")
+    func calculatesPeriodLengthsInclusiveOfBothEnds() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),  // 5일
+            makeRecord(start: "2025-02-01", end: "2025-02-01")   // 1일
+        ]
+
+        let samples = engine.makePeriodSamples(from: records, calendar: calendar)
+
+        #expect(samples.map(\.periodLength) == [5, 1])
+    }
+
+    private func makeRecord(start: String, end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date(start, calendar: calendar),
+            endDate: Self.date(end, calendar: calendar)
+        )
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
         let formatter = DateFormatter()
         formatter.calendar = calendar
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = calendar.timeZone
         formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+}
+
+// MARK: - 3. Clean Cycle (이상치 가중치 할당)
+
+struct CleanCycleTests {
+    private let calendar = TestCalendar.make()
+    private let engine = MenstrualPredictionEngine()
+
+    @Test("cleanCycleSamples — 3개 미만이면 가중치 조정 없이 그대로 반환한다")
+    func underThreeSamplesReturnUnchanged() {
+        let samples = [
+            CycleSample(startDate: Self.date("2025-01-29"), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-02-26"), cycleLength: 50, weightFactor: 1.0)
+        ]
+
+        let cleaned = engine.cleanCycleSamples(samples)
+
+        #expect(cleaned.count == 2)
+        #expect(cleaned.map(\.weightFactor) == [1.0, 1.0])
+    }
+
+    @Test("cleanCycleSamples — 중앙값 대비 편차 ≤4이면 가중치 1.0, 5~8이면 0.35, ≥9이면 0.10을 할당한다")
+    func assignsWeightsByDeviationFromMedian() {
+        // median([27,28,29,36,45]) = 29, deviations: 2,1,0,7,16
+        let samples = [
+            CycleSample(startDate: Self.date("2025-01-29"), cycleLength: 27, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-02-26"), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-03-26"), cycleLength: 29, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-04-23"), cycleLength: 36, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-05-21"), cycleLength: 45, weightFactor: 1.0)
+        ]
+
+        let cleaned = engine.cleanCycleSamples(samples)
+
+        #expect(cleaned.map(\.cycleLength) == [27, 28, 29, 36, 45])
+        #expect(cleaned.map(\.weightFactor) == [1.0, 1.0, 1.0, 0.35, 0.10])
+    }
+
+    @Test("cleanCycleSamples — 모든 cycle이 동일하면 전부 가중치 1.0이다")
+    func identicalCyclesAllGetWeight1() {
+        let samples = (0..<5).map { i in
+            CycleSample(startDate: Self.date("2025-0\(i + 1)-01"), cycleLength: 28, weightFactor: 1.0)
+        }
+
+        let cleaned = engine.cleanCycleSamples(samples)
+
+        #expect(cleaned.allSatisfy { $0.weightFactor == 1.0 })
+    }
+
+    private static func date(_ value: String) -> Date {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+}
+
+// MARK: - 4. Variability 분류 (severe outlier 제외)
+
+struct VariabilityTests {
+    private let engine = MenstrualPredictionEngine()
+
+    @Test("classifyVariability — 최근 6개 range ≤ 4이면 regular로 분류한다")
+    func rangeUpTo4IsRegular() {
+        let variability = engine.classifyVariability(from: [28, 29, 28, 30, 29, 28])
+        #expect(variability == .regular)
+    }
+
+    @Test("classifyVariability — 최근 6개 range 5~8이면 moderate로 분류한다")
+    func range5To8IsModerate() {
+        let variability = engine.classifyVariability(from: [28, 29, 31, 32, 30, 35])
+        #expect(variability == .moderate)
+    }
+
+    @Test("classifyVariability — 최근 6개 range ≥ 9이면 irregular로 분류한다")
+    func range9OrMoreIsIrregular() {
+        let variability = engine.classifyVariability(from: [26, 28, 29, 33, 34, 37])
+        #expect(variability == .irregular)
+    }
+
+    @Test("classifyVariability — 7개 이상이면 마지막 6개만 사용한다")
+    func usesOnlyLast6Cycles() {
+        // 처음 2개([20, 45])를 포함하면 range=25 → irregular
+        // 하지만 마지막 6개([28,29,28,30,29,28])만 사용 → range=2 → regular
+        let variability = engine.classifyVariability(from: [20, 45, 28, 29, 28, 30, 29, 28])
+        #expect(variability == .regular)
+    }
+
+    @Test("variabilityCycleLengths — severe outlier(weightFactor == outlierSevereWeight)는 variability 계산에서 제외한다")
+    func excludesSevereOutliersFromVariability() {
+        let samples = [
+            CycleSample(startDate: Date(), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Date(), cycleLength: 29, weightFactor: 1.0),
+            CycleSample(startDate: Date(), cycleLength: 30, weightFactor: 0.5),
+            CycleSample(startDate: Date(), cycleLength: 60, weightFactor: 0.10)  // severe
+        ]
+
+        let lengths = engine.variabilityCycleLengths(from: samples)
+
+        // severe(0.10)는 제외, 나머지 3개 사용
+        #expect(lengths == [28, 29, 30])
+    }
+
+    @Test("variabilityCycleLengths — severe 제외 후 2개 미만이면 전체를 fallback으로 사용한다")
+    func fallsBackToAllWhenTooFewAfterExclusion() {
+        let samples = [
+            CycleSample(startDate: Date(), cycleLength: 28, weightFactor: 0.5),
+            CycleSample(startDate: Date(), cycleLength: 60, weightFactor: 0.10),
+            CycleSample(startDate: Date(), cycleLength: 70, weightFactor: 0.10)
+        ]
+
+        let lengths = engine.variabilityCycleLengths(from: samples)
+
+        // non-severe가 1개뿐이므로 전체 fallback
+        #expect(lengths == [28, 60, 70])
+    }
+
+    @Test("severe outlier 1개가 섞여도 variability는 나머지 기준으로 regular을 유지한다")
+    func singleSevereOutlierDoesNotDistortVariability() {
+        // cleanCycles에서 severe outlier가 하나 있지만,
+        // variabilityCycleLengths에서 제외되므로 regular 유지
+        let samples = [
+            CycleSample(startDate: Date(), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Date(), cycleLength: 29, weightFactor: 1.0),
+            CycleSample(startDate: Date(), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Date(), cycleLength: 29, weightFactor: 1.0),
+            CycleSample(startDate: Date(), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Date(), cycleLength: 55, weightFactor: 0.10)  // severe
+        ]
+
+        let lengths = engine.variabilityCycleLengths(from: samples)
+        let variability = engine.classifyVariability(from: lengths)
+
+        // severe 제외 → [28,29,28,29,28] → range=1 → regular
+        #expect(variability == .regular)
+    }
+}
+
+// MARK: - 5. Shift 감지
+
+struct ShiftDetectionTests {
+    private let engine = MenstrualPredictionEngine()
+
+    @Test("detectShift — 6개 미만이면 항상 false를 반환한다")
+    func fewerThan6CyclesReturnsFalse() {
+        #expect(engine.detectShift(from: [28, 35, 35]) == false)
+        #expect(engine.detectShift(from: [28, 28, 35, 35, 35]) == false)
+    }
+
+    @Test("detectShift — 최근 3개와 이전 3~6개의 중앙값 차이가 4일 이상이면 shift를 감지한다")
+    func detectsShiftWhenRecentMedianDiffers4OrMore() {
+        // 이전: [28,28,28] median=28, 최근: [35,35,35] median=35, 차이=7
+        let cycles = [28, 28, 28, 35, 35, 35]
+        #expect(engine.detectShift(from: cycles) == true)
+    }
+
+    @Test("detectShift — 최근 3개와 이전의 중앙값 차이가 4일 미만이면 shift로 보지 않는다")
+    func doesNotDetectShiftWhenDifferenceBelowThreshold() {
+        let cycles = [28, 29, 29, 30, 31, 31]
+        #expect(engine.detectShift(from: cycles) == false)
+    }
+
+    @Test("detectShift — 정확히 임계값 경계(차이 4.0)에서 shift를 감지한다")
+    func detectsShiftAtExactThreshold() {
+        // 이전: [28,28,28] median=28, 최근: [32,32,32] median=32, 차이=4
+        let cycles = [28, 28, 28, 32, 32, 32]
+        #expect(engine.detectShift(from: cycles) == true)
+    }
+}
+
+// MARK: - 6. Confidence 결정
+
+struct ConfidenceTests {
+    private let engine = MenstrualPredictionEngine()
+
+    @Test("determineConfidence — clean cycle 0개이면 insufficient를 반환한다")
+    func zeroCyclesReturnInsufficient() {
+        let c = engine.determineConfidence(cleanCycleCount: 0, variability: nil, shift: false)
+        #expect(c == .insufficient)
+    }
+
+    @Test("determineConfidence — clean cycle 1~2개이면 low를 반환한다")
+    func oneTwoCyclesReturnLow() {
+        let c1 = engine.determineConfidence(cleanCycleCount: 1, variability: nil, shift: false)
+        let c2 = engine.determineConfidence(cleanCycleCount: 2, variability: .regular, shift: false)
+        #expect(c1 == .low)
+        #expect(c2 == .low)
+    }
+
+    @Test("determineConfidence — irregular이면 기록 수에 관계없이 low를 반환한다")
+    func irregularAlwaysReturnsLow() {
+        let c = engine.determineConfidence(cleanCycleCount: 10, variability: .irregular, shift: false)
+        #expect(c == .low)
+    }
+
+    @Test("determineConfidence — 3~5개 + regular/moderate이면 medium을 반환한다")
+    func mediumCycleCountRegularReturnsMedium() {
+        let c1 = engine.determineConfidence(cleanCycleCount: 4, variability: .regular, shift: false)
+        let c2 = engine.determineConfidence(cleanCycleCount: 5, variability: .moderate, shift: false)
+        #expect(c1 == .medium)
+        #expect(c2 == .medium)
+    }
+
+    @Test("determineConfidence — 6개 이상 + regular + shift 없음이면 high를 반환한다")
+    func highCycleCountRegularNoShiftReturnsHigh() {
+        let c = engine.determineConfidence(cleanCycleCount: 8, variability: .regular, shift: false)
+        #expect(c == .high)
+    }
+
+    @Test("determineConfidence — 6개 이상 + regular + shift 있으면 medium으로 낮아진다")
+    func highCycleCountWithShiftReturnsMedium() {
+        let c = engine.determineConfidence(cleanCycleCount: 8, variability: .regular, shift: true)
+        #expect(c == .medium)
+    }
+
+    @Test("determineConfidence — 6개 이상 + moderate이면 medium을 반환한다")
+    func highCycleCountModerateReturnsMedium() {
+        let c = engine.determineConfidence(cleanCycleCount: 7, variability: .moderate, shift: false)
+        #expect(c == .medium)
+    }
+}
+
+// MARK: - 7. Recency Weight
+
+struct RecencyWeightTests {
+    private let calendar = TestCalendar.make()
+    private let engine = MenstrualPredictionEngine()
+
+    @Test("recencyWeight — 같은 날짜이면 1.0을 반환한다")
+    func sameDateReturns1() {
+        let date = Self.date("2025-06-01")
+        let w = engine.recencyWeight(for: date, latestDate: date, calendar: calendar)
+        #expect(w == 1.0)
+    }
+
+    @Test("recencyWeight — 오래될수록 감소하지만 최소값(0.25) 이하로 떨어지지 않는다")
+    func decaysButNeverBelowMinimum() {
+        let latest = Self.date("2025-06-01")
+        let old = Self.date("2023-01-01")  // 약 880일 전
+
+        let w = engine.recencyWeight(for: old, latestDate: latest, calendar: calendar)
+
+        #expect(w >= 0.25)
+        #expect(w == 0.25)  // exp(-880/180) ≈ 0.007 → max(0.25, 0.007) = 0.25
+    }
+
+    @Test("recencyWeight — 중간 거리에서는 1.0과 최소값 사이의 값을 반환한다")
+    func intermediateDistanceReturnsDecayedValue() {
+        let latest = Self.date("2025-06-01")
+        let mid = Self.date("2025-02-01")  // 약 120일 전
+
+        let w = engine.recencyWeight(for: mid, latestDate: latest, calendar: calendar)
+
+        // exp(-120/180) = exp(-0.666...) ≈ 0.513
+        #expect(w > 0.25)
+        #expect(w < 1.0)
+    }
+
+    private static func date(_ value: String) -> Date {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+}
+
+// MARK: - 8. Adaptive Blend Weight
+
+struct AdaptiveBlendWeightTests {
+    private let engine = MenstrualPredictionEngine()
+
+    // MARK: Cycle blend
+
+    @Test("adaptiveCycleBlendWeight — 기록 0~2개이면 veryLow weight(0.30)를 반환한다")
+    func veryLowHistoryReturnsCycleWeight030() {
+        #expect(engine.adaptiveCycleBlendWeight(usedRecordCount: 0, confidence: .low) == 0.30)
+        #expect(engine.adaptiveCycleBlendWeight(usedRecordCount: 2, confidence: .low) == 0.30)
+    }
+
+    @Test("adaptiveCycleBlendWeight — 기록 3~5개이면 low weight(0.15)를 반환한다")
+    func lowHistoryReturnsCycleWeight015() {
+        #expect(engine.adaptiveCycleBlendWeight(usedRecordCount: 3, confidence: .medium) == 0.15)
+        #expect(engine.adaptiveCycleBlendWeight(usedRecordCount: 5, confidence: .medium) == 0.15)
+    }
+
+    @Test("adaptiveCycleBlendWeight — 기록 6개 이상이면 high weight(0.08)를 반환한다")
+    func highHistoryReturnsCycleWeight008() {
+        #expect(engine.adaptiveCycleBlendWeight(usedRecordCount: 6, confidence: .medium) == 0.08)
+        #expect(engine.adaptiveCycleBlendWeight(usedRecordCount: 12, confidence: .medium) == 0.08)
+    }
+
+    @Test("adaptiveCycleBlendWeight — confidence가 high이면 기록 수 무관하게 override(0.03)를 반환한다")
+    func highConfidenceOverridesToMinimalWeight() {
+        #expect(engine.adaptiveCycleBlendWeight(usedRecordCount: 0, confidence: .high) == 0.03)
+        #expect(engine.adaptiveCycleBlendWeight(usedRecordCount: 10, confidence: .high) == 0.03)
+    }
+
+    // MARK: Period blend
+
+    @Test("adaptivePeriodBlendWeight — 기록 0~2개이면 0.30, 3~5개이면 0.20, 6개 이상이면 0.12를 반환한다")
+    func periodBlendWeightByRecordCount() {
+        #expect(engine.adaptivePeriodBlendWeight(usedRecordCount: 1) == 0.30)
+        #expect(engine.adaptivePeriodBlendWeight(usedRecordCount: 4) == 0.20)
+        #expect(engine.adaptivePeriodBlendWeight(usedRecordCount: 8) == 0.12)
+    }
+}
+
+// MARK: - 9. Period 예측
+
+struct PeriodPredictionTests {
+    private let calendar = TestCalendar.make()
+    private let engine = MenstrualPredictionEngine()
+
+    @Test("predictPeriodLength — 빈 배열이면 nil을 반환한다")
+    func emptyPeriodsReturnNil() {
+        #expect(engine.predictPeriodLength(from: [], variability: .regular) == nil)
+    }
+
+    @Test("predictPeriodLength — 6개 미만이면 단순 중앙값을 사용한다")
+    func underSixUsesSimpleMedian() {
+        let periods = [
+            PeriodSample(startDate: Self.date("2025-01-01"), periodLength: 4),
+            PeriodSample(startDate: Self.date("2025-02-01"), periodLength: 6),
+            PeriodSample(startDate: Self.date("2025-03-01"), periodLength: 5)
+        ]
+
+        let result = engine.predictPeriodLength(from: periods, variability: .regular)
+
+        #expect(result == 5)  // median([4,5,6]) = 5
+    }
+
+    @Test("predictPeriodLength — 6개 이상이면 variability에 따라 short-term과 long-term을 혼합한다")
+    func sixOrMoreUsesWeightedMix() {
+        let periods = [
+            PeriodSample(startDate: Self.date("2025-01-01"), periodLength: 4),
+            PeriodSample(startDate: Self.date("2025-01-29"), periodLength: 4),
+            PeriodSample(startDate: Self.date("2025-02-26"), periodLength: 5),
+            PeriodSample(startDate: Self.date("2025-03-26"), periodLength: 5),
+            PeriodSample(startDate: Self.date("2025-04-23"), periodLength: 6),
+            PeriodSample(startDate: Self.date("2025-05-21"), periodLength: 6)
+        ]
+
+        let regular = engine.predictPeriodLength(from: periods, variability: .regular)
+        let irregular = engine.predictPeriodLength(from: periods, variability: .irregular)
+
+        #expect(regular == 5)
+        #expect(irregular == 6)
+    }
+
+    @Test("predictPeriodLength — period length가 1 미만으로 계산되어도 최소 1을 반환한다")
+    func minimumPeriodLengthIs1() {
+        let periods = [
+            PeriodSample(startDate: Self.date("2025-01-01"), periodLength: 1),
+            PeriodSample(startDate: Self.date("2025-02-01"), periodLength: 1),
+            PeriodSample(startDate: Self.date("2025-03-01"), periodLength: 1),
+            PeriodSample(startDate: Self.date("2025-04-01"), periodLength: 1),
+            PeriodSample(startDate: Self.date("2025-05-01"), periodLength: 1),
+            PeriodSample(startDate: Self.date("2025-06-01"), periodLength: 1)
+        ]
+
+        let result = engine.predictPeriodLength(from: periods, variability: .regular)
+
+        #expect(result == 1)
+    }
+
+    private static func date(_ value: String) -> Date {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+}
+
+// MARK: - 10. Cycle 예측 (Case별)
+
+struct CyclePredictionTests {
+    private let calendar = TestCalendar.make()
+    private let engine = MenstrualPredictionEngine()
+
+    @Test("predictCycleLength — cycle 0개이면 nil을 반환한다")
+    func zeroCyclesReturnNil() {
+        let (value, shift) = engine.predictCycleLength(from: [], calendar: calendar)
+        #expect(value == nil)
+        #expect(shift == false)
+    }
+
+    @Test("predictCycleLength — cycle 1개이면 그 값을 그대로 반환한다")
+    func singleCycleReturnsItself() {
+        let samples = [
+            CycleSample(startDate: Self.date("2025-01-29"), cycleLength: 31, weightFactor: 1.0)
+        ]
+
+        let (value, shift) = engine.predictCycleLength(from: samples, calendar: calendar)
+
+        #expect(value == 31)
+        #expect(shift == false)
+    }
+
+    @Test("predictCycleLength — cycle 2개이면 중앙값을 반환한다")
+    func twoCyclesReturnsMedian() {
+        let samples = [
+            CycleSample(startDate: Self.date("2025-01-29"), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-02-26"), cycleLength: 30, weightFactor: 1.0)
+        ]
+
+        let (value, _) = engine.predictCycleLength(from: samples, calendar: calendar)
+
+        #expect(value == 29)  // median([28,30]) = 29
+    }
+
+    @Test("predictCycleLength — cycle 3~4개이면 축소 adaptive 모델(EWMA + median)을 사용한다")
+    func threeToFourCyclesUseReducedAdaptive() {
+        let samples = [
+            CycleSample(startDate: Self.date("2025-01-29"), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-02-26"), cycleLength: 29, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-03-28"), cycleLength: 30, weightFactor: 1.0)
+        ]
+
+        let (value, shift) = engine.predictCycleLength(from: samples, calendar: calendar)
+
+        #expect(value != nil)
+        #expect(shift == false)
+    }
+
+    @Test("predictCycleLength — cycle 5개 이상이면 full adaptive 모델을 사용하고 shift를 감지한다")
+    func fiveOrMoreCyclesUseFullAdaptiveWithShiftDetection() {
+        // cycles: [28,28,28,35,35,35] → shift 감지
+        let samples = [
+            CycleSample(startDate: Self.date("2025-01-29"), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-02-26"), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-03-26"), cycleLength: 28, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-04-23"), cycleLength: 35, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-05-28"), cycleLength: 35, weightFactor: 1.0),
+            CycleSample(startDate: Self.date("2025-07-02"), cycleLength: 35, weightFactor: 1.0)
+        ]
+
+        let (value, shift) = engine.predictCycleLength(from: samples, calendar: calendar)
+
+        #expect(value != nil)
+        #expect(shift == true)
+    }
+
+    private static func date(_ value: String) -> Date {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+}
+
+// MARK: - 11. 예측 레코드 생성
+
+struct BuildPredictionsTests {
+    private let calendar = TestCalendar.make()
+
+    @Test("buildMenstrualPredictions — 지정된 개수만큼 연쇄 예측을 생성한다")
+    func generatesConsecutiveRecords() {
+        let anchor = Self.date("2026-04-01")
+
+        let predictions = MenstrualPredictionEngine.buildMenstrualPredictions(
+            from: anchor, cycleLength: 28, periodLength: 5, count: 3, calendar: calendar
+        )
+
+        #expect(predictions.count == 3)
+        #expect(predictions.allSatisfy { $0.type == .menstrualPrediction })
+
+        #expect(Self.dayString(predictions[0].startDate) == "2026-04-29")
+        #expect(Self.dayString(predictions[0].endDate) == "2026-05-03")
+        #expect(Self.dayString(predictions[1].startDate) == "2026-05-27")
+        #expect(Self.dayString(predictions[2].startDate) == "2026-06-24")
+    }
+
+    @Test("buildMenstrualPredictions — count가 0이면 빈 배열을 반환한다")
+    func zeroCountReturnsEmpty() {
+        let predictions = MenstrualPredictionEngine.buildMenstrualPredictions(
+            from: Self.date("2026-01-01"), cycleLength: 28, periodLength: 5, count: 0, calendar: calendar
+        )
+        #expect(predictions.isEmpty)
+    }
+
+    @Test("buildMenstrualPredictions — 각 예측의 endDate는 startDate + (periodLength - 1)일이다")
+    func endDateIsPeriodLengthMinusOneFromStart() {
+        let predictions = MenstrualPredictionEngine.buildMenstrualPredictions(
+            from: Self.date("2026-01-01"), cycleLength: 30, periodLength: 7, count: 1, calendar: calendar
+        )
+
+        #expect(Self.dayString(predictions[0].startDate) == "2026-01-31")
+        #expect(Self.dayString(predictions[0].endDate) == "2026-02-06")
+    }
+
+    private static func date(_ value: String) -> Date {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+
+    private static func dayString(_ date: Date?) -> String? {
+        guard let date else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date)
     }
 }
+
+// MARK: - 12. Median 유틸리티
+
+struct MedianTests {
+    @Test("median — 홀수 개 배열의 가운데 값을 반환한다")
+    func oddCountReturnsMiddle() {
+        #expect(MenstrualPredictionEngine.median([1, 2, 3]) == 2.0)
+        #expect(MenstrualPredictionEngine.median([10, 20, 30, 40, 50]) == 30.0)
+    }
+
+    @Test("median — 짝수 개 배열의 두 가운데 값 평균을 반환한다")
+    func evenCountReturnsAverage() {
+        #expect(MenstrualPredictionEngine.median([1, 2, 3, 4]) == 2.5)
+        #expect(MenstrualPredictionEngine.median([28, 30]) == 29.0)
+    }
+
+    @Test("median — 빈 배열이면 0을 반환한다")
+    func emptyReturnsZero() {
+        #expect(MenstrualPredictionEngine.median([]) == 0)
+    }
+
+    @Test("median — 1개 배열이면 그 값을 반환한다")
+    func singleElementReturnsItself() {
+        #expect(MenstrualPredictionEngine.median([42]) == 42.0)
+    }
+}
+
+// MARK: - 13. shouldBlendUserInput 제어
+
+struct BlendControlTests {
+    private let calendar = TestCalendar.make()
+
+    @Test("shouldBlendUserInput이 false이면 사용자 입력이 있어도 모델 예측만 사용한다")
+    func blendOffIgnoresUserInput() {
+        let noBlendEngine = MenstrualPredictionEngine(shouldBlendUserInput: false)
+
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-28", end: "2025-03-04")
+        ]
+
+        let withoutInput = noBlendEngine.predict(from: records, calendar: calendar)
+        let withInput = noBlendEngine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 8),
+            calendar: calendar
+        )
+
+        #expect(withoutInput.predictedCycleLength == withInput.predictedCycleLength)
+        #expect(withoutInput.predictedPeriodLength == withInput.predictedPeriodLength)
+    }
+
+    @Test("shouldBlendUserInput이 false이고 기록 0개이면 사용자 입력이 있어도 예측 없이 insufficient를 반환한다")
+    func blendOffZeroRecordsReturnsInsufficient() {
+        let noBlendEngine = MenstrualPredictionEngine(shouldBlendUserInput: false)
+
+        let result = noBlendEngine.predict(
+            from: [],
+            userInput: MenstrualUserInput(cycleLength: 28, periodLength: 5),
+            calendar: calendar
+        )
+
+        #expect(result.confidence == .insufficient)
+        #expect(result.menstrualPredictions.isEmpty)
+    }
+
+    @Test("shouldBlendUserInput이 false이고 기록 1개이면 cycle 입력이 있어도 insufficient를 반환한다")
+    func blendOffOneRecordReturnsInsufficient() {
+        let noBlendEngine = MenstrualPredictionEngine(shouldBlendUserInput: false)
+
+        let records = [makeRecord(start: "2026-01-10", end: "2026-01-14")]
+
+        let result = noBlendEngine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 30, periodLength: 5),
+            calendar: calendar
+        )
+
+        #expect(result.confidence == .insufficient)
+        #expect(result.menstrualPredictions.isEmpty)
+    }
+
+    @Test("shouldBlendUserInput이 true이면 기록 0개에서도 사용자 입력으로 예측을 생성한다")
+    func blendOnZeroRecordsUsesUserInput() {
+        let engine = MenstrualPredictionEngine(shouldBlendUserInput: true)
+
+        let result = engine.predict(
+            from: [],
+            userInput: MenstrualUserInput(cycleLength: 28, periodLength: 5),
+            calendar: calendar
+        )
+
+        #expect(result.confidence == .low)
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.menstrualPredictions.count == 3)
+    }
+
+    private func makeRecord(start: String, end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date(start, calendar: calendar),
+            endDate: Self.date(end, calendar: calendar)
+        )
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+
+}
+
+// MARK: - 14. 통합 예측 (Case별 predict 흐름)
+
+struct IntegrationPredictionTests {
+    private let calendar = TestCalendar.make()
+    private let engine = MenstrualPredictionEngine()
+
+    // MARK: Case 0 — 유효 기록 0개
+
+    @Test("기록 0개 + 사용자 입력 없음 → 예측 없음, insufficient")
+    func case0_noInput_insufficient() {
+        let result = engine.predict(from: [], calendar: calendar)
+
+        #expect(result.menstrualPredictions.isEmpty)
+        #expect(result.predictedCycleLength == nil)
+        #expect(result.predictedPeriodLength == nil)
+        #expect(result.confidence == .insufficient)
+        #expect(result.usedRecordCount == 0)
+    }
+
+    @Test("기록 0개 + 유효한 사용자 입력 → 해당 값으로 예측 생성, low confidence")
+    func case0_validInput_predictionsGenerated() {
+        let result = engine.predict(
+            from: [],
+            userInput: MenstrualUserInput(cycleLength: 30, periodLength: 6),
+            calendar: calendar
+        )
+
+        #expect(result.predictedCycleLength == 30)
+        #expect(result.predictedPeriodLength == 6)
+        #expect(result.confidence == .low)
+        #expect(result.usedRecordCount == 0)
+        #expect(result.menstrualPredictions.count == 3)
+    }
+
+    @Test("기록 0개 + cycle만 입력(period 없음) → 예측 없음, insufficient")
+    func case0_cycleOnlyInput_insufficient() {
+        let result = engine.predict(
+            from: [],
+            userInput: MenstrualUserInput(cycleLength: 28, periodLength: nil),
+            calendar: calendar
+        )
+
+        #expect(result.confidence == .insufficient)
+        #expect(result.menstrualPredictions.isEmpty)
+    }
+
+    @Test("기록 0개 + 유효 범위 밖 사용자 입력 → 예측 없음, insufficient")
+    func case0_outOfRangeInput_insufficient() {
+        let result = engine.predict(
+            from: [],
+            userInput: MenstrualUserInput(cycleLength: 200, periodLength: 5),
+            calendar: calendar
+        )
+
+        #expect(result.confidence == .insufficient)
+    }
+
+    // MARK: Case 1 — 유효 기록 1개
+
+    @Test("기록 1개 + cycle 입력 있음 → 실제 period 유지, 입력 cycle로 예측")
+    func case1_withCycleInput() {
+        let records = [makeRecord(start: "2026-01-10", end: "2026-01-14")]
+
+        let result = engine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 30, periodLength: nil),
+            calendar: calendar
+        )
+
+        #expect(result.predictedCycleLength == 30)
+        #expect(result.predictedPeriodLength == 5)  // 실제 period = 5일
+        #expect(result.confidence == .low)
+        #expect(result.usedRecordCount == 1)
+        #expect(result.menstrualPredictions.count == 3)
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-09")
+    }
+
+    @Test("기록 1개 + cycle 입력 없음 → 예측 없음, insufficient")
+    func case1_noCycleInput_insufficient() {
+        let records = [makeRecord(start: "2026-01-10", end: "2026-01-14")]
+
+        let result = engine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: nil, periodLength: 5),
+            calendar: calendar
+        )
+
+        #expect(result.confidence == .insufficient)
+        #expect(result.menstrualPredictions.isEmpty)
+    }
+
+    @Test("기록 1개 + cycle/period 모두 입력 → period는 실제값 우선으로 adaptive blend한다")
+    func case1_withBothInputs_blendsPeriod() {
+        let records = [makeRecord(start: "2026-01-10", end: "2026-01-14")]
+
+        let result = engine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 30, periodLength: 6),
+            calendar: calendar
+        )
+
+        // 실제 period = 5, user = 6, weight = 0.30 (veryLow)
+        // blended = (1-0.30)*5 + 0.30*6 = 3.5 + 1.8 = 5.3 → 5
+        #expect(result.predictedCycleLength == 30)
+        #expect(result.predictedPeriodLength == 5)
+    }
+
+    // MARK: Case 2 — 유효 기록 2개
+
+    @Test("기록 2개 → 단일 cycle 기반 예측, low confidence")
+    func case2_twoRecords() {
+        let records = [
+            makeRecord(start: "2026-01-01", end: "2026-01-05"),
+            makeRecord(start: "2026-01-30", end: "2026-02-03")
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.predictedCycleLength == 29)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .low)
+        #expect(result.usedRecordCount == 2)
+        #expect(result.menstrualPredictions.count == 3)
+
+        #expect(result.menstrualPredictions[0].type == .menstrualPrediction)
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-28")
+    }
+
+    // MARK: Case 3 — 유효 기록 3개
+
+    @Test("기록 3개 → cycle 2개의 중앙값으로 예측, low confidence")
+    func case3_threeRecords() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-28", end: "2025-03-04")
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.predictedCycleLength == 29)  // median([28,30]) = 29
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .low)
+        #expect(result.usedRecordCount == 3)
+    }
+
+    // MARK: Case 4 — 유효 기록 4~5개 (축소 adaptive)
+
+    @Test("기록 4개 → 축소 adaptive 모델(EWMA + median), medium confidence")
+    func case4_fourRecords() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-27", end: "2025-03-03"),
+            makeRecord(start: "2025-03-29", end: "2025-04-02")
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.predictedCycleLength == 29)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .medium)
+        #expect(result.detectedShift == false)
+    }
+
+    // MARK: Case 5 — 유효 기록 7개 이상 (full adaptive)
+
+    @Test("기록 7개 규칙적(range ≤ 4) → full adaptive, high confidence")
+    func case5_regularCycles_highConfidence() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-26", end: "2025-03-02"),
+            makeRecord(start: "2025-03-26", end: "2025-03-30"),
+            makeRecord(start: "2025-04-23", end: "2025-04-27"),
+            makeRecord(start: "2025-05-21", end: "2025-05-25"),
+            makeRecord(start: "2025-06-18", end: "2025-06-22")
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .high)
+        #expect(result.detectedShift == false)
+        #expect(result.usedRecordCount == 7)
+        #expect(result.menstrualPredictions.count == 3)
+
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2025-07-16")
+        #expect(Self.dayString(result.menstrualPredictions[0].endDate) == "2025-07-20")
+    }
+
+    @Test("기록 7개 moderate(range 5~8) → full adaptive, medium confidence")
+    func case5_moderateCycles_mediumConfidence() {
+        // cycles: [28, 31, 29, 32, 28, 36] → range=8 → moderate
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-03-01", end: "2025-03-05"),
+            makeRecord(start: "2025-03-30", end: "2025-04-03"),
+            makeRecord(start: "2025-05-01", end: "2025-05-05"),
+            makeRecord(start: "2025-05-29", end: "2025-06-02"),
+            makeRecord(start: "2025-07-04", end: "2025-07-08")
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.confidence == .medium)
+        #expect(result.detectedShift == false)
+        #expect(result.predictedCycleLength != nil)
+    }
+
+    @Test("최근 주기가 갑자기 길어지면 shift를 감지하고 confidence를 낮춘다")
+    func detectsShiftForSuddenLengthening() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-26", end: "2025-03-02"),
+            makeRecord(start: "2025-03-26", end: "2025-03-30"),
+            makeRecord(start: "2025-04-27", end: "2025-05-01"),
+            makeRecord(start: "2025-05-29", end: "2025-06-02"),
+            makeRecord(start: "2025-07-04", end: "2025-07-08")
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.detectedShift == true)
+        #expect(result.predictedCycleLength == 31)
+        #expect(result.confidence == .medium)
+    }
+
+    // MARK: Blend
+
+    @Test("사용자 입력이 있으면 adaptive weight로 예측값과 blend한다")
+    func blendsWithAdaptiveWeight() {
+        let customEngine = MenstrualPredictionEngine(config: {
+            let c = MenstrualPredictionEngine.Config.default
+            return MenstrualPredictionEngine.Config(
+                validPeriodRange: c.validPeriodRange,
+                validCycleRange: c.validCycleRange,
+                outlierNormalThreshold: c.outlierNormalThreshold,
+                outlierMildThreshold: c.outlierMildThreshold,
+                outlierMildWeight: c.outlierMildWeight,
+                outlierSevereWeight: c.outlierSevereWeight,
+                variabilityRegularMaxRange: c.variabilityRegularMaxRange,
+                variabilityModerateMaxRange: c.variabilityModerateMaxRange,
+                ewmaAlphaRegular: c.ewmaAlphaRegular,
+                ewmaAlphaModerate: c.ewmaAlphaModerate,
+                ewmaAlphaIrregular: c.ewmaAlphaIrregular,
+                cycleWeightRegular: c.cycleWeightRegular,
+                cycleWeightModerate: c.cycleWeightModerate,
+                cycleWeightIrregular: c.cycleWeightIrregular,
+                cycleWeightShift: c.cycleWeightShift,
+                cycleWeightReduced: c.cycleWeightReduced,
+                periodWeightStable: c.periodWeightStable,
+                periodWeightIrregular: c.periodWeightIrregular,
+                recencyDecayDays: c.recencyDecayDays,
+                recencyMinimumWeight: c.recencyMinimumWeight,
+                shouldBlendUserInput: c.shouldBlendUserInput,
+                userInputCycleWeightVeryLowHistory: 0.5,
+                userInputCycleWeightLowHistory: 0.5,
+                userInputCycleWeightHighHistory: 0.5,
+                userInputCycleWeightHighConfidenceOverride: 0.5,
+                userInputPeriodWeightVeryLowHistory: 0.5,
+                userInputPeriodWeightLowHistory: 0.5,
+                userInputPeriodWeightHighHistory: 0.5,
+                shiftThreshold: c.shiftThreshold,
+                predictionCount: c.predictionCount
+            )
+        }())
+
+        let records = [
+            makeRecord(start: "2026-01-01", end: "2026-01-05"),
+            makeRecord(start: "2026-01-30", end: "2026-02-03")
+        ]
+
+        let result = customEngine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 31, periodLength: 7),
+            calendar: calendar
+        )
+
+        // cycle: (1-0.5)*29 + 0.5*31 = 30, period: (1-0.5)*5 + 0.5*7 = 6
+        #expect(result.predictedCycleLength == 30)
+        #expect(result.predictedPeriodLength == 6)
+    }
+
+    @Test("Config로 predictionCount를 변경하면 해당 개수만큼 예측한다")
+    func customPredictionCount() {
+        let customEngine = MenstrualPredictionEngine(config: {
+            let c = MenstrualPredictionEngine.Config.default
+            return MenstrualPredictionEngine.Config(
+                validPeriodRange: c.validPeriodRange,
+                validCycleRange: c.validCycleRange,
+                outlierNormalThreshold: c.outlierNormalThreshold,
+                outlierMildThreshold: c.outlierMildThreshold,
+                outlierMildWeight: c.outlierMildWeight,
+                outlierSevereWeight: c.outlierSevereWeight,
+                variabilityRegularMaxRange: c.variabilityRegularMaxRange,
+                variabilityModerateMaxRange: c.variabilityModerateMaxRange,
+                ewmaAlphaRegular: c.ewmaAlphaRegular,
+                ewmaAlphaModerate: c.ewmaAlphaModerate,
+                ewmaAlphaIrregular: c.ewmaAlphaIrregular,
+                cycleWeightRegular: c.cycleWeightRegular,
+                cycleWeightModerate: c.cycleWeightModerate,
+                cycleWeightIrregular: c.cycleWeightIrregular,
+                cycleWeightShift: c.cycleWeightShift,
+                cycleWeightReduced: c.cycleWeightReduced,
+                periodWeightStable: c.periodWeightStable,
+                periodWeightIrregular: c.periodWeightIrregular,
+                recencyDecayDays: c.recencyDecayDays,
+                recencyMinimumWeight: c.recencyMinimumWeight,
+                shouldBlendUserInput: c.shouldBlendUserInput,
+                userInputCycleWeightVeryLowHistory: c.userInputCycleWeightVeryLowHistory,
+                userInputCycleWeightLowHistory: c.userInputCycleWeightLowHistory,
+                userInputCycleWeightHighHistory: c.userInputCycleWeightHighHistory,
+                userInputCycleWeightHighConfidenceOverride: c.userInputCycleWeightHighConfidenceOverride,
+                userInputPeriodWeightVeryLowHistory: c.userInputPeriodWeightVeryLowHistory,
+                userInputPeriodWeightLowHistory: c.userInputPeriodWeightLowHistory,
+                userInputPeriodWeightHighHistory: c.userInputPeriodWeightHighHistory,
+                shiftThreshold: c.shiftThreshold,
+                predictionCount: 5
+            )
+        }())
+
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02")
+        ]
+
+        let result = customEngine.predict(from: records, calendar: calendar)
+        #expect(result.menstrualPredictions.count == 5)
+    }
+
+    private func makeRecord(start: String, end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date(start, calendar: calendar),
+            endDate: Self.date(end, calendar: calendar)
+        )
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+
+    private static func dayString(_ date: Date?) -> String? {
+        guard let date else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - 15. 엣지 케이스
+
+struct EdgeCaseTests {
+    private let calendar = TestCalendar.make()
+    private let engine = MenstrualPredictionEngine()
+
+    @Test("주기가 갑자기 불규칙해진 경우 — 규칙적이었다가 마지막 3개가 흩어지면 confidence가 떨어진다")
+    func suddenlyIrregularCyclesLowerConfidence() {
+        // 처음 4개: 28일 규칙, 마지막 3개: 22,35,40일로 급변
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),  // 28
+            makeRecord(start: "2025-02-26", end: "2025-03-02"),  // 28
+            makeRecord(start: "2025-03-26", end: "2025-03-30"),  // 28
+            makeRecord(start: "2025-04-23", end: "2025-04-27"),  // 28
+            makeRecord(start: "2025-05-15", end: "2025-05-19"),  // 22
+            makeRecord(start: "2025-06-19", end: "2025-06-23"),  // 35
+            makeRecord(start: "2025-08-08", end: "2025-08-12")   // 40 → 범위 내
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        // 마지막 6개 cycle에서 range가 넓어지므로 confidence가 high가 아닐 것
+        #expect(result.confidence != .high)
+        #expect(result.predictedCycleLength != nil)
+    }
+
+    @Test("이상치가 1개 섞인 규칙적 데이터 — 이상치의 가중치만 낮아지고 예측은 안정적이다")
+    func singleOutlierInRegularData() {
+        // 6개 regular(28일) 중 1개가 60일(severe outlier)
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),  // 28
+            makeRecord(start: "2025-02-26", end: "2025-03-02"),  // 28
+            makeRecord(start: "2025-03-26", end: "2025-03-30"),  // 28
+            makeRecord(start: "2025-05-25", end: "2025-05-29"),  // 60 → mild/severe outlier
+            makeRecord(start: "2025-06-22", end: "2025-06-26"),  // 28
+            makeRecord(start: "2025-07-20", end: "2025-07-24")   // 28
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        // 이상치 1개에도 불구하고 대부분 28일이므로 예측은 28~29 근처
+        #expect(result.predictedCycleLength != nil)
+        let cycle = result.predictedCycleLength!
+        #expect((26...32).contains(cycle))
+    }
+
+    @Test("모든 기록이 동일한 주기일 때 — 예측도 동일한 값이고 high confidence이다")
+    func perfectlyRegularCycles() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-26", end: "2025-03-02"),
+            makeRecord(start: "2025-03-26", end: "2025-03-30"),
+            makeRecord(start: "2025-04-23", end: "2025-04-27"),
+            makeRecord(start: "2025-05-21", end: "2025-05-25"),
+            makeRecord(start: "2025-06-18", end: "2025-06-22")
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.confidence == .high)
+        #expect(result.detectedShift == false)
+    }
+
+    @Test("period length가 유효 범위 하한(2일)인 기록이 유효하게 처리된다")
+    func minimumPeriodLengthRecord() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-02"),  // 2일
+            makeRecord(start: "2025-01-29", end: "2025-01-30")   // 2일
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.predictedPeriodLength == 2)
+        #expect(result.usedRecordCount == 2)
+    }
+
+    @Test("cycle length가 유효 범위 경계(20일, 45일)에서 포함된다")
+    func cycleLengthAtBoundary() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-21", end: "2025-01-25"),  // 20일 cycle → 경계 포함
+            makeRecord(start: "2025-03-07", end: "2025-03-11")   // 45일 cycle → 경계 포함
+        ]
+
+        let samples = engine.makeCycleSamples(
+            from: engine.validateRecords(
+                MenstrualPredictionEngine.extractActualRecords(from: records),
+                calendar: calendar
+            ),
+            calendar: calendar
+        )
+
+        #expect(samples.map(\.cycleLength) == [20, 45])
+    }
+
+    @Test("기록이 시간순서 역순으로 들어와도 내부에서 정렬하여 정확히 예측한다")
+    func outOfOrderRecordsAreSorted() {
+        let records = [
+            makeRecord(start: "2025-02-28", end: "2025-03-04"),
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02")
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        // 정렬 후: 01-01, 01-29, 02-28 → cycles: [28, 30] → median = 29
+        #expect(result.predictedCycleLength == 29)
+        #expect(result.usedRecordCount == 3)
+    }
+
+    @Test("사용자 입력 cycle이 유효 범위 밖이면 blend 시 무시된다")
+    func outOfRangeUserInputCycleIsIgnored() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02")
+        ]
+
+        // 01-01 → 01-29 = 28일 cycle
+        let result = engine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 200, periodLength: 5),
+            calendar: calendar
+        )
+
+        // cycle 200은 범위(20~45) 밖이므로 무시, 모델 예측값(28)만 사용
+        #expect(result.predictedCycleLength == 28)
+    }
+
+    @Test("사용자 입력 period가 유효 범위 밖이면 blend 시 무시된다")
+    func outOfRangeUserInputPeriodIsIgnored() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02")
+        ]
+
+        let result = engine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 30, periodLength: 50),
+            calendar: calendar
+        )
+
+        // period 50은 범위(2~8) 밖이므로 무시
+        #expect(result.predictedPeriodLength == 5)
+    }
+
+    @Test("userInput 없이 호출해도 정상 동작한다")
+    func noUserInputWorksCorrectly() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02")
+        ]
+
+        // 01-01 → 01-29 = 28일 cycle
+        let result = engine.predict(from: records, calendar: calendar)
+
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+    }
+
+    @Test("점진적으로 길어지는 주기 패턴에서 EWMA가 추세를 반영한다")
+    func graduallyLengeningCyclesReflectedInEWMA() {
+        // 점점 길어지는 주기: 26 → 27 → 28 → 29 → 30 → 31
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-27", end: "2025-01-31"),  // 26
+            makeRecord(start: "2025-02-23", end: "2025-02-27"),  // 27
+            makeRecord(start: "2025-03-23", end: "2025-03-27"),  // 28
+            makeRecord(start: "2025-04-21", end: "2025-04-25"),  // 29
+            makeRecord(start: "2025-05-21", end: "2025-05-25"),  // 30
+            makeRecord(start: "2025-06-21", end: "2025-06-25")   // 31
+        ]
+
+        let result = engine.predict(from: records, calendar: calendar)
+
+        // EWMA는 최근 값(30,31)에 더 가중하므로 중앙값(28.5)보다 높을 것
+        #expect(result.predictedCycleLength != nil)
+        let cycle = result.predictedCycleLength!
+        #expect(cycle >= 29)
+    }
+
+    @Test("high confidence에서 사용자 입력 blend weight는 최소(0.03)가 되어 모델 예측이 지배적이다")
+    func highConfidenceMinimizesUserInputBlend() {
+        // 7개 규칙적 기록(28일) → high confidence → cycle blend = 0.03
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-26", end: "2025-03-02"),
+            makeRecord(start: "2025-03-26", end: "2025-03-30"),
+            makeRecord(start: "2025-04-23", end: "2025-04-27"),
+            makeRecord(start: "2025-05-21", end: "2025-05-25"),
+            makeRecord(start: "2025-06-18", end: "2025-06-22")
+        ]
+
+        let resultWithInput = engine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 8),
+            calendar: calendar
+        )
+
+        // model = 28, user = 35, weight = 0.03
+        // blended = 0.97 * 28 + 0.03 * 35 = 27.16 + 1.05 = 28.21 → 28
+        #expect(resultWithInput.predictedCycleLength == 28)
+    }
+
+    @Test("모든 cycle이 severe outlier(극단값)일 때 variabilityCycleLengths는 전체를 fallback으로 사용한다")
+    func allSevereOutliersFallbackToAll() {
+        let samples = [
+            CycleSample(startDate: Date(), cycleLength: 15, weightFactor: 0.2),
+            CycleSample(startDate: Date(), cycleLength: 80, weightFactor: 0.2),
+            CycleSample(startDate: Date(), cycleLength: 50, weightFactor: 0.2)
+        ]
+
+        let lengths = engine.variabilityCycleLengths(from: samples)
+
+        // 모두 severe → non-severe 0개 → fallback 전체
+        #expect(lengths == [15, 80, 50])
+    }
+
+    private func makeRecord(start: String, end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date(start, calendar: calendar),
+            endDate: Self.date(end, calendar: calendar)
+        )
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+
+    private static func dayString(_ date: Date?) -> String? {
+        guard let date else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - 16. MenstrualRecordUseCase
+
+struct MenstrualRecordUseCaseTests {
+    private let calendar = TestCalendar.make()
+
+    @Test("fetchMenstrualRecords는 실제 월경 기록에 예상 월경, 배란일, 배란기를 합쳐 정렬해 반환한다")
+    func fetchMenstrualRecordsIncludesPredictionsAndOvulationRecords() async throws {
+        let repository = MockHealthKitRepository(records: [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-26", end: "2025-03-02")
+        ])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            calendar: calendar
+        )
+
+        let result = try await useCase.fetchMenstrualRecords()
+
+        #expect(result.filter { $0.type == .menstrualRecord }.count == 3)
+        #expect(result.filter { $0.type == .menstrualPrediction }.count == 3)
+        #expect(result.filter { $0.type == .ovulationEstimated }.count == 3)
+        #expect(result.filter { $0.type == .ovulationFertileWindowEstimated }.count == 3)
+        #expect(result.filter { $0.type == .ovulationPrediction }.count == 3)
+        #expect(result.filter { $0.type == .ovulationFertileWindowPrediction }.count == 3)
+        #expect(result.count == 18)
+        #expect(result.map(\.startDate) == result.map(\.startDate).sorted())
+    }
+
+    @Test("fetchMenstrualRecords는 기록이 없으면 빈 배열을 반환한다")
+    func fetchMenstrualRecordsReturnsEmptyWhenNoActualRecords() async throws {
+        let repository = MockHealthKitRepository(records: [])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            calendar: calendar
+        )
+
+        let result = try await useCase.fetchMenstrualRecords()
+
+        #expect(result.isEmpty)
+    }
+
+    private func makeRecord(start: String, end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date(start, calendar: calendar),
+            endDate: Self.date(end, calendar: calendar)
+        )
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+}
+
+private struct MockHealthKitRepository: HealthKitRepository {
+    let records: [MenstrualRecord]
+
+    func checkWriteAuthorization(for type: HealthDataType) async throws {}
+
+    func requestAuthorization(
+        writeTypes: Set<HealthDataType>,
+        readTypes: Set<HealthDataType>
+    ) async throws {}
+
+    func readMenstrualCycleRecords(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [MenstrualRecord] {
+        records
+    }
+
+    func readWristTemperatureRecords(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [WristTemperatureRecord] {
+        []
+    }
+
+    func updateMenstrualCycleRecord(_ record: MenstrualRecord) async throws {}
+}
+
+// MARK: - Test Calendar Helper
 
 private enum TestCalendar {
     static func make() -> Calendar {
