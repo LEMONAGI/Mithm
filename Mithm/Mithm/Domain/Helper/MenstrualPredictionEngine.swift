@@ -152,6 +152,13 @@ struct MenstrualPredictionEngine {
         /// 앞으로 생성할 월경 예측 레코드 수
         let predictionCount: Int
 
+        // MARK: 통계 기반 기본값 (기록 부족 시 fallback)
+
+        /// 평균 월경 주기 (일)
+        static let defaultCycleLength = 28
+        /// 평균 월경 기간 (일)
+        static let defaultPeriodLength = 5
+
         // MARK: Default
 
         static let `default` = Config(
@@ -268,17 +275,9 @@ struct MenstrualPredictionEngine {
             confidence: confidence
         )
 
-        guard let cycleLen = blendedLengths.cycle, let periodLen = blendedLengths.period else {
-            return makeResult(
-                menstrualPredictions: [],
-                predictedCycleLength: blendedLengths.cycle,
-                predictedPeriodLength: blendedLengths.period,
-                confidence: .low,
-                usedRecordCount: recordCount,
-                detectedShift: shift,
-                usedDefaultRule: false
-            )
-        }
+        let cycleLen = blendedLengths.cycle ?? Config.defaultCycleLength
+        let periodLen = blendedLengths.period ?? Config.defaultPeriodLength
+        let usedDefaultRule = blendedLengths.cycle == nil || blendedLengths.period == nil
 
         let predictions = buildPredictions(
             from: lastObservedStartDay,
@@ -292,10 +291,10 @@ struct MenstrualPredictionEngine {
             menstrualPredictions: predictions,
             predictedCycleLength: cycleLen,
             predictedPeriodLength: periodLen,
-            confidence: confidence,
+            confidence: usedDefaultRule ? .low : confidence,
             usedRecordCount: recordCount,
             detectedShift: shift,
-            usedDefaultRule: false
+            usedDefaultRule: usedDefaultRule
         )
     }
 
@@ -303,19 +302,21 @@ struct MenstrualPredictionEngine {
         _ userInput: MenstrualUserInput?,
         calendar: Calendar
     ) -> MenstrualPredictionResult {
-        guard let userInput,
-              let cycleLength = normalizedLength(userInput.cycleLength, validRange: config.validCycleRange),
-              let periodLength = normalizedLength(userInput.periodLength, validRange: config.validPeriodRange)
-        else {
-            return makeResult(
-                menstrualPredictions: [],
-                predictedCycleLength: nil,
-                predictedPeriodLength: nil,
-                confidence: .insufficient,
-                usedRecordCount: 0,
-                detectedShift: false,
-                usedDefaultRule: false
-            )
+        let cycleLength: Int
+        let periodLength: Int
+        let usedDefaultRule: Bool
+
+        if let userInput,
+           let validCycle = normalizedLength(userInput.cycleLength, validRange: config.validCycleRange),
+           let validPeriod = normalizedLength(userInput.periodLength, validRange: config.validPeriodRange) {
+            cycleLength = validCycle
+            periodLength = validPeriod
+            usedDefaultRule = false
+        } else {
+            // 사용자 입력이 없거나 유효하지 않으면 통계 기본값으로 fallback
+            cycleLength = Config.defaultCycleLength
+            periodLength = Config.defaultPeriodLength
+            usedDefaultRule = true
         }
 
         let predictions = Self.buildMenstrualPredictions(
@@ -333,7 +334,7 @@ struct MenstrualPredictionEngine {
             confidence: .low,
             usedRecordCount: 0,
             detectedShift: false,
-            usedDefaultRule: false
+            usedDefaultRule: usedDefaultRule
         )
     }
 
@@ -346,33 +347,30 @@ struct MenstrualPredictionEngine {
     ) -> MenstrualPredictionResult {
         let actualPeriodLength = periodSamples.last?.periodLength
 
-        guard let userInput,
-              let cycleLength = normalizedLength(userInput.cycleLength, validRange: config.validCycleRange)
-        else {
-            return makeResult(
-                menstrualPredictions: [],
-                predictedCycleLength: nil,
-                predictedPeriodLength: actualPeriodLength,
-                confidence: .insufficient,
-                usedRecordCount: usedRecordCount,
-                detectedShift: false,
-                usedDefaultRule: false
-            )
-        }
+        let cycleLength: Int
+        let periodLength: Int
+        let usedDefaultRule: Bool
 
-        guard let periodLength = resolvedSingleRecordPeriodLength(
-            actualPeriodLength: actualPeriodLength,
-            userInputPeriodLength: userInput.periodLength
-        ) else {
-            return makeResult(
-                menstrualPredictions: [],
-                predictedCycleLength: cycleLength,
-                predictedPeriodLength: nil,
-                confidence: .insufficient,
-                usedRecordCount: usedRecordCount,
-                detectedShift: false,
-                usedDefaultRule: false
-            )
+        if let userInput,
+           let validCycle = normalizedLength(userInput.cycleLength, validRange: config.validCycleRange) {
+            cycleLength = validCycle
+
+            if let resolved = resolvedSingleRecordPeriodLength(
+                actualPeriodLength: actualPeriodLength,
+                userInputPeriodLength: userInput.periodLength
+            ) {
+                periodLength = resolved
+                usedDefaultRule = false
+            } else {
+                // period를 결정할 수 없으면 실제값 또는 기본값으로 fallback
+                periodLength = actualPeriodLength ?? Config.defaultPeriodLength
+                usedDefaultRule = actualPeriodLength == nil
+            }
+        } else {
+            // 사용자 입력이 없거나 cycle이 유효하지 않으면 통계 기본값으로 fallback
+            cycleLength = Config.defaultCycleLength
+            periodLength = actualPeriodLength ?? Config.defaultPeriodLength
+            usedDefaultRule = true
         }
 
         let predictions = buildPredictions(
@@ -389,7 +387,7 @@ struct MenstrualPredictionEngine {
             confidence: .low,
             usedRecordCount: usedRecordCount,
             detectedShift: false,
-            usedDefaultRule: false
+            usedDefaultRule: usedDefaultRule
         )
     }
 

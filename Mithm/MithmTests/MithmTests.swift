@@ -745,8 +745,8 @@ struct BlendControlTests {
         #expect(withoutInput.predictedPeriodLength == withInput.predictedPeriodLength)
     }
 
-    @Test("shouldBlendUserInput이 false이고 기록 0개이면 사용자 입력이 있어도 예측 없이 insufficient를 반환한다")
-    func blendOffZeroRecordsReturnsInsufficient() {
+    @Test("shouldBlendUserInput이 false이고 기록 0개이면 통계 기본값(주기 28일, 기간 5일)으로 fallback 예측한다")
+    func blendOffZeroRecordsFallbacksToDefault() {
         let noBlendEngine = MenstrualPredictionEngine(shouldBlendUserInput: false)
 
         let result = noBlendEngine.predict(
@@ -755,12 +755,15 @@ struct BlendControlTests {
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
-        #expect(result.menstrualPredictions.isEmpty)
+        #expect(result.confidence == .low)
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
-    @Test("shouldBlendUserInput이 false이고 기록 1개이면 cycle 입력이 있어도 insufficient를 반환한다")
-    func blendOffOneRecordReturnsInsufficient() {
+    @Test("shouldBlendUserInput이 false이고 기록 1개이면 통계 기본값 주기로 fallback하고 실제 period는 유지한다")
+    func blendOffOneRecordFallbacksToDefaultCycle() {
         let noBlendEngine = MenstrualPredictionEngine(shouldBlendUserInput: false)
 
         let records = [makeRecord(start: "2026-01-10", end: "2026-01-14")]
@@ -771,8 +774,11 @@ struct BlendControlTests {
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
-        #expect(result.menstrualPredictions.isEmpty)
+        #expect(result.confidence == .low)
+        #expect(result.predictedCycleLength == 28)  // 통계 기본값
+        #expect(result.predictedPeriodLength == 5)   // 실제 기록의 period
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
     @Test("shouldBlendUserInput이 true이면 기록 0개에서도 사용자 입력으로 예측을 생성한다")
@@ -818,15 +824,16 @@ struct IntegrationPredictionTests {
 
     // MARK: Case 0 — 유효 기록 0개
 
-    @Test("기록 0개 + 사용자 입력 없음 → 예측 없음, insufficient")
-    func case0_noInput_insufficient() {
+    @Test("기록 0개 + 사용자 입력 없음 → 통계 기본값(주기 28일, 기간 5일)으로 fallback 예측")
+    func case0_noInput_fallbackToDefault() {
         let result = engine.predict(from: [], calendar: calendar)
 
-        #expect(result.menstrualPredictions.isEmpty)
-        #expect(result.predictedCycleLength == nil)
-        #expect(result.predictedPeriodLength == nil)
-        #expect(result.confidence == .insufficient)
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .low)
         #expect(result.usedRecordCount == 0)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
     @Test("기록 0개 + 유효한 사용자 입력 → 해당 값으로 예측 생성, low confidence")
@@ -844,27 +851,34 @@ struct IntegrationPredictionTests {
         #expect(result.menstrualPredictions.count == 3)
     }
 
-    @Test("기록 0개 + cycle만 입력(period 없음) → 예측 없음, insufficient")
-    func case0_cycleOnlyInput_insufficient() {
+    @Test("기록 0개 + cycle만 입력(period 없음) → 통계 기본값으로 fallback 예측")
+    func case0_cycleOnlyInput_fallbackToDefault() {
         let result = engine.predict(
             from: [],
             userInput: MenstrualUserInput(cycleLength: 28, periodLength: nil),
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
-        #expect(result.menstrualPredictions.isEmpty)
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .low)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
-    @Test("기록 0개 + 유효 범위 밖 사용자 입력 → 예측 없음, insufficient")
-    func case0_outOfRangeInput_insufficient() {
+    @Test("기록 0개 + 유효 범위 밖 사용자 입력 → 통계 기본값으로 fallback 예측")
+    func case0_outOfRangeInput_fallbackToDefault() {
         let result = engine.predict(
             from: [],
             userInput: MenstrualUserInput(cycleLength: 200, periodLength: 5),
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .low)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
     // MARK: Case 1 — 유효 기록 1개
@@ -887,8 +901,8 @@ struct IntegrationPredictionTests {
         #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-09")
     }
 
-    @Test("기록 1개 + cycle 입력 없음 → 예측 없음, insufficient")
-    func case1_noCycleInput_insufficient() {
+    @Test("기록 1개 + cycle 입력 없음 → 통계 기본값 주기로 fallback하고 실제 period 유지")
+    func case1_noCycleInput_fallbackToDefaultCycle() {
         let records = [makeRecord(start: "2026-01-10", end: "2026-01-14")]
 
         let result = engine.predict(
@@ -897,8 +911,12 @@ struct IntegrationPredictionTests {
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
-        #expect(result.menstrualPredictions.isEmpty)
+        #expect(result.predictedCycleLength == 28)  // 통계 기본값
+        #expect(result.predictedPeriodLength == 5)   // 실제 기록의 period
+        #expect(result.confidence == .low)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-07")
     }
 
     @Test("기록 1개 + cycle/period 모두 입력 → period는 실제값 우선으로 adaptive blend한다")
@@ -1473,8 +1491,8 @@ struct MenstrualRecordUseCaseTests {
         #expect(result.map(\.startDate) == result.map(\.startDate).sorted())
     }
 
-    @Test("fetchMenstrualRecords는 기록이 없으면 빈 배열을 반환한다")
-    func fetchMenstrualRecordsReturnsEmptyWhenNoActualRecords() async throws {
+    @Test("fetchMenstrualRecords는 기록이 없으면 통계 기본값 기반 예측(주기 28일, 기간 5일)과 배란 기록을 반환한다")
+    func fetchMenstrualRecordsReturnsDefaultPredictionsWhenNoActualRecords() async throws {
         let repository = MockHealthKitRepository(records: [])
         let useCase = MenstrualRecordUseCaseImpl(
             healthKitRepository: repository,
@@ -1483,7 +1501,8 @@ struct MenstrualRecordUseCaseTests {
 
         let result = try await useCase.fetchMenstrualRecords()
 
-        #expect(result.isEmpty)
+        #expect(result.filter { $0.type == .menstrualRecord }.count == 0)
+        #expect(result.filter { $0.type == .menstrualPrediction }.count == 3)
     }
 
     @Test("fetchMenstrualRecords는 진행 중 실제 기록(endDate nil)을 제거하고 예측 월경 예정기간으로 교체한다")
