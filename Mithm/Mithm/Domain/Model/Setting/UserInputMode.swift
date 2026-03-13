@@ -6,7 +6,7 @@
 //
 
 
-enum UserInputMode {
+enum UserInputMode: String {
     /// 사용자 입력만 사용하여 예측 (모델 예측 사용하지 않음)
     case onlyUserInput
     /// 모델 예측과 사용자 입력을 blend하여 예측
