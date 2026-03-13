@@ -33,11 +33,6 @@ enum PredictionConfidence {
     case high
 }
 
-struct MenstrualUserInput {
-    let cycleLength: Int?
-    let periodLength: Int?
-}
-
 struct MenstrualPredictionResult {
     /// 다음 월경 예측 (최대 predictionCount개)
     let menstrualPredictions: [MenstrualRecord]
@@ -59,12 +54,19 @@ struct MenstrualPredictionEngine {
 
     struct Config {
 
-        // MARK: 유효성 범위
+        // MARK: 유효성 범위 (기록 기반 예측용)
 
         /// period length 유효 범위 (일수)
         let validPeriodRange: ClosedRange<Int>
         /// cycle length 유효 범위 (일수)
         let validCycleRange: ClosedRange<Int>
+
+        // MARK: 사용자 직접 입력 허용 범위 (predictFromUserInput용)
+
+        /// 사용자 입력 cycle length 허용 범위 (예측용보다 넓게 설정)
+        let allowedUserInputCycleRange: ClosedRange<Int>
+        /// 사용자 입력 period length 허용 범위 (예측용보다 넓게 설정)
+        let allowedUserInputPeriodRange: ClosedRange<Int>
 
         // MARK: 이상치 가중치 (clean cycle)
 
@@ -119,8 +121,8 @@ struct MenstrualPredictionEngine {
 
         // MARK: 사용자 입력 blend 제어
 
-        /// 사용자 입력 blend 사용 여부 (false이면 모델 예측만 사용)
-        let shouldBlendUserInput: Bool
+        /// 사용자 입력 활용 모드
+        let userInputMode: UserInputMode
 
         // MARK: Adaptive blend 비율 — cycle length
 
@@ -152,11 +154,21 @@ struct MenstrualPredictionEngine {
         /// 앞으로 생성할 월경 예측 레코드 수
         let predictionCount: Int
 
+        // MARK: 통계 기반 기본값 (기록 부족 시 fallback)
+
+        /// 평균 월경 주기 (일)
+        static let defaultCycleLength = 28
+        /// 평균 월경 기간 (일)
+        static let defaultPeriodLength = 5
+
         // MARK: Default
 
         static let `default` = Config(
             validPeriodRange: 2...8,
             validCycleRange: 20...45,
+
+            allowedUserInputCycleRange: 15...60,
+            allowedUserInputPeriodRange: 1...10,
 
             outlierNormalThreshold: 4,
             outlierMildThreshold: 8,
@@ -182,7 +194,7 @@ struct MenstrualPredictionEngine {
             recencyDecayDays: 180,
             recencyMinimumWeight: 0.25,
 
-            shouldBlendUserInput: true,
+            userInputMode: .blendUserInput,
 
             userInputCycleWeightVeryLowHistory: 0.30,
             userInputCycleWeightLowHistory: 0.15,
@@ -202,12 +214,12 @@ struct MenstrualPredictionEngine {
 
     init(
         config: Config = .default,
-        shouldBlendUserInput: Bool? = nil
+        userInputMode: UserInputMode? = nil
     ) {
-        if let shouldBlendUserInput {
+        if let userInputMode {
             self.config = Self.makeConfig(
                 from: config,
-                shouldBlendUserInput: shouldBlendUserInput
+                userInputMode: userInputMode
             )
         } else {
             self.config = config
@@ -216,12 +228,69 @@ struct MenstrualPredictionEngine {
 
     // MARK: - Public
 
+    /// 이전 월경 기록에 이어서 사용자 입력(주기/기간)만으로 다음 월경 예측 레코드를 생성한다.
+    /// 모델 예측(EWMA, variability 등)을 사용하지 않고, 사용자가 입력한 값을 그대로 사용한다.
+    /// 예측용 validRange보다 넓은 allowedUserInputRange로 검증하여 특이한 사용자도 수용한다.
+    /// 허용 범위 밖의 값은 통계 기본값(주기 28일, 기간 5일)으로 대체한다.
+    func predictFromUserInput(
+        _ userInput: MenstrualUserInput,
+        records: [MenstrualRecord] = [],
+        calendar: Calendar = .current
+    ) -> MenstrualPredictionResult {
+        let cycleLength = normalizedLength(userInput.cycleLength, validRange: config.allowedUserInputCycleRange)
+            ?? Config.defaultCycleLength
+        let periodLength = normalizedLength(userInput.periodLength, validRange: config.allowedUserInputPeriodRange)
+            ?? Config.defaultPeriodLength
+        let usedDefaultRule = normalizedLength(userInput.cycleLength, validRange: config.allowedUserInputCycleRange) == nil
+            || normalizedLength(userInput.periodLength, validRange: config.allowedUserInputPeriodRange) == nil
+
+        let actualRecords = Self.extractActualRecords(from: records)
+        let openActualRecord = Self.extractOpenRecord(from: records)
+        let validRecords = validateRecords(actualRecords, calendar: calendar)
+
+        let anchorDate = openActualRecord.map { calendar.startOfDay(for: $0.startDate) }
+            ?? validRecords.last.map { calendar.startOfDay(for: $0.startDate) }
+            ?? calendar.startOfDay(for: Date())
+
+        let predictions = buildPredictions(
+            from: anchorDate,
+            cycleLength: cycleLength,
+            periodLength: periodLength,
+            replacing: openActualRecord,
+            calendar: calendar
+        )
+
+        let recordCount = validRecords.count + (openActualRecord == nil ? 0 : 1)
+
+        return makeResult(
+            menstrualPredictions: predictions,
+            predictedCycleLength: cycleLength,
+            predictedPeriodLength: periodLength,
+            confidence: .low,
+            usedRecordCount: recordCount,
+            detectedShift: false,
+            usedDefaultRule: usedDefaultRule
+        )
+    }
+
     func predict(
         from records: [MenstrualRecord],
         userInput: MenstrualUserInput? = nil,
         calendar: Calendar = .current
     ) -> MenstrualPredictionResult {
-        let effectiveUserInput = config.shouldBlendUserInput ? userInput : nil
+        // onlyUserInput 모드이면 모델 예측 없이 사용자 입력만으로 예측
+        if case .onlyUserInput = config.userInputMode, let userInput {
+            return predictFromUserInput(userInput, records: records, calendar: calendar)
+        }
+
+        let effectiveUserInput: MenstrualUserInput?
+        switch config.userInputMode {
+        case .blendUserInput:
+            effectiveUserInput = userInput
+        case .notBlendUserInput, .onlyUserInput:
+            effectiveUserInput = nil
+        }
+
         let actualRecords = Self.extractActualRecords(from: records)
         let openActualRecord = Self.extractOpenRecord(from: records)
         let validRecords = validateRecords(actualRecords, calendar: calendar)
@@ -268,17 +337,9 @@ struct MenstrualPredictionEngine {
             confidence: confidence
         )
 
-        guard let cycleLen = blendedLengths.cycle, let periodLen = blendedLengths.period else {
-            return makeResult(
-                menstrualPredictions: [],
-                predictedCycleLength: blendedLengths.cycle,
-                predictedPeriodLength: blendedLengths.period,
-                confidence: .low,
-                usedRecordCount: recordCount,
-                detectedShift: shift,
-                usedDefaultRule: false
-            )
-        }
+        let cycleLen = blendedLengths.cycle ?? Config.defaultCycleLength
+        let periodLen = blendedLengths.period ?? Config.defaultPeriodLength
+        let usedDefaultRule = blendedLengths.cycle == nil || blendedLengths.period == nil
 
         let predictions = buildPredictions(
             from: lastObservedStartDay,
@@ -292,30 +353,36 @@ struct MenstrualPredictionEngine {
             menstrualPredictions: predictions,
             predictedCycleLength: cycleLen,
             predictedPeriodLength: periodLen,
-            confidence: confidence,
+            confidence: usedDefaultRule ? .low : confidence,
             usedRecordCount: recordCount,
             detectedShift: shift,
-            usedDefaultRule: false
+            usedDefaultRule: usedDefaultRule
         )
     }
 
+    // MARK: - Public Assistant Func
+    
+    /// 충분한 입력이 없을 때 userInput을 사용하는 경우로, 앞의
+    /// 유저 입력만으로 하는 옵션에 따른 것과는 다르다.
     private func predictWithUserInputOnly(
         _ userInput: MenstrualUserInput?,
         calendar: Calendar
     ) -> MenstrualPredictionResult {
-        guard let userInput,
-              let cycleLength = normalizedLength(userInput.cycleLength, validRange: config.validCycleRange),
-              let periodLength = normalizedLength(userInput.periodLength, validRange: config.validPeriodRange)
-        else {
-            return makeResult(
-                menstrualPredictions: [],
-                predictedCycleLength: nil,
-                predictedPeriodLength: nil,
-                confidence: .insufficient,
-                usedRecordCount: 0,
-                detectedShift: false,
-                usedDefaultRule: false
-            )
+        let cycleLength: Int
+        let periodLength: Int
+        let usedDefaultRule: Bool
+
+        if let userInput,
+           let validCycle = normalizedLength(userInput.cycleLength, validRange: config.validCycleRange),
+           let validPeriod = normalizedLength(userInput.periodLength, validRange: config.validPeriodRange) {
+            cycleLength = validCycle
+            periodLength = validPeriod
+            usedDefaultRule = false
+        } else {
+            // 사용자 입력이 없거나 유효하지 않으면 통계 기본값으로 fallback
+            cycleLength = Config.defaultCycleLength
+            periodLength = Config.defaultPeriodLength
+            usedDefaultRule = true
         }
 
         let predictions = Self.buildMenstrualPredictions(
@@ -333,7 +400,7 @@ struct MenstrualPredictionEngine {
             confidence: .low,
             usedRecordCount: 0,
             detectedShift: false,
-            usedDefaultRule: false
+            usedDefaultRule: usedDefaultRule
         )
     }
 
@@ -346,33 +413,30 @@ struct MenstrualPredictionEngine {
     ) -> MenstrualPredictionResult {
         let actualPeriodLength = periodSamples.last?.periodLength
 
-        guard let userInput,
-              let cycleLength = normalizedLength(userInput.cycleLength, validRange: config.validCycleRange)
-        else {
-            return makeResult(
-                menstrualPredictions: [],
-                predictedCycleLength: nil,
-                predictedPeriodLength: actualPeriodLength,
-                confidence: .insufficient,
-                usedRecordCount: usedRecordCount,
-                detectedShift: false,
-                usedDefaultRule: false
-            )
-        }
+        let cycleLength: Int
+        let periodLength: Int
+        let usedDefaultRule: Bool
 
-        guard let periodLength = resolvedSingleRecordPeriodLength(
-            actualPeriodLength: actualPeriodLength,
-            userInputPeriodLength: userInput.periodLength
-        ) else {
-            return makeResult(
-                menstrualPredictions: [],
-                predictedCycleLength: cycleLength,
-                predictedPeriodLength: nil,
-                confidence: .insufficient,
-                usedRecordCount: usedRecordCount,
-                detectedShift: false,
-                usedDefaultRule: false
-            )
+        if let userInput,
+           let validCycle = normalizedLength(userInput.cycleLength, validRange: config.validCycleRange) {
+            cycleLength = validCycle
+
+            if let resolved = resolvedSingleRecordPeriodLength(
+                actualPeriodLength: actualPeriodLength,
+                userInputPeriodLength: userInput.periodLength
+            ) {
+                periodLength = resolved
+                usedDefaultRule = false
+            } else {
+                // period를 결정할 수 없으면 실제값 또는 기본값으로 fallback
+                periodLength = actualPeriodLength ?? Config.defaultPeriodLength
+                usedDefaultRule = actualPeriodLength == nil
+            }
+        } else {
+            // 사용자 입력이 없거나 cycle이 유효하지 않으면 통계 기본값으로 fallback
+            cycleLength = Config.defaultCycleLength
+            periodLength = actualPeriodLength ?? Config.defaultPeriodLength
+            usedDefaultRule = true
         }
 
         let predictions = buildPredictions(
@@ -389,7 +453,7 @@ struct MenstrualPredictionEngine {
             confidence: .low,
             usedRecordCount: usedRecordCount,
             detectedShift: false,
-            usedDefaultRule: false
+            usedDefaultRule: usedDefaultRule
         )
     }
 
@@ -994,11 +1058,13 @@ struct MenstrualPredictionEngine {
 
     private static func makeConfig(
         from config: Config,
-        shouldBlendUserInput: Bool
+        userInputMode: UserInputMode
     ) -> Config {
         Config(
             validPeriodRange: config.validPeriodRange,
             validCycleRange: config.validCycleRange,
+            allowedUserInputCycleRange: config.allowedUserInputCycleRange,
+            allowedUserInputPeriodRange: config.allowedUserInputPeriodRange,
             outlierNormalThreshold: config.outlierNormalThreshold,
             outlierMildThreshold: config.outlierMildThreshold,
             outlierMildWeight: config.outlierMildWeight,
@@ -1017,7 +1083,7 @@ struct MenstrualPredictionEngine {
             periodWeightIrregular: config.periodWeightIrregular,
             recencyDecayDays: config.recencyDecayDays,
             recencyMinimumWeight: config.recencyMinimumWeight,
-            shouldBlendUserInput: shouldBlendUserInput,
+            userInputMode: userInputMode,
             userInputCycleWeightVeryLowHistory: config.userInputCycleWeightVeryLowHistory,
             userInputCycleWeightLowHistory: config.userInputCycleWeightLowHistory,
             userInputCycleWeightHighHistory: config.userInputCycleWeightHighHistory,

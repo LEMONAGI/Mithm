@@ -719,14 +719,14 @@ struct MedianTests {
     }
 }
 
-// MARK: - 13. shouldBlendUserInput 제어
+// MARK: - 13. UserInputMode 제어
 
 struct BlendControlTests {
     private let calendar = TestCalendar.make()
 
-    @Test("shouldBlendUserInput이 false이면 사용자 입력이 있어도 모델 예측만 사용한다")
+    @Test("notBlendUserInput이면 사용자 입력이 있어도 모델 예측만 사용한다")
     func blendOffIgnoresUserInput() {
-        let noBlendEngine = MenstrualPredictionEngine(shouldBlendUserInput: false)
+        let noBlendEngine = MenstrualPredictionEngine(userInputMode: .notBlendUserInput)
 
         let records = [
             makeRecord(start: "2025-01-01", end: "2025-01-05"),
@@ -745,9 +745,9 @@ struct BlendControlTests {
         #expect(withoutInput.predictedPeriodLength == withInput.predictedPeriodLength)
     }
 
-    @Test("shouldBlendUserInput이 false이고 기록 0개이면 사용자 입력이 있어도 예측 없이 insufficient를 반환한다")
-    func blendOffZeroRecordsReturnsInsufficient() {
-        let noBlendEngine = MenstrualPredictionEngine(shouldBlendUserInput: false)
+    @Test("notBlendUserInput이고 기록 0개이면 통계 기본값(주기 28일, 기간 5일)으로 fallback 예측한다")
+    func blendOffZeroRecordsFallbacksToDefault() {
+        let noBlendEngine = MenstrualPredictionEngine(userInputMode: .notBlendUserInput)
 
         let result = noBlendEngine.predict(
             from: [],
@@ -755,13 +755,16 @@ struct BlendControlTests {
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
-        #expect(result.menstrualPredictions.isEmpty)
+        #expect(result.confidence == .low)
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
-    @Test("shouldBlendUserInput이 false이고 기록 1개이면 cycle 입력이 있어도 insufficient를 반환한다")
-    func blendOffOneRecordReturnsInsufficient() {
-        let noBlendEngine = MenstrualPredictionEngine(shouldBlendUserInput: false)
+    @Test("notBlendUserInput이고 기록 1개이면 통계 기본값 주기로 fallback하고 실제 period는 유지한다")
+    func blendOffOneRecordFallbacksToDefaultCycle() {
+        let noBlendEngine = MenstrualPredictionEngine(userInputMode: .notBlendUserInput)
 
         let records = [makeRecord(start: "2026-01-10", end: "2026-01-14")]
 
@@ -771,13 +774,16 @@ struct BlendControlTests {
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
-        #expect(result.menstrualPredictions.isEmpty)
+        #expect(result.confidence == .low)
+        #expect(result.predictedCycleLength == 28)  // 통계 기본값
+        #expect(result.predictedPeriodLength == 5)   // 실제 기록의 period
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
-    @Test("shouldBlendUserInput이 true이면 기록 0개에서도 사용자 입력으로 예측을 생성한다")
+    @Test("blendUserInput이면 기록 0개에서도 사용자 입력으로 예측을 생성한다")
     func blendOnZeroRecordsUsesUserInput() {
-        let engine = MenstrualPredictionEngine(shouldBlendUserInput: true)
+        let engine = MenstrualPredictionEngine(userInputMode: .blendUserInput)
 
         let result = engine.predict(
             from: [],
@@ -788,6 +794,51 @@ struct BlendControlTests {
         #expect(result.confidence == .low)
         #expect(result.predictedCycleLength == 28)
         #expect(result.predictedPeriodLength == 5)
+        #expect(result.menstrualPredictions.count == 3)
+    }
+
+    @Test("onlyUserInput이면 기록이 있어도 모델 예측 없이 사용자 입력값만 사용한다")
+    func onlyUserInputUsesUserInputDirectly() {
+        let onlyInputEngine = MenstrualPredictionEngine(userInputMode: .onlyUserInput)
+
+        let records = [
+            makeRecord(start: "2026-01-01", end: "2026-01-05"),
+            makeRecord(start: "2026-01-30", end: "2026-02-03"),
+            makeRecord(start: "2026-02-28", end: "2026-03-04"),
+            makeRecord(start: "2026-03-28", end: "2026-04-01")
+        ]
+
+        let result = onlyInputEngine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 7),
+            calendar: calendar
+        )
+
+        // 모델 예측이 아닌 사용자 입력 35/7을 그대로 사용
+        #expect(result.predictedCycleLength == 35)
+        #expect(result.predictedPeriodLength == 7)
+        #expect(result.confidence == .low)
+        #expect(result.menstrualPredictions.count == 3)
+    }
+
+    @Test("onlyUserInput이고 userInput이 nil이면 통계 기본값으로 fallback한다")
+    func onlyUserInputWithNilInputFallbacksToDefault() {
+        let onlyInputEngine = MenstrualPredictionEngine(userInputMode: .onlyUserInput)
+
+        let records = [
+            makeRecord(start: "2026-01-01", end: "2026-01-05"),
+            makeRecord(start: "2026-01-30", end: "2026-02-03")
+        ]
+
+        let result = onlyInputEngine.predict(
+            from: records,
+            userInput: nil,
+            calendar: calendar
+        )
+
+        // userInput이 nil이면 모델 예측 경로로 fallback (effectiveUserInput = nil)
+        #expect(result.predictedCycleLength != nil)
+        #expect(result.predictedPeriodLength != nil)
         #expect(result.menstrualPredictions.count == 3)
     }
 
@@ -810,7 +861,211 @@ struct BlendControlTests {
 
 }
 
-// MARK: - 14. 통합 예측 (Case별 predict 흐름)
+// MARK: - 14. 사용자 입력 전용 예측 (predictFromUserInput)
+
+struct PredictFromUserInputTests {
+    private let calendar = TestCalendar.make()
+    private let engine = MenstrualPredictionEngine()
+
+    // MARK: 기본 동작
+
+    @Test("유효한 cycle/period 입력 + 기록 있음 → 마지막 기록에 이어서 사용자 입력값으로 예측한다")
+    func validInputWithRecordsGeneratesPredictionsFromLastRecord() {
+        let records = [
+            makeRecord(start: "2026-01-01", end: "2026-01-05"),
+            makeRecord(start: "2026-01-29", end: "2026-02-02")
+        ]
+
+        let result = engine.predictFromUserInput(
+            MenstrualUserInput(cycleLength: 30, periodLength: 6),
+            records: records,
+            calendar: calendar
+        )
+
+        #expect(result.predictedCycleLength == 30)
+        #expect(result.predictedPeriodLength == 6)
+        #expect(result.usedRecordCount == 2)
+        #expect(result.usedDefaultRule == false)
+        #expect(result.confidence == .low)
+        #expect(result.menstrualPredictions.count == 3)
+
+        // 마지막 기록 01-29 + 30일 = 02-28
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-28")
+        #expect(Self.dayString(result.menstrualPredictions[0].endDate) == "2026-03-05")
+        // 02-28 + 30일 = 03-30
+        #expect(Self.dayString(result.menstrualPredictions[1].startDate) == "2026-03-30")
+        // 03-30 + 30일 = 04-29
+        #expect(Self.dayString(result.menstrualPredictions[2].startDate) == "2026-04-29")
+    }
+
+    @Test("기록 없이 사용자 입력만 → 현재 날짜를 기준으로 예측한다")
+    func noRecordsUsesCurrentDateAsAnchor() {
+        let result = engine.predictFromUserInput(
+            MenstrualUserInput(cycleLength: 28, periodLength: 5),
+            records: [],
+            calendar: calendar
+        )
+
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.usedRecordCount == 0)
+        #expect(result.usedDefaultRule == false)
+        #expect(result.menstrualPredictions.count == 3)
+    }
+
+    @Test("진행 중 기록(endDate nil)이 있으면 해당 startDate를 기준으로 예측하고 월경 예정기간으로 치환한다")
+    func openRecordIsUsedAsAnchorAndReplaced() {
+        let records: [MenstrualRecord] = [
+            makeRecord(start: "2026-01-01", end: "2026-01-05"),
+            makeRecord(start: "2026-01-29", end: "2026-02-02"),
+            MenstrualRecord(
+                type: .menstrualRecord,
+                startDate: Self.date("2026-02-26"),
+                endDate: nil
+            )
+        ]
+
+        let result = engine.predictFromUserInput(
+            MenstrualUserInput(cycleLength: 30, periodLength: 6),
+            records: records,
+            calendar: calendar
+        )
+
+        #expect(result.usedRecordCount == 3)
+        #expect(result.menstrualPredictions.count == 4)
+        // 진행 중 기록이 예측으로 치환됨
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-26")
+        #expect(Self.dayString(result.menstrualPredictions[0].endDate) == "2026-03-03")
+        #expect(result.menstrualPredictions[0].type == .menstrualPrediction)
+        // 이후 예측: 02-26 + 30 = 03-28
+        #expect(Self.dayString(result.menstrualPredictions[1].startDate) == "2026-03-28")
+    }
+
+    // MARK: Fallback 동작
+
+    @Test("cycle이 nil이면 기본값(28일)으로 대체한다")
+    func nilCycleFallbacksToDefault() {
+        let records = [makeRecord(start: "2026-01-01", end: "2026-01-05")]
+
+        let result = engine.predictFromUserInput(
+            MenstrualUserInput(cycleLength: nil, periodLength: 5),
+            records: records,
+            calendar: calendar
+        )
+
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.usedDefaultRule == true)
+        // 01-01 + 28 = 01-29
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-01-29")
+    }
+
+    @Test("period가 nil이면 기본값(5일)으로 대체한다")
+    func nilPeriodFallbacksToDefault() {
+        let records = [makeRecord(start: "2026-01-01", end: "2026-01-05")]
+
+        let result = engine.predictFromUserInput(
+            MenstrualUserInput(cycleLength: 30, periodLength: nil),
+            records: records,
+            calendar: calendar
+        )
+
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.usedDefaultRule == true)
+    }
+
+    @Test("유효 범위 밖 cycle → 기본값(28일)으로 대체한다")
+    func outOfRangeCycleFallbacksToDefault() {
+        let result = engine.predictFromUserInput(
+            MenstrualUserInput(cycleLength: 200, periodLength: 5),
+            calendar: calendar
+        )
+
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.usedDefaultRule == true)
+    }
+
+    @Test("유효 범위 밖 period → 기본값(5일)으로 대체한다")
+    func outOfRangePeriodFallbacksToDefault() {
+        let result = engine.predictFromUserInput(
+            MenstrualUserInput(cycleLength: 30, periodLength: 50),
+            calendar: calendar
+        )
+
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.usedDefaultRule == true)
+    }
+
+    @Test("cycle/period 모두 nil이면 기본값(주기 28일, 기간 5일)으로 예측한다")
+    func bothNilFallbacksToDefaults() {
+        let result = engine.predictFromUserInput(
+            MenstrualUserInput(cycleLength: nil, periodLength: nil),
+            calendar: calendar
+        )
+
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
+    }
+
+    // MARK: predict()와의 차이
+
+    @Test("predict()와 달리 모델 예측을 사용하지 않고 사용자 입력값을 그대로 사용한다")
+    func usesUserInputDirectlyWithoutModelPrediction() {
+        // 기록은 28일 규칙적 주기이지만, 사용자가 35일로 입력하면 35일로 예측
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-26", end: "2025-03-02")
+        ]
+
+        let userInputResult = engine.predictFromUserInput(
+            MenstrualUserInput(cycleLength: 35, periodLength: 7),
+            records: records,
+            calendar: calendar
+        )
+
+        let modelResult = engine.predict(
+            from: records,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 7),
+            calendar: calendar
+        )
+
+        // predictFromUserInput은 사용자 입력값(35)을 그대로 사용
+        #expect(userInputResult.predictedCycleLength == 35)
+        #expect(userInputResult.predictedPeriodLength == 7)
+
+        // predict()는 모델 예측과 blend하므로 35보다 작은 값
+        #expect(modelResult.predictedCycleLength != 35)
+    }
+
+    private func makeRecord(start: String, end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date(start),
+            endDate: Self.date(end)
+        )
+    }
+
+    private static func date(_ value: String) -> Date {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+
+    private static func dayString(_ date: Date?) -> String? {
+        guard let date else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - 15. 통합 예측 (Case별 predict 흐름)
 
 struct IntegrationPredictionTests {
     private let calendar = TestCalendar.make()
@@ -818,15 +1073,16 @@ struct IntegrationPredictionTests {
 
     // MARK: Case 0 — 유효 기록 0개
 
-    @Test("기록 0개 + 사용자 입력 없음 → 예측 없음, insufficient")
-    func case0_noInput_insufficient() {
+    @Test("기록 0개 + 사용자 입력 없음 → 통계 기본값(주기 28일, 기간 5일)으로 fallback 예측")
+    func case0_noInput_fallbackToDefault() {
         let result = engine.predict(from: [], calendar: calendar)
 
-        #expect(result.menstrualPredictions.isEmpty)
-        #expect(result.predictedCycleLength == nil)
-        #expect(result.predictedPeriodLength == nil)
-        #expect(result.confidence == .insufficient)
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .low)
         #expect(result.usedRecordCount == 0)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
     @Test("기록 0개 + 유효한 사용자 입력 → 해당 값으로 예측 생성, low confidence")
@@ -844,27 +1100,34 @@ struct IntegrationPredictionTests {
         #expect(result.menstrualPredictions.count == 3)
     }
 
-    @Test("기록 0개 + cycle만 입력(period 없음) → 예측 없음, insufficient")
-    func case0_cycleOnlyInput_insufficient() {
+    @Test("기록 0개 + cycle만 입력(period 없음) → 통계 기본값으로 fallback 예측")
+    func case0_cycleOnlyInput_fallbackToDefault() {
         let result = engine.predict(
             from: [],
             userInput: MenstrualUserInput(cycleLength: 28, periodLength: nil),
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
-        #expect(result.menstrualPredictions.isEmpty)
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .low)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
-    @Test("기록 0개 + 유효 범위 밖 사용자 입력 → 예측 없음, insufficient")
-    func case0_outOfRangeInput_insufficient() {
+    @Test("기록 0개 + 유효 범위 밖 사용자 입력 → 통계 기본값으로 fallback 예측")
+    func case0_outOfRangeInput_fallbackToDefault() {
         let result = engine.predict(
             from: [],
             userInput: MenstrualUserInput(cycleLength: 200, periodLength: 5),
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
+        #expect(result.predictedCycleLength == 28)
+        #expect(result.predictedPeriodLength == 5)
+        #expect(result.confidence == .low)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
     }
 
     // MARK: Case 1 — 유효 기록 1개
@@ -887,8 +1150,8 @@ struct IntegrationPredictionTests {
         #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-09")
     }
 
-    @Test("기록 1개 + cycle 입력 없음 → 예측 없음, insufficient")
-    func case1_noCycleInput_insufficient() {
+    @Test("기록 1개 + cycle 입력 없음 → 통계 기본값 주기로 fallback하고 실제 period 유지")
+    func case1_noCycleInput_fallbackToDefaultCycle() {
         let records = [makeRecord(start: "2026-01-10", end: "2026-01-14")]
 
         let result = engine.predict(
@@ -897,8 +1160,12 @@ struct IntegrationPredictionTests {
             calendar: calendar
         )
 
-        #expect(result.confidence == .insufficient)
-        #expect(result.menstrualPredictions.isEmpty)
+        #expect(result.predictedCycleLength == 28)  // 통계 기본값
+        #expect(result.predictedPeriodLength == 5)   // 실제 기록의 period
+        #expect(result.confidence == .low)
+        #expect(result.usedDefaultRule == true)
+        #expect(result.menstrualPredictions.count == 3)
+        #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-07")
     }
 
     @Test("기록 1개 + cycle/period 모두 입력 → period는 실제값 우선으로 adaptive blend한다")
@@ -1074,6 +1341,8 @@ struct IntegrationPredictionTests {
             return MenstrualPredictionEngine.Config(
                 validPeriodRange: c.validPeriodRange,
                 validCycleRange: c.validCycleRange,
+                allowedUserInputCycleRange: c.allowedUserInputCycleRange,
+                allowedUserInputPeriodRange: c.allowedUserInputPeriodRange,
                 outlierNormalThreshold: c.outlierNormalThreshold,
                 outlierMildThreshold: c.outlierMildThreshold,
                 outlierMildWeight: c.outlierMildWeight,
@@ -1092,7 +1361,7 @@ struct IntegrationPredictionTests {
                 periodWeightIrregular: c.periodWeightIrregular,
                 recencyDecayDays: c.recencyDecayDays,
                 recencyMinimumWeight: c.recencyMinimumWeight,
-                shouldBlendUserInput: c.shouldBlendUserInput,
+                userInputMode: c.userInputMode,
                 userInputCycleWeightVeryLowHistory: 0.5,
                 userInputCycleWeightLowHistory: 0.5,
                 userInputCycleWeightHighHistory: 0.5,
@@ -1128,6 +1397,8 @@ struct IntegrationPredictionTests {
             return MenstrualPredictionEngine.Config(
                 validPeriodRange: c.validPeriodRange,
                 validCycleRange: c.validCycleRange,
+                allowedUserInputCycleRange: c.allowedUserInputCycleRange,
+                allowedUserInputPeriodRange: c.allowedUserInputPeriodRange,
                 outlierNormalThreshold: c.outlierNormalThreshold,
                 outlierMildThreshold: c.outlierMildThreshold,
                 outlierMildWeight: c.outlierMildWeight,
@@ -1146,7 +1417,7 @@ struct IntegrationPredictionTests {
                 periodWeightIrregular: c.periodWeightIrregular,
                 recencyDecayDays: c.recencyDecayDays,
                 recencyMinimumWeight: c.recencyMinimumWeight,
-                shouldBlendUserInput: c.shouldBlendUserInput,
+                userInputMode: c.userInputMode,
                 userInputCycleWeightVeryLowHistory: c.userInputCycleWeightVeryLowHistory,
                 userInputCycleWeightLowHistory: c.userInputCycleWeightLowHistory,
                 userInputCycleWeightHighHistory: c.userInputCycleWeightHighHistory,
@@ -1195,7 +1466,7 @@ struct IntegrationPredictionTests {
     }
 }
 
-// MARK: - 15. 엣지 케이스
+// MARK: - 16. 엣지 케이스
 
 struct EdgeCaseTests {
     private let calendar = TestCalendar.make()
@@ -1444,7 +1715,7 @@ struct EdgeCaseTests {
     }
 }
 
-// MARK: - 16. MenstrualRecordUseCase
+// MARK: - 17. MenstrualRecordUseCase
 
 struct MenstrualRecordUseCaseTests {
     private let calendar = TestCalendar.make()
@@ -1473,8 +1744,8 @@ struct MenstrualRecordUseCaseTests {
         #expect(result.map(\.startDate) == result.map(\.startDate).sorted())
     }
 
-    @Test("fetchMenstrualRecords는 기록이 없으면 빈 배열을 반환한다")
-    func fetchMenstrualRecordsReturnsEmptyWhenNoActualRecords() async throws {
+    @Test("fetchMenstrualRecords는 기록이 없으면 통계 기본값 기반 예측(주기 28일, 기간 5일)과 배란 기록을 반환한다")
+    func fetchMenstrualRecordsReturnsDefaultPredictionsWhenNoActualRecords() async throws {
         let repository = MockHealthKitRepository(records: [])
         let useCase = MenstrualRecordUseCaseImpl(
             healthKitRepository: repository,
@@ -1483,7 +1754,8 @@ struct MenstrualRecordUseCaseTests {
 
         let result = try await useCase.fetchMenstrualRecords()
 
-        #expect(result.isEmpty)
+        #expect(result.filter { $0.type == .menstrualRecord }.count == 0)
+        #expect(result.filter { $0.type == .menstrualPrediction }.count == 3)
     }
 
     @Test("fetchMenstrualRecords는 진행 중 실제 기록(endDate nil)을 제거하고 예측 월경 예정기간으로 교체한다")
@@ -1546,7 +1818,7 @@ struct MenstrualRecordUseCaseTests {
     }
 }
 
-// MARK: - 17. EventKit Mapper
+// MARK: - 18. EventKit Mapper
 
 struct EventKitMapperTests {
     private let calendar = TestCalendar.make()
@@ -1567,6 +1839,203 @@ struct EventKitMapperTests {
         #expect(parameters.count == 1)
         #expect(Self.dayString(parameters[0].startDate, calendar: calendar) == "2026-03-08")
         #expect(Self.dayString(parameters[0].endDate, calendar: calendar) == "2026-03-12")
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+
+    private static func dayString(_ date: Date, calendar: Calendar) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - 19. OpenPeriodAutoCloser (자동 종료 판별)
+
+struct OpenPeriodAutoCloserTests {
+    private let calendar = TestCalendar.make()
+    private let closer = OpenPeriodAutoCloser()
+
+    // MARK: 자동 종료 성공
+
+    @Test("예상 종료일 + 유예기간을 지난 경우 자동 종료된 기록을 반환한다")
+    func closesAfterDeadline() {
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14, 유예 2일 → 마감 1/16
+        // referenceDate = 1/17 → 자동 종료
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-17", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result != nil)
+        #expect(Self.dayString(result!.startDate, calendar: calendar) == "2026-01-10")
+        #expect(Self.dayString(result!.endDate!, calendar: calendar) == "2026-01-14")
+        #expect(result!.type == .menstrualRecord)
+    }
+
+    @Test("예상 종료일 + 유예기간 다음 날에 정확히 자동 종료된다")
+    func closesExactlyOneDayAfterDeadline() {
+        // 1/1 시작, 기간 3일 → 예상 종료 1/3, 유예 2일 → 마감 1/5
+        // referenceDate = 1/6 → 자동 종료
+        let openRecord = makeOpenRecord(start: "2026-01-01")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 3,
+            referenceDate: Self.date("2026-01-06", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result != nil)
+        #expect(Self.dayString(result!.endDate!, calendar: calendar) == "2026-01-03")
+    }
+
+    // MARK: 자동 종료 미충족
+
+    @Test("예상 종료일 + 유예기간 당일이면 아직 종료하지 않는다")
+    func doesNotCloseOnDeadlineDay() {
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14, 유예 2일 → 마감 1/16
+        // referenceDate = 1/16 → 마감 당일이므로 종료 안 됨
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-16", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result == nil)
+    }
+
+    @Test("예상 종료일 전이면 종료하지 않는다")
+    func doesNotCloseBeforeExpectedEnd() {
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14
+        // referenceDate = 1/12 → 아직 월경 기간 중
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-12", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result == nil)
+    }
+
+    // MARK: 이미 종료된 기록
+
+    @Test("endDate가 이미 있는 기록이면 nil을 반환한다")
+    func alreadyClosedRecordReturnsNil() {
+        let closedRecord = MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date("2026-01-10", calendar: calendar),
+            endDate: Self.date("2026-01-14", calendar: calendar)
+        )
+
+        let result = closer.tryAutoClose(
+            openRecord: closedRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-20", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result == nil)
+    }
+
+    // MARK: 기간 1일
+
+    @Test("월경 기간이 1일이면 시작일 = 종료일로 자동 종료한다")
+    func periodLengthOneClosesOnStartDate() {
+        // 1/10 시작, 기간 1일 → 예상 종료 1/10, 유예 2일 → 마감 1/12
+        // referenceDate = 1/13 → 자동 종료
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 1,
+            referenceDate: Self.date("2026-01-13", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result != nil)
+        #expect(Self.dayString(result!.startDate, calendar: calendar) == "2026-01-10")
+        #expect(Self.dayString(result!.endDate!, calendar: calendar) == "2026-01-10")
+    }
+
+    // MARK: 커스텀 유예기간
+
+    @Test("유예기간을 0일로 설정하면 예상 종료일 다음 날부터 바로 종료한다")
+    func zeroGracePeriodClosesImmediately() {
+        let zeroGraceCloser = OpenPeriodAutoCloser(
+            config: .init(gracePeriodDays: 0)
+        )
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14, 유예 0일 → 마감 1/14
+        // referenceDate = 1/15 → 자동 종료
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = zeroGraceCloser.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-15", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result != nil)
+        #expect(Self.dayString(result!.endDate!, calendar: calendar) == "2026-01-14")
+    }
+
+    @Test("유예기간을 5일로 설정하면 예상 종료일 + 5일 이후에 종료한다")
+    func customGracePeriodDelaysClosure() {
+        let longGraceCloser = OpenPeriodAutoCloser(
+            config: .init(gracePeriodDays: 5)
+        )
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14, 유예 5일 → 마감 1/19
+        // referenceDate = 1/19 → 마감 당일, 아직 종료 안 됨
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let notYet = longGraceCloser.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-19", calendar: calendar),
+            calendar: calendar
+        )
+        #expect(notYet == nil)
+
+        // referenceDate = 1/20 → 종료
+        let closed = longGraceCloser.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-20", calendar: calendar),
+            calendar: calendar
+        )
+        #expect(closed != nil)
+        #expect(Self.dayString(closed!.endDate!, calendar: calendar) == "2026-01-14")
+    }
+
+    // MARK: - Helpers
+
+    private func makeOpenRecord(start: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date(start, calendar: calendar),
+            endDate: nil
+        )
     }
 
     private static func date(_ value: String, calendar: Calendar) -> Date {
