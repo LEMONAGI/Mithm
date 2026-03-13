@@ -1860,6 +1860,203 @@ struct EventKitMapperTests {
     }
 }
 
+// MARK: - 19. OpenPeriodAutoCloser (자동 종료 판별)
+
+struct OpenPeriodAutoCloserTests {
+    private let calendar = TestCalendar.make()
+    private let closer = OpenPeriodAutoCloser()
+
+    // MARK: 자동 종료 성공
+
+    @Test("예상 종료일 + 유예기간을 지난 경우 자동 종료된 기록을 반환한다")
+    func closesAfterDeadline() {
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14, 유예 2일 → 마감 1/16
+        // referenceDate = 1/17 → 자동 종료
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-17", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result != nil)
+        #expect(Self.dayString(result!.startDate, calendar: calendar) == "2026-01-10")
+        #expect(Self.dayString(result!.endDate!, calendar: calendar) == "2026-01-14")
+        #expect(result!.type == .menstrualRecord)
+    }
+
+    @Test("예상 종료일 + 유예기간 다음 날에 정확히 자동 종료된다")
+    func closesExactlyOneDayAfterDeadline() {
+        // 1/1 시작, 기간 3일 → 예상 종료 1/3, 유예 2일 → 마감 1/5
+        // referenceDate = 1/6 → 자동 종료
+        let openRecord = makeOpenRecord(start: "2026-01-01")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 3,
+            referenceDate: Self.date("2026-01-06", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result != nil)
+        #expect(Self.dayString(result!.endDate!, calendar: calendar) == "2026-01-03")
+    }
+
+    // MARK: 자동 종료 미충족
+
+    @Test("예상 종료일 + 유예기간 당일이면 아직 종료하지 않는다")
+    func doesNotCloseOnDeadlineDay() {
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14, 유예 2일 → 마감 1/16
+        // referenceDate = 1/16 → 마감 당일이므로 종료 안 됨
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-16", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result == nil)
+    }
+
+    @Test("예상 종료일 전이면 종료하지 않는다")
+    func doesNotCloseBeforeExpectedEnd() {
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14
+        // referenceDate = 1/12 → 아직 월경 기간 중
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-12", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result == nil)
+    }
+
+    // MARK: 이미 종료된 기록
+
+    @Test("endDate가 이미 있는 기록이면 nil을 반환한다")
+    func alreadyClosedRecordReturnsNil() {
+        let closedRecord = MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date("2026-01-10", calendar: calendar),
+            endDate: Self.date("2026-01-14", calendar: calendar)
+        )
+
+        let result = closer.tryAutoClose(
+            openRecord: closedRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-20", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result == nil)
+    }
+
+    // MARK: 기간 1일
+
+    @Test("월경 기간이 1일이면 시작일 = 종료일로 자동 종료한다")
+    func periodLengthOneClosesOnStartDate() {
+        // 1/10 시작, 기간 1일 → 예상 종료 1/10, 유예 2일 → 마감 1/12
+        // referenceDate = 1/13 → 자동 종료
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = closer.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 1,
+            referenceDate: Self.date("2026-01-13", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result != nil)
+        #expect(Self.dayString(result!.startDate, calendar: calendar) == "2026-01-10")
+        #expect(Self.dayString(result!.endDate!, calendar: calendar) == "2026-01-10")
+    }
+
+    // MARK: 커스텀 유예기간
+
+    @Test("유예기간을 0일로 설정하면 예상 종료일 다음 날부터 바로 종료한다")
+    func zeroGracePeriodClosesImmediately() {
+        let zeroGraceCloser = OpenPeriodAutoCloser(
+            config: .init(gracePeriodDays: 0)
+        )
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14, 유예 0일 → 마감 1/14
+        // referenceDate = 1/15 → 자동 종료
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let result = zeroGraceCloser.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-15", calendar: calendar),
+            calendar: calendar
+        )
+
+        #expect(result != nil)
+        #expect(Self.dayString(result!.endDate!, calendar: calendar) == "2026-01-14")
+    }
+
+    @Test("유예기간을 5일로 설정하면 예상 종료일 + 5일 이후에 종료한다")
+    func customGracePeriodDelaysClosure() {
+        let longGraceCloser = OpenPeriodAutoCloser(
+            config: .init(gracePeriodDays: 5)
+        )
+        // 1/10 시작, 기간 5일 → 예상 종료 1/14, 유예 5일 → 마감 1/19
+        // referenceDate = 1/19 → 마감 당일, 아직 종료 안 됨
+        let openRecord = makeOpenRecord(start: "2026-01-10")
+
+        let notYet = longGraceCloser.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-19", calendar: calendar),
+            calendar: calendar
+        )
+        #expect(notYet == nil)
+
+        // referenceDate = 1/20 → 종료
+        let closed = longGraceCloser.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: 5,
+            referenceDate: Self.date("2026-01-20", calendar: calendar),
+            calendar: calendar
+        )
+        #expect(closed != nil)
+        #expect(Self.dayString(closed!.endDate!, calendar: calendar) == "2026-01-14")
+    }
+
+    // MARK: - Helpers
+
+    private func makeOpenRecord(start: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: Self.date(start, calendar: calendar),
+            endDate: nil
+        )
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+
+    private static func dayString(_ date: Date, calendar: Calendar) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
 private struct MockHealthKitRepository: HealthKitRepository {
     let records: [MenstrualRecord]
 
