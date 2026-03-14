@@ -33,6 +33,7 @@ struct SettingMenuRow: View {
                 Toggle("", isOn: $isOn)
                     .labelsHidden()
                     .padding(.trailing, 13)
+                    .tint(.accent)
             case .chevron:
                 Image(systemName: "chevron.right")
                     .font(.system(size: 17, weight: .semibold))
