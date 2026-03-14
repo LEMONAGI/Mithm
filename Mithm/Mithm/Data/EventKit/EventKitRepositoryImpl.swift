@@ -7,11 +7,16 @@
 
 import Foundation
 import EventKit
+import os
 
 final class EventKitRepositoryImpl: EventKitRepository {
-    
+
     private let dataStore: EventKitDataStore
-    
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.mithm",
+        category: "EventKitRepository"
+    )
+
     init(dataStore: EventKitDataStore) {
         self.dataStore = dataStore
     }
@@ -23,6 +28,7 @@ final class EventKitRepositoryImpl: EventKitRepository {
         do {
             return try await dataStore.verifyAuthorizationStatus()
         } catch {
+            logger.error("캘린더 접근 권한 확인 실패: \(error.localizedDescription)")
             throw EventKitError.accessDenied
         }
     }
@@ -37,6 +43,7 @@ final class EventKitRepositoryImpl: EventKitRepository {
         do {
             calendar = try dataStore.fetchOrCreateCalendar()
         } catch {
+            logger.error("캘린더 생성/조회 실패: \(error.localizedDescription)")
             throw EventKitError.noCalendarSource
         }
         
@@ -86,6 +93,7 @@ final class EventKitRepositoryImpl: EventKitRepository {
             try dataStore.saveEvents(newEvents)
             try dataStore.commit()
         } catch {
+            logger.error("이벤트 동기화 실패: \(error.localizedDescription)")
             dataStore.reset()
             throw EventKitError.syncFailed(error)
         }

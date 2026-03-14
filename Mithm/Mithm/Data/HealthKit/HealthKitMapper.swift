@@ -9,7 +9,13 @@ import Foundation
 import HealthKit
 
 enum HealthKitMapper {
-    
+
+    /// Mapper 내부에서만 사용하는 타입 변환 에러.
+    /// Repository에서 catch하여 HealthKitError로 매핑한다.
+    enum MappingError: Error {
+        case invalidTypeConversion(expected: String, actual: String)
+    }
+
     static let calendar = Calendar.current
     
     // MARK: - Entity -> DTO
@@ -26,7 +32,10 @@ enum HealthKitMapper {
     static func hkCategoryType(from type: HealthDataType) throws -> HKCategoryType {
         let object = hkObjectType(from: type)
         guard let category = object as? HKCategoryType else {
-            throw HealthKitError.invalidTypeForCategory
+            throw MappingError.invalidTypeConversion(
+                expected: "HKCategoryType",
+                actual: String(describing: Swift.type(of: object))
+            )
         }
         return category
     }
@@ -34,7 +43,10 @@ enum HealthKitMapper {
     static func hkQuantityType(from type: HealthDataType) throws -> HKQuantityType {
         let object = hkObjectType(from: type)
         guard let quantity = object as? HKQuantityType else {
-            throw HealthKitError.invalidTypeForQuantity
+            throw MappingError.invalidTypeConversion(
+                expected: "HKQuantityType",
+                actual: String(describing: Swift.type(of: object))
+            )
         }
         return quantity
     }
@@ -42,7 +54,10 @@ enum HealthKitMapper {
     static func hkSampleType(from type: HealthDataType) throws -> HKSampleType {
         let object = hkObjectType(from: type)
         guard let sample = object as? HKSampleType else {
-            throw HealthKitError.invalidTypeForSample
+            throw MappingError.invalidTypeConversion(
+                expected: "HKSampleType",
+                actual: String(describing: Swift.type(of: object))
+            )
         }
         return sample
     }
