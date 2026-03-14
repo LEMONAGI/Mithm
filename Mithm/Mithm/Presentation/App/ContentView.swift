@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @EnvironmentObject private var appState: AppState
     @State private var selectedTab: Int = 0
     
     var body: some View {
@@ -29,9 +30,14 @@ struct ContentView: View {
                 Label("설정", systemImage: "gearshape")
             }
         }
+        .task {
+            appState.loadUserSettings()
+            await appState.loadMenstrualRecords()
+        }
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(AppDIContainer.makeAppState())
 }
