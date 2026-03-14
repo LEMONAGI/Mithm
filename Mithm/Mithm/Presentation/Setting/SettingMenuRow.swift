@@ -24,8 +24,7 @@ struct SettingMenuRow: View {
             Spacer().frame(width: 3)
 
             Text(item.title)
-                .font(.body)
-                .fontWeight(.medium)
+                .font(.heading6)
 
             Spacer()
 
