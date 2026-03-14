@@ -27,6 +27,7 @@ protocol HealthKitRepository {
     // MARK: - MenstrualCycleRecord
     
     /// from ~ to  기간 내의 월경 기록을 healthKit에서 받아온다.
+    /// 온보딩에서 반드시 이전 월경 기록을 건강앱에 작성하므로, 결과가 비어있다면 권한이 없는 것이 되어 오류를 던진다.
     func readMenstrualCycleRecords(
         from startDate: Date,
         to endDate: Date

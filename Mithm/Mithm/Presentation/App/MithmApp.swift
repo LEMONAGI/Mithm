@@ -10,31 +10,12 @@ import SwiftData
 
 @main
 struct MithmApp: App {
-//    var sharedModelContainer: ModelContainer = {
-//        let schema = Schema([
-//            Item.self,
-//        ])
-//        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-//
-//        do {
-//            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-//        } catch {
-//            fatalError("Could not create ModelContainer: \(error)")
-//        }
-//    }()
+    @StateObject private var appState = AppDIContainer.makeAppState()
 
-//    var body: some Scene {
-//        WindowGroup {
-//            ContentView()
-//        }
-//        //.modelContainer(sharedModelContainer)
-//    }
-    
-    @Environment(\.openURL) private var openURL
-        
-        var body: some Scene {
-            WindowGroup {
-                ContentView()
-            }
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environmentObject(appState)
         }
+    }
 }

@@ -9,6 +9,7 @@ import SwiftUI
 
 
 struct SettingView: View {
+    @EnvironmentObject private var appState: AppState
     @State private var isHealthSyncOn: Bool = false
     @State private var isCalendarExportOn: Bool = false
     

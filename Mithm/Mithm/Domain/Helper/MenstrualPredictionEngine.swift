@@ -232,7 +232,7 @@ struct MenstrualPredictionEngine {
     /// 모델 예측(EWMA, variability 등)을 사용하지 않고, 사용자가 입력한 값을 그대로 사용한다.
     /// 예측용 validRange보다 넓은 allowedUserInputRange로 검증하여 특이한 사용자도 수용한다.
     /// 허용 범위 밖의 값은 통계 기본값(주기 28일, 기간 5일)으로 대체한다.
-    func predictFromUserInput(
+    private func predictFromUserInput(
         _ userInput: MenstrualUserInput,
         records: [MenstrualRecord] = [],
         calendar: Calendar = .current

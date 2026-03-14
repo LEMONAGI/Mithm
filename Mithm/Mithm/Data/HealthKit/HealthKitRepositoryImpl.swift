@@ -72,8 +72,11 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
             from: startDate,
             to: endDate
         )
-        
-        return HealthKitMapper.menstrualCycleRecords(from: samples)
+        if samples.isEmpty {
+            throw HealthKitError.authorizationDenied
+        } else {
+            return HealthKitMapper.menstrualCycleRecords(from: samples)
+        }
     }
 
     func readWristTemperatureRecords(

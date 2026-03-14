@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct CalendarView: View {
+    @EnvironmentObject private var appState: AppState
+
     var body: some View {
         Text("CalendarView")
     }

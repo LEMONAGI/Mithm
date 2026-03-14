@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct HomeView: View {
+    @EnvironmentObject private var appState: AppState
     @State var currentType: PhaseType = .luteal
     var body: some View {
         ZStack(alignment: .topTrailing) {
