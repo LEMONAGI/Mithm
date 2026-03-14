@@ -17,6 +17,7 @@ struct SettingView: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text("설정")
                     .font(.pretendardBold(36))
+                    .foregroundStyle(.textPrimary)
                     .padding(.bottom, 26)
                 ForEach(SettingMenuItem.allCases, id: \.self) { item in
                     settingMenuRow(for: item)

@@ -25,6 +25,7 @@ struct SettingMenuRow: View {
 
             Text(item.title)
                 .font(.heading6)
+                .foregroundStyle(.textPrimary)
 
             Spacer()
 
@@ -37,7 +38,7 @@ struct SettingMenuRow: View {
             case .chevron:
                 Image(systemName: "chevron.right")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primaryBlack)
                     .frame(width: 30, height: 30)
                     .padding(.trailing, 16)
             }
