@@ -1,4 +1,4 @@
-ㅇ//
+//
 //  HomePhaseUseCaseTests.swift
 //  MithmTests
 //
@@ -53,8 +53,8 @@ struct HomePhaseUseCaseTests {
         #expect(window.endDate == date("2026-03-11"))
     }
 
-    @Test("황체기는 이전 배란기와 다음 월경기 사이의 날짜로 계산한다")
-    func buildsLutealWindowFromGap() {
+    @Test("다음 월경 예측이 제외되면 이전 배란기 종료 다음 날부터 황체기를 유지한다")
+    func keepsLutealFromPreviousOvulationWhenNextMenstrualPredictionIsScopedOut() {
         let useCase = HomePhaseUseCaseImpl(calendar: calendar)
         let overview = MenstrualOverview(
             allRecords: [
@@ -73,14 +73,16 @@ struct HomePhaseUseCaseTests {
 
         #expect(window.phase == .luteal)
         #expect(window.startDate == date("2026-03-19"))
-        #expect(window.endDate == date("2026-03-30"))
+        #expect(window.endDate == date("2026-03-25"))
     }
 
-    @Test("다음 월경기만 있으면 fallback으로 오늘부터 다음 월경 전날까지 황체기를 만든다")
-    func fallbackUsesNextMenstrualWhenOnlyFutureBoundaryExists() {
+    @Test("사용자가 직접 시작하지 않으면 월경 예측 기간에 들어가도 월경기로 전환되지 않는다")
+    func doesNotEnterMenstrualPhaseFromPredictionWithoutActiveStart() {
         let useCase = HomePhaseUseCaseImpl(calendar: calendar)
         let overview = MenstrualOverview(
             allRecords: [
+                record(.menstrualRecord, "2026-03-01", "2026-03-05"),
+                record(.ovulationFertileWindowPrediction, "2026-03-12", "2026-03-18"),
                 record(.menstrualPrediction, "2026-03-31", "2026-04-04")
             ]
         )
@@ -88,31 +90,140 @@ struct HomePhaseUseCaseTests {
         let window = useCase.execute(
             menstrualOverview: overview,
             activeMenstrualStartDate: nil,
-            today: date("2026-03-20")
+            today: date("2026-04-02")
         )
 
         #expect(window.phase == .luteal)
-        #expect(window.startDate == date("2026-03-20"))
-        #expect(window.endDate == date("2026-03-30"))
+        #expect(window.startDate == date("2026-03-19"))
+        #expect(window.endDate == date("2026-04-02"))
     }
 
-    @Test("이전 월경기만 있으면 fallback으로 월경 종료 다음 날부터 오늘까지 난포기를 만든다")
-    func fallbackUsesPreviousMenstrualWhenOnlyPastMenstrualExists() {
+    @Test("사용자가 직접 시작하지 않으면 다음 예측 배란기에 도달해도 배란기로 전환되지 않는다")
+    func doesNotEnterNextCycleOvulationWithoutActiveStart() {
         let useCase = HomePhaseUseCaseImpl(calendar: calendar)
         let overview = MenstrualOverview(
             allRecords: [
-                record(.menstrualRecord, "2026-03-01", "2026-03-05")
+                record(.menstrualRecord, "2026-03-01", "2026-03-05"),
+                record(.ovulationFertileWindowPrediction, "2026-03-12", "2026-03-18"),
+                record(.menstrualPrediction, "2026-03-31", "2026-04-04"),
+                record(.ovulationFertileWindowPrediction, "2026-04-12", "2026-04-18")
             ]
         )
 
         let window = useCase.execute(
             menstrualOverview: overview,
             activeMenstrualStartDate: nil,
+            today: date("2026-04-14")
+        )
+
+        #expect(window.phase == .luteal)
+        #expect(window.startDate == date("2026-03-19"))
+        #expect(window.endDate == date("2026-04-14"))
+    }
+
+    @Test("사용자가 직접 시작하지 않으면 다음 예측 난포기에 도달해도 난포기로 전환되지 않는다")
+    func doesNotEnterNextCycleFollicularWithoutActiveStart() {
+        let useCase = HomePhaseUseCaseImpl(calendar: calendar)
+        let overview = MenstrualOverview(
+            allRecords: [
+                record(.menstrualRecord, "2026-03-01", "2026-03-05"),
+                record(.ovulationFertileWindowPrediction, "2026-03-12", "2026-03-18"),
+                record(.menstrualPrediction, "2026-03-31", "2026-04-04"),
+                record(.ovulationFertileWindowPrediction, "2026-04-12", "2026-04-18"),
+                record(.ovulationPrediction, "2026-04-15", "2026-04-15")
+            ]
+        )
+
+        let window = useCase.execute(
+            menstrualOverview: overview,
+            activeMenstrualStartDate: nil,
+            today: date("2026-04-08")
+        )
+
+        #expect(window.phase == .luteal)
+        #expect(window.startDate == date("2026-03-19"))
+        #expect(window.endDate == date("2026-04-08"))
+    }
+
+    @Test("사용자가 직접 시작하지 않으면 다음 예측 황체기에 도달해도 황체기로 전환되지 않는다")
+    func doesNotResetLutealWindowForNextCycleWithoutActiveStart() {
+        let useCase = HomePhaseUseCaseImpl(calendar: calendar)
+        let overview = MenstrualOverview(
+            allRecords: [
+                record(.menstrualRecord, "2026-03-01", "2026-03-05"),
+                record(.ovulationFertileWindowPrediction, "2026-03-12", "2026-03-18"),
+                record(.menstrualPrediction, "2026-03-31", "2026-04-04"),
+                record(.ovulationFertileWindowPrediction, "2026-04-12", "2026-04-18")
+            ]
+        )
+
+        let window = useCase.execute(
+            menstrualOverview: overview,
+            activeMenstrualStartDate: nil,
+            today: date("2026-04-20")
+        )
+
+        #expect(window.phase == .luteal)
+        #expect(window.startDate == date("2026-03-19"))
+        #expect(window.endDate == date("2026-04-20"))
+    }
+
+    @Test("다음 사이클 시작 경계 이후의 예측 데이터는 현재 phase 계산에서 제외한다")
+    func excludesPredictionsOnOrAfterNextCycleBoundary() {
+        let useCase = HomePhaseUseCaseImpl(calendar: calendar)
+        let overview = MenstrualOverview(
+            allRecords: [
+                record(.menstrualRecord, "2026-03-10", "2026-03-14"),
+                record(.ovulationFertileWindowPrediction, "2026-03-22", "2026-03-28"),
+                record(.menstrualPrediction, "2026-04-10", "2026-04-14")
+            ]
+        )
+
+        let window = useCase.execute(
+            menstrualOverview: overview,
+            activeMenstrualStartDate: nil,
+            today: date("2026-04-11")
+        )
+
+        #expect(window.phase == .luteal)
+        #expect(window.startDate == date("2026-03-29"))
+        #expect(window.endDate == date("2026-04-11"))
+    }
+
+    @Test("이전 배란기가 있으면 어떤 구간에도 포함되지 않아도 그 시작점을 유지하며 황체기를 반환한다")
+    func fallsBackToExtendedLutealWindowFromPreviousOvulation() {
+        let useCase = HomePhaseUseCaseImpl(calendar: calendar)
+        let overview = MenstrualOverview(
+            allRecords: [
+                record(.menstrualRecord, "2026-03-01", "2026-03-05"),
+                record(.ovulationFertileWindowPrediction, "2026-03-12", "2026-03-18"),
+                record(.menstrualPrediction, "2026-03-31", "2026-04-04")
+            ]
+        )
+
+        let window = useCase.execute(
+            menstrualOverview: overview,
+            activeMenstrualStartDate: nil,
+            today: date("2026-04-06")
+        )
+
+        #expect(window.phase == .luteal)
+        #expect(window.startDate == date("2026-03-19"))
+        #expect(window.endDate == date("2026-04-06"))
+    }
+
+    @Test("이전 배란기도 없으면 기본값으로 오늘 하루 황체기를 반환한다")
+    func fallsBackToTodayLutealWindow() {
+        let useCase = HomePhaseUseCaseImpl(calendar: calendar)
+
+        let window = useCase.execute(
+            menstrualOverview: MenstrualOverview(),
+            activeMenstrualStartDate: nil,
             today: date("2026-03-20")
         )
 
-        #expect(window.phase == .follicular)
-        #expect(window.startDate == date("2026-03-06"))
+        #expect(window.phase == .luteal)
+        #expect(window.startDate == date("2026-03-20"))
         #expect(window.endDate == date("2026-03-20"))
     }
 

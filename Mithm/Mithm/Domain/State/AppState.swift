@@ -14,19 +14,25 @@ final class AppState: ObservableObject {
     @Published var menstrualRecordError: Error?
     @Published var userSetting = UserSettingState()
 
+    private let calendar: Calendar
     private let menstrualRecordUseCase: MenstrualRecordUseCase
     private let homePhaseUseCase: HomePhaseUseCase
+    private let openPeriodAutoCloser: OpenPeriodAutoCloser
     private let syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase
     private let userSettingUseCase: UserSettingUseCase
 
     init(
+        calendar: Calendar = .current,
         menstrualRecordUseCase: MenstrualRecordUseCase,
         homePhaseUseCase: HomePhaseUseCase,
+        openPeriodAutoCloser: OpenPeriodAutoCloser,
         syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase,
         userSettingUseCase: UserSettingUseCase
     ) {
+        self.calendar = calendar
         self.menstrualRecordUseCase = menstrualRecordUseCase
         self.homePhaseUseCase = homePhaseUseCase
+        self.openPeriodAutoCloser = openPeriodAutoCloser
         self.syncMenstrualCalendarUseCase = syncMenstrualCalendarUseCase
         self.userSettingUseCase = userSettingUseCase
     }
@@ -64,6 +70,29 @@ final class AppState: ObservableObject {
             activeMenstrualStartDate: activeMenstrualStartDate,
             today: Date()
         )
+    }
+
+    func autoCloseOpenMenstruationIfNeeded(activeMenstrualStartDate: Date?) async throws -> Bool {
+        guard let activeMenstrualStartDate else { return false }
+        let openRecord = MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: calendar.startOfDay(for: activeMenstrualStartDate),
+            endDate: nil
+        )
+        let predictedPeriodLength = menstrualOverview.prediction?.predictedPeriodLength
+            ?? MenstrualPredictionEngine.Config.defaultPeriodLength
+
+        guard let closedRecord = openPeriodAutoCloser.tryAutoClose(
+            openRecord: openRecord,
+            predictedPeriodLength: predictedPeriodLength,
+            referenceDate: Date(),
+            calendar: calendar
+        ) else {
+            return false
+        }
+
+        try await saveMenstrualRecord(closedRecord)
+        return true
     }
 }
 

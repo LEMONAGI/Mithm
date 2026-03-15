@@ -69,6 +69,9 @@ struct HomeView: View {
                 showEmptyRecordsAlert = true
             }
         }
+        .task {
+            await autoCloseOpenMenstruationIfNeeded()
+        }
     }
 }
 
@@ -205,29 +208,24 @@ private extension HomeView {
     }
     
     var currentPhaseDateRangeString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "M.dd"
-        return "\(formatter.string(from: currentPhaseWindow.startDate)) - \(formatter.string(from: currentPhaseWindow.endDate))"
+        "\(FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.startDate)) - \(FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.endDate))"
     }
     
-    var nextMenstrualDate: Date? {
-        let today = calendar.startOfDay(for: Date())
-        return allRecords
-            .filter { $0.type == .menstrualPrediction || $0.type == .menstrualRecord }
-            .sorted { $0.startDate < $1.startDate }
-            .first { calendar.startOfDay(for: $0.startDate) > today }?
-            .startDate
+    var earliestPredictedMenstrualDate: Date? {
+        let predictedRecords = allRecords.filter { $0.type == .menstrualPrediction }
+        let targetIndex = isMenstruating ? 1 : 0
+
+        guard predictedRecords.indices.contains(targetIndex) else { return nil }
+        return predictedRecords[targetIndex].startDate
     }
     
     var nextMenstrualString: String {
-        guard let nextDate = nextMenstrualDate else { return "-" }
+        guard let nextDate = earliestPredictedMenstrualDate else { return "-" }
         let today = calendar.startOfDay(for: Date())
         let target = calendar.startOfDay(for: nextDate)
         let days = calendar.dateComponents([.day], from: today, to: target).day ?? 0
         
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "M월 d일"
-        let dateStr = dateFormatter.string(from: nextDate)
+        let dateStr = FormatterUtility.homeNextMenstrual.string(from: nextDate)
         
         let dDay: String
         if days == 0 {
@@ -269,8 +267,9 @@ private extension HomeView {
 private extension HomeView {
     
     func startMenstruation(startDate: Date) {
-        let formatter = ISO8601DateFormatter()
-        menstrualStartDateString = formatter.string(from: calendar.startOfDay(for: startDate))
+        menstrualStartDateString = FormatterUtility.iso8601.string(
+            from: calendar.startOfDay(for: startDate)
+        )
     }
     
     func endMenstruation(endDate: Date) async {
@@ -292,8 +291,20 @@ private extension HomeView {
     }
     
     func parseDateString(_ string: String) -> Date? {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: string)
+        FormatterUtility.iso8601.date(from: string)
+    }
+
+    func autoCloseOpenMenstruationIfNeeded() async {
+        do {
+            let didAutoClose = try await appState.autoCloseOpenMenstruationIfNeeded(
+                activeMenstrualStartDate: menstrualStartDate
+            )
+            if didAutoClose {
+                menstrualStartDateString = ""
+            }
+        } catch {
+            appState.menstrualRecordError = error
+        }
     }
 }
 
