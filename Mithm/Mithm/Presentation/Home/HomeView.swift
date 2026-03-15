@@ -122,10 +122,11 @@ private extension HomeView {
         Button {
             if isMenstruating {
                 isPickingEndDate = true
+                selectedDate = menstrualStartDate ?? Date()
             } else {
                 isPickingEndDate = false
+                selectedDate = Date()
             }
-            selectedDate = Date()
             showDatePicker = true
         } label: {
             Text(isMenstruating ? "월경 종료" : "월경 시작")
@@ -152,6 +153,7 @@ private extension HomeView {
             DatePicker(
                 "",
                 selection: $selectedDate,
+                in: selectableDateRange,
                 displayedComponents: [.date]
             )
             .datePickerStyle(.wheel)
@@ -187,126 +189,30 @@ private extension HomeView {
     }
 }
 
-// MARK: - Phase Logic
+// MARK: - ComputedValues
 
 private extension HomeView {
-    
-    var loadedRecords: [MenstrualRecord] {
+    var allRecords: [MenstrualRecord] {
         appState.menstrualOverview.allRecords
     }
-    
+
     var isMenstruating: Bool {
         !menstrualStartDateString.isEmpty
     }
     
     var currentPhase: PhaseType {
-        let today = calendar.startOfDay(for: Date())
-        
-        // 사용자가 월경 시작 버튼을 눌러 진행 중인 경우
-        if isMenstruating {
-            return .menstrual
-        }
-        
-        // 레코드가 없으면 기본값
-        guard !loadedRecords.isEmpty else {
-            return .luteal
-        }
-        
-        // 레코드에서 오늘이 속한 구간 확인
-        for record in loadedRecords {
-            let start = calendar.startOfDay(for: record.startDate)
-            let end = calendar.startOfDay(for: record.endDate ?? record.startDate)
-            guard today >= start && today <= end else { continue }
-            
-            switch record.type {
-            case .menstrualRecord, .menstrualPrediction:
-                return .menstrual
-            case .ovulationEstimated, .ovulationPrediction:
-                return .ovulation
-            case .ovulationFertileWindowEstimated, .ovulationFertileWindowPrediction:
-                return .ovulation
-            }
-        }
-        
-        // 구간 사이에 있는 경우: 레코드를 시간순 정렬 후 직전/직후 레코드로 판단
-        let sorted = loadedRecords.sorted { $0.startDate < $1.startDate }
-        
-        let menstrualRecords = sorted.filter {
-            $0.type == .menstrualRecord || $0.type == .menstrualPrediction
-        }
-        let fertileRecords = sorted.filter {
-            $0.type == .ovulationFertileWindowEstimated || $0.type == .ovulationFertileWindowPrediction
-        }
-        
-        if let lastMenstrual = menstrualRecords.last(where: {
-            calendar.startOfDay(for: $0.endDate ?? $0.startDate) < today
-        }) {
-            let menstrualEnd = calendar.startOfDay(for: lastMenstrual.endDate ?? lastMenstrual.startDate)
-            if today > menstrualEnd {
-                if let nextFertile = fertileRecords.first(where: {
-                    calendar.startOfDay(for: $0.startDate) > today
-                }) {
-                    if today < calendar.startOfDay(for: nextFertile.startDate) {
-                        return .follicular
-                    }
-                }
-                if let nextMenstrual = menstrualRecords.first(where: {
-                    calendar.startOfDay(for: $0.startDate) > today
-                }) {
-                    if today < calendar.startOfDay(for: nextMenstrual.startDate) {
-                        return .luteal
-                    }
-                }
-                return .follicular
-            }
-        }
-        
-        return .luteal
+        currentPhaseWindow.phase
     }
     
     var currentPhaseDateRangeString: String {
-        let today = calendar.startOfDay(for: Date())
         let formatter = DateFormatter()
         formatter.dateFormat = "M.dd"
-        
-        // 월경 진행 중
-        if isMenstruating, let startDate = parseDateString(menstrualStartDateString) {
-            return "\(formatter.string(from: startDate)) -"
-        }
-        
-        // 레코드가 없으면 빈 문자열
-        guard !loadedRecords.isEmpty else { return "" }
-        
-        // 오늘이 속한 레코드의 날짜 범위
-        for record in loadedRecords {
-            let start = calendar.startOfDay(for: record.startDate)
-            let end = calendar.startOfDay(for: record.endDate ?? record.startDate)
-            if today >= start && today <= end {
-                return "\(formatter.string(from: record.startDate)) - \(formatter.string(from: record.endDate ?? record.startDate))"
-            }
-        }
-        
-        // 구간 사이: 직전 레코드 종료 ~ 직후 레코드 시작
-        let sorted = loadedRecords.sorted { $0.startDate < $1.startDate }
-        if sorted.count >= 2 {
-            for i in 0..<(sorted.count - 1) {
-                let currentEnd = calendar.startOfDay(for: sorted[i].endDate ?? sorted[i].startDate)
-                let nextStart = calendar.startOfDay(for: sorted[i + 1].startDate)
-                if today > currentEnd && today < nextStart {
-                    if let dayAfterEnd = calendar.date(byAdding: .day, value: 1, to: sorted[i].endDate ?? sorted[i].startDate),
-                       let dayBeforeNext = calendar.date(byAdding: .day, value: -1, to: sorted[i + 1].startDate) {
-                        return "\(formatter.string(from: dayAfterEnd)) - \(formatter.string(from: dayBeforeNext))"
-                    }
-                }
-            }
-        }
-        
-        return ""
+        return "\(formatter.string(from: currentPhaseWindow.startDate)) - \(formatter.string(from: currentPhaseWindow.endDate))"
     }
     
     var nextMenstrualDate: Date? {
         let today = calendar.startOfDay(for: Date())
-        return loadedRecords
+        return allRecords
             .filter { $0.type == .menstrualPrediction || $0.type == .menstrualRecord }
             .sorted { $0.startDate < $1.startDate }
             .first { calendar.startOfDay(for: $0.startDate) > today }?
@@ -334,6 +240,27 @@ private extension HomeView {
         
         return "\(dateStr) · \(dDay)"
     }
+
+    var selectableDateRange: ClosedRange<Date> {
+        let today = calendar.startOfDay(for: Date())
+
+        if isPickingEndDate, let menstrualStartDate {
+            return menstrualStartDate...today
+        }
+
+        return Date.distantPast...today
+    }
+
+    var menstrualStartDate: Date? {
+        guard let date = parseDateString(menstrualStartDateString) else { return nil }
+        return calendar.startOfDay(for: date)
+    }
+
+    var currentPhaseWindow: PhaseWindow {
+        appState.makeCurrentPhaseWindow(
+            activeMenstrualStartDate: menstrualStartDate
+        )
+    }
     
 }
 
@@ -343,16 +270,17 @@ private extension HomeView {
     
     func startMenstruation(startDate: Date) {
         let formatter = ISO8601DateFormatter()
-        menstrualStartDateString = formatter.string(from: startDate)
+        menstrualStartDateString = formatter.string(from: calendar.startOfDay(for: startDate))
     }
     
     func endMenstruation(endDate: Date) async {
-        guard let startDate = parseDateString(menstrualStartDateString) else { return }
+        guard let startDate = menstrualStartDate else { return }
+        let normalizedEndDate = max(calendar.startOfDay(for: endDate), startDate)
         
         let record = MenstrualRecord(
             type: .menstrualRecord,
             startDate: startDate,
-            endDate: endDate
+            endDate: normalizedEndDate
         )
         
         do {

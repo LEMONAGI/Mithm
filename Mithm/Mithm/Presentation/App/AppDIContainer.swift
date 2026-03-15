@@ -15,6 +15,7 @@ struct AppDIContainer {
         let menstrualRecordUseCase = MenstrualRecordUseCaseImpl(
             healthKitRepository: healthKitRepository
         )
+        let homePhaseUseCase = HomePhaseUseCaseImpl()
 
         let eventKitDataStore = EventKitDataStoreImpl()
         let eventKitRepository = EventKitRepositoryImpl(dataStore: eventKitDataStore)
@@ -29,6 +30,7 @@ struct AppDIContainer {
 
         return AppState(
             menstrualRecordUseCase: menstrualRecordUseCase,
+            homePhaseUseCase: homePhaseUseCase,
             syncMenstrualCalendarUseCase: syncMenstrualCalendarUseCase,
             userSettingUseCase: userSettingUseCase
         )

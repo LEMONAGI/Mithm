@@ -15,15 +15,18 @@ final class AppState: ObservableObject {
     @Published var userSetting = UserSettingState()
 
     private let menstrualRecordUseCase: MenstrualRecordUseCase
+    private let homePhaseUseCase: HomePhaseUseCase
     private let syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase
     private let userSettingUseCase: UserSettingUseCase
 
     init(
         menstrualRecordUseCase: MenstrualRecordUseCase,
+        homePhaseUseCase: HomePhaseUseCase,
         syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase,
         userSettingUseCase: UserSettingUseCase
     ) {
         self.menstrualRecordUseCase = menstrualRecordUseCase
+        self.homePhaseUseCase = homePhaseUseCase
         self.syncMenstrualCalendarUseCase = syncMenstrualCalendarUseCase
         self.userSettingUseCase = userSettingUseCase
     }
@@ -54,7 +57,13 @@ final class AppState: ObservableObject {
         try await menstrualRecordUseCase.saveMenstrualRecored(record)
         try await refreshMenstrualData()
     }
+
+    func makeCurrentPhaseWindow(activeMenstrualStartDate: Date?) -> PhaseWindow {
+        homePhaseUseCase.execute(
+            menstrualOverview: menstrualOverview,
+            activeMenstrualStartDate: activeMenstrualStartDate,
+            today: Date()
+        )
+    }
 }
-
-
 
