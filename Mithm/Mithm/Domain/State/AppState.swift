@@ -43,6 +43,13 @@ final class AppState: ObservableObject {
             userInputMode: userSettingRepository.loadUserInputMode()
         )
     }
+
+    // MARK: - Save
+
+    func saveMenstrualRecord(_ record: MenstrualRecord) async throws {
+        try await menstrualRecordUseCase.saveMenstrualRecored(record)
+        await loadMenstrualRecords()
+    }
 }
 
 // MARK: - MenstrualRecordState
@@ -77,3 +84,4 @@ enum LoadState<T> {
     case loaded(T)
     case failed(Error)
 }
+
