@@ -87,11 +87,11 @@ final class MenstrualRecordUseCaseDemoViewModel: ObservableObject {
     }
 
     private func loadRecords() async throws {
-        let fetchedRecords = try await useCase.fetchMenstrualRecords()
+        let overview = try await useCase.fetchMenstrualOverview()
 
-        records = fetchedRecords
+        records = overview.allRecords
         lastLoadedAt = Date()
-        try await exportFetchedRecordsToCalendar(fetchedRecords)
+        try await exportFetchedRecordsToCalendar(overview.allRecords)
         errorMessage = nil
     }
 

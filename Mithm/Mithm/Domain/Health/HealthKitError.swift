@@ -29,7 +29,7 @@ enum HealthKitError: Error {
 
     /// 건강 데이터 삭제 실패
     case deleteFailed
-    
+
     /// 권한 없음 or 기록 없음 -> 권한을 수정하거나 기록을 추가하도록 유도.
     case emptyResult
 

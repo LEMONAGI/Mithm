@@ -6,6 +6,6 @@
 //
 
 protocol MenstrualRecordUseCase {
-    func fetchMenstrualRecords() async throws -> [MenstrualRecord]
+    func fetchMenstrualOverview() async throws -> MenstrualOverview
     func saveMenstrualRecored(_ record: MenstrualRecord) async throws
 }

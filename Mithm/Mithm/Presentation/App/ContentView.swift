@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
     @EnvironmentObject private var appState: AppState
@@ -32,7 +31,11 @@ struct ContentView: View {
         }
         .task {
             appState.loadUserSettings()
-            await appState.loadMenstrualRecords()
+            do {
+                try await appState.refreshMenstrualData()
+            } catch {
+                appState.menstrualRecordError = error
+            }
         }
     }
 }

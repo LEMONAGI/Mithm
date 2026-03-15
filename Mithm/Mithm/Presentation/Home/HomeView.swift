@@ -64,8 +64,10 @@ struct HomeView: View {
         } message: {
             Text("건강 앱에서 월경 기록을 추가하거나,\n설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요.")
         }
-        .onChange(of: appState.menstrualRecord.loadState.isSettled) {
-            checkEmptyRecords()
+        .onChange(of: appState.menstrualRecordError != nil) {
+            if appState.menstrualRecordError != nil {
+                showEmptyRecordsAlert = true
+            }
         }
     }
 }
@@ -151,10 +153,11 @@ private extension HomeView {
             DatePicker(
                 "",
                 selection: $selectedDate,
-                displayedComponents: [.date, .hourAndMinute]
+                displayedComponents: [.date]
             )
             .datePickerStyle(.wheel)
             .labelsHidden()
+            .environment(\.locale, Locale(identifier: "ko_KR"))
             .padding(.horizontal, 20)
 
             Spacer()
@@ -190,10 +193,7 @@ private extension HomeView {
 private extension HomeView {
 
     var loadedRecords: [MenstrualRecord] {
-        if case .loaded(let records) = appState.menstrualRecord.loadState {
-            return records
-        }
-        return []
+        appState.menstrualOverview.allRecords
     }
 
     var isMenstruating: Bool {
@@ -336,16 +336,6 @@ private extension HomeView {
         return "\(dateStr) · \(dDay)"
     }
 
-    func checkEmptyRecords() {
-        if case .loaded(let records) = appState.menstrualRecord.loadState {
-            let actualRecords = records.filter { $0.type == .menstrualRecord }
-            if actualRecords.isEmpty {
-                showEmptyRecordsAlert = true
-            }
-        } else if case .failed = appState.menstrualRecord.loadState {
-            showEmptyRecordsAlert = true
-        }
-    }
 }
 
 // MARK: - Actions
@@ -368,27 +358,15 @@ private extension HomeView {
 
         do {
             try await appState.saveMenstrualRecord(record)
+            menstrualStartDateString = ""
         } catch {
-            // 에러는 AppState 내부에서 Logger로 처리
+            // 저장 실패 시 월경 시작 상태를 유지하여 데이터 손실 방지
         }
-        menstrualStartDateString = ""
     }
 
     func parseDateString(_ string: String) -> Date? {
         let formatter = ISO8601DateFormatter()
         return formatter.date(from: string)
-    }
-}
-
-// MARK: - LoadState Helper
-
-extension LoadState {
-    /// 로딩이 완료된 상태 (loaded 또는 failed)
-    var isSettled: Bool {
-        switch self {
-        case .loaded, .failed: return true
-        default: return false
-        }
     }
 }
 

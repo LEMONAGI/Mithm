@@ -57,4 +57,5 @@ extension SettingView {
 
 #Preview {
     SettingView()
+        .environmentObject(AppDIContainer.makeAppState())
 }

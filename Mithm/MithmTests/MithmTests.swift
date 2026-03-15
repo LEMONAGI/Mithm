@@ -1720,8 +1720,8 @@ struct EdgeCaseTests {
 struct MenstrualRecordUseCaseTests {
     private let calendar = TestCalendar.make()
 
-    @Test("fetchMenstrualRecords는 실제 월경 기록에 예상 월경, 배란일, 배란기를 합쳐 정렬해 반환한다")
-    func fetchMenstrualRecordsIncludesPredictionsAndOvulationRecords() async throws {
+    @Test("fetchMenstrualOverview는 실제 월경 기록에 예상 월경, 배란일, 배란기를 합쳐 정렬해 반환한다")
+    func fetchMenstrualOverviewIncludesPredictionsAndOvulationRecords() async throws {
         let repository = MockHealthKitRepository(records: [
             makeRecord(start: "2025-01-01", end: "2025-01-05"),
             makeRecord(start: "2025-01-29", end: "2025-02-02"),
@@ -1732,7 +1732,8 @@ struct MenstrualRecordUseCaseTests {
             calendar: calendar
         )
 
-        let result = try await useCase.fetchMenstrualRecords()
+        let overview = try await useCase.fetchMenstrualOverview()
+        let result = overview.allRecords
 
         #expect(result.filter { $0.type == .menstrualRecord }.count == 3)
         #expect(result.filter { $0.type == .menstrualPrediction }.count == 3)
@@ -1744,22 +1745,23 @@ struct MenstrualRecordUseCaseTests {
         #expect(result.map(\.startDate) == result.map(\.startDate).sorted())
     }
 
-    @Test("fetchMenstrualRecords는 기록이 없으면 통계 기본값 기반 예측(주기 28일, 기간 5일)과 배란 기록을 반환한다")
-    func fetchMenstrualRecordsReturnsDefaultPredictionsWhenNoActualRecords() async throws {
+    @Test("fetchMenstrualOverview는 기록이 없으면 통계 기본값 기반 예측(주기 28일, 기간 5일)과 배란 기록을 반환한다")
+    func fetchMenstrualOverviewReturnsDefaultPredictionsWhenNoActualRecords() async throws {
         let repository = MockHealthKitRepository(records: [])
         let useCase = MenstrualRecordUseCaseImpl(
             healthKitRepository: repository,
             calendar: calendar
         )
 
-        let result = try await useCase.fetchMenstrualRecords()
+        let overview = try await useCase.fetchMenstrualOverview()
+        let result = overview.allRecords
 
         #expect(result.filter { $0.type == .menstrualRecord }.count == 0)
         #expect(result.filter { $0.type == .menstrualPrediction }.count == 3)
     }
 
-    @Test("fetchMenstrualRecords는 진행 중 실제 기록(endDate nil)을 제거하고 예측 월경 예정기간으로 교체한다")
-    func fetchMenstrualRecordsReplacesOpenEndedActualRecord() async throws {
+    @Test("fetchMenstrualOverview는 진행 중 실제 기록(endDate nil)을 제거하고 예측 월경 예정기간으로 교체한다")
+    func fetchMenstrualOverviewReplacesOpenEndedActualRecord() async throws {
         let repository = MockHealthKitRepository(records: [
             makeRecord(start: "2025-01-01", end: "2025-01-05"),
             makeRecord(start: "2025-01-29", end: "2025-02-02"),
@@ -1774,7 +1776,8 @@ struct MenstrualRecordUseCaseTests {
             calendar: calendar
         )
 
-        let result = try await useCase.fetchMenstrualRecords()
+        let overview = try await useCase.fetchMenstrualOverview()
+        let result = overview.allRecords
 
         #expect(result.filter { $0.type == .menstrualRecord }.count == 2)
         #expect(result.filter { $0.type == .menstrualPrediction }.count == 4)

@@ -148,8 +148,8 @@ extension CalendarView {
 
     private var statsView: some View {
         VStack(spacing: 8) {
-            statRow(title: "평균 월경 기간", value: averagePeriodLength, unit: "일")
-            statRow(title: "평균 월경 주기", value: averageCycleLength, unit: "일")
+            statRow(title: "현재 월경 기간", value: predictedPeriodLength, unit: "일")
+            statRow(title: "현재 월경 주기", value: predictedCycleLength, unit: "일")
         }
     }
 
@@ -292,8 +292,8 @@ extension CalendarView {
 
     private var monthYearString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "yyyy년 M월"
+        formatter.locale = Locale(identifier: "ko_KR")
         return formatter.string(from: displayedMonth)
     }
 
@@ -304,7 +304,7 @@ extension CalendarView {
         displayedMonth = newMonth
     }
 
-    private static let gridCellCount = 35 // 5 rows × 7 columns
+    private static let gridCellCount = 42 // 6 rows × 7 columns
 
     private func daysForGrid() -> [Date] {
         let components = calendar.dateComponents([.year, .month], from: displayedMonth)
@@ -314,7 +314,7 @@ extension CalendarView {
         let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth)
         let leadingDays = firstWeekday - 1
 
-        // Grid starts this many days before the 1st
+        // 1일이 첫 번째 줄에 오도록, 이전 달 날짜로 앞을 채운 뒤 6주(42셀)를 표시
         guard let gridStart = calendar.date(byAdding: .day, value: -leadingDays, to: firstDayOfMonth)
         else { return [] }
 
@@ -324,10 +324,7 @@ extension CalendarView {
     }
 
     private var loadedRecords: [MenstrualRecord] {
-        if case .loaded(let records) = appState.menstrualRecord.loadState {
-            return records
-        }
-        return []
+        appState.menstrualOverview.allRecords
     }
 }
 
@@ -335,32 +332,12 @@ extension CalendarView {
 
 extension CalendarView {
 
-    private var averagePeriodLength: Int? {
-        let actual = loadedRecords.filter {
-            $0.type == MenstrualRecordType.menstrualRecord && $0.endDate != nil
-        }
-        let dayCounts = actual.compactMap { $0.dayCount }
-        guard !dayCounts.isEmpty else { return nil }
-        return dayCounts.reduce(0, +) / dayCounts.count
+    private var predictedPeriodLength: Int? {
+        appState.menstrualOverview.prediction.flatMap { $0.predictedPeriodLength }
     }
 
-    private var averageCycleLength: Int? {
-        let actual = loadedRecords
-            .filter { $0.type == MenstrualRecordType.menstrualRecord && $0.endDate != nil }
-            .sorted { $0.startDate < $1.startDate }
-        guard actual.count >= 2 else { return nil }
-
-        var cycleLengths: [Int] = []
-        for i in 1..<actual.count {
-            let prev = calendar.startOfDay(for: actual[i - 1].startDate)
-            let curr = calendar.startOfDay(for: actual[i].startDate)
-            let days = calendar.dateComponents([.day], from: prev, to: curr).day ?? 0
-            if days > 0 {
-                cycleLengths.append(days)
-            }
-        }
-        guard !cycleLengths.isEmpty else { return nil }
-        return cycleLengths.reduce(0, +) / cycleLengths.count
+    private var predictedCycleLength: Int? {
+        appState.menstrualOverview.prediction.flatMap { $0.predictedCycleLength }
     }
 }
 
