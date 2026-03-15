@@ -24,10 +24,10 @@ enum PhaseType: Int, Hashable {
     
     var color: Color {
         switch self {
-        case .menstrual: return .mYellow
-        case .follicular: return .mBlue
-        case .ovulation: return .mTeal
-        case .luteal: return .mPurple
+        case .menstrual: return .primaryYellow
+        case .follicular: return .primaryBlue
+        case .ovulation: return .primaryTeal
+        case .luteal: return .primaryPurple
         }
     }
     
@@ -59,15 +59,6 @@ enum PhaseType: Int, Hashable {
         case .follicular: return .mainFollicular
         case .ovulation: return .mainOvulatory
         case .luteal: return .mainLuteal
-        }
-    }
-
-    var image: ImageResource {
-        switch self {
-        case .menstrual: return .menstrual
-        case .follicular: return .follicular
-        case .ovulation: return .ovulation
-        case .luteal: return .luteal
         }
     }
 }
