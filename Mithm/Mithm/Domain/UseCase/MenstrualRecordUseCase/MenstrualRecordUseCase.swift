@@ -6,6 +6,7 @@
 //
 
 protocol MenstrualRecordUseCase {
+    func requestHealthKitAuthorization() async throws
     func fetchMenstrualOverview() async throws -> MenstrualOverview
     func saveMenstrualRecored(_ record: MenstrualRecord) async throws
 }

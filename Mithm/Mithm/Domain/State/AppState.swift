@@ -57,6 +57,10 @@ final class AppState: ObservableObject {
         )
     }
 
+    func requestHealthKitAuthorization() async throws {
+        try await menstrualRecordUseCase.requestHealthKitAuthorization()
+    }
+
     // MARK: - Save
 
     func saveMenstrualRecord(_ record: MenstrualRecord) async throws {

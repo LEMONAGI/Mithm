@@ -26,6 +26,13 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
         self.calendar = calendar
     }
     
+    func requestHealthKitAuthorization() async throws {
+        try await healthKitRepository.requestAuthorization(
+            writeTypes: [.menstrualCycle],
+            readTypes: [.menstrualCycle, .wristTemperature]
+        )
+    }
+
     func fetchMenstrualOverview() async throws -> MenstrualOverview {
         let now = Date()
         let from = calendar.date(byAdding: .year, value: -100, to: now)!
