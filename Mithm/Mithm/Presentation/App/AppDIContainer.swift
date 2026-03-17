@@ -17,8 +17,6 @@ struct AppDIContainer {
             healthKitRepository: healthKitRepository,
             calendar: calendar
         )
-        let openPeriodAutoCloser = OpenPeriodAutoCloser()
-        let homePhaseUseCase = HomePhaseUseCaseImpl()
 
         let eventKitDataStore = EventKitDataStoreImpl()
         let eventKitRepository = EventKitRepositoryImpl(dataStore: eventKitDataStore)
@@ -32,12 +30,29 @@ struct AppDIContainer {
         )
 
         return AppState(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            syncMenstrualCalendarUseCase: syncMenstrualCalendarUseCase,
+            userSettingUseCase: userSettingUseCase
+        )
+    }
+
+    static func makeHomeViewModel(appState: AppState) -> HomeViewModel {
+        let calendar = Calendar.current
+        let healthKitDataStore = HealthKitDataStoreImpl()
+        let healthKitRepository = HealthKitRepositoryImpl(dataStore: healthKitDataStore)
+        let menstrualRecordUseCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: healthKitRepository,
+            calendar: calendar
+        )
+        let openPeriodAutoCloser = OpenPeriodAutoCloser()
+        let homePhaseUseCase = HomePhaseUseCaseImpl()
+
+        return HomeViewModel(
+            appState: appState,
             calendar: calendar,
             menstrualRecordUseCase: menstrualRecordUseCase,
             homePhaseUseCase: homePhaseUseCase,
-            openPeriodAutoCloser: openPeriodAutoCloser,
-            syncMenstrualCalendarUseCase: syncMenstrualCalendarUseCase,
-            userSettingUseCase: userSettingUseCase
+            openPeriodAutoCloser: openPeriodAutoCloser
         )
     }
 }

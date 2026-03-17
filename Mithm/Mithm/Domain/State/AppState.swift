@@ -10,35 +10,54 @@ import Combine
 
 @MainActor
 final class AppState: ObservableObject {
+
+    // MARK: - Published State
+
     @Published var menstrualOverview: MenstrualOverview = MenstrualOverview()
     @Published var menstrualRecordError: Error?
     @Published var userSetting = UserSettingState()
 
-    private let calendar: Calendar
+    // MARK: - Dependencies
+
     private let menstrualRecordUseCase: MenstrualRecordUseCase
-    private let homePhaseUseCase: HomePhaseUseCase
-    private let openPeriodAutoCloser: OpenPeriodAutoCloser
     private let syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase
     private let userSettingUseCase: UserSettingUseCase
 
+    // MARK: - Init
+
     init(
-        calendar: Calendar = .current,
         menstrualRecordUseCase: MenstrualRecordUseCase,
-        homePhaseUseCase: HomePhaseUseCase,
-        openPeriodAutoCloser: OpenPeriodAutoCloser,
         syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase,
         userSettingUseCase: UserSettingUseCase
     ) {
-        self.calendar = calendar
         self.menstrualRecordUseCase = menstrualRecordUseCase
-        self.homePhaseUseCase = homePhaseUseCase
-        self.openPeriodAutoCloser = openPeriodAutoCloser
         self.syncMenstrualCalendarUseCase = syncMenstrualCalendarUseCase
         self.userSettingUseCase = userSettingUseCase
     }
 
-    // MARK: - Load
+    // MARK: - Public Actions
 
+    /// 앱 최초 실행 시 호출
+    func performInitialLoad() async {
+        loadUserSettings()
+        do {
+            try await menstrualRecordUseCase.requestHealthKitAuthorization()
+            try await refreshMenstrualData()
+        } catch {
+            menstrualRecordError = error
+        }
+    }
+
+    /// scenePhase가 active로 전환될 때 호출
+    func refreshOnForeground() async {
+        do {
+            try await refreshMenstrualData()
+        } catch {
+            menstrualRecordError = error
+        }
+    }
+
+    /// 월경 기록 변경 후 데이터 갱신
     func refreshMenstrualData() async throws {
         let overview = try await menstrualRecordUseCase.fetchMenstrualOverview()
         menstrualOverview = overview
@@ -55,51 +74,6 @@ final class AppState: ObservableObject {
             calendarExportEnabled: userSettingUseCase.loadCalendarExportEnabled(),
             userInputMode: userSettingUseCase.loadUserInputMode()
         )
-    }
-
-    func requestHealthKitAuthorization() async throws {
-        try await menstrualRecordUseCase.requestHealthKitAuthorization()
-    }
-
-    // MARK: - Save
-
-    func saveMenstrualRecord(_ record: MenstrualRecord, deleteFrom: Date? = nil, deleteThrough: Date? = nil) async throws {
-        try await menstrualRecordUseCase.saveMenstrualRecored(record, deleteFrom: deleteFrom, deleteThrough: deleteThrough)
-        try await refreshMenstrualData()
-    }
-
-    func makeCurrentPhaseWindow(activeMenstrualStartDate: Date?) -> PhaseWindow {
-        homePhaseUseCase.execute(
-            menstrualOverview: menstrualOverview,
-            activeMenstrualStartDate: activeMenstrualStartDate,
-            today: Date()
-        )
-    }
-
-    func autoCloseOpenMenstruationIfNeeded(activeMenstrualStartDate: Date?) async throws -> Bool {
-        guard let activeMenstrualStartDate else { return false }
-        let openRecord = MenstrualRecord(
-            type: .menstrualRecord,
-            startDate: calendar.startOfDay(for: activeMenstrualStartDate),
-            endDate: nil
-        )
-        let predictedPeriodLength = menstrualOverview.prediction?.predictedPeriodLength
-            ?? MenstrualPredictionEngine.Config.defaultPeriodLength
-
-        if let closedRecord = openPeriodAutoCloser.tryAutoClose(
-            openRecord: openRecord,
-            predictedPeriodLength: predictedPeriodLength,
-            referenceDate: Date(),
-            calendar: calendar
-        ) {
-            // 자동 종료 조건 충족: 확정된 기록 저장, 이전 open record 범위까지 삭제
-            try await saveMenstrualRecord(closedRecord, deleteThrough: Date())
-            return true
-        }
-
-        // 자동 종료 조건 미충족: 진행 중인 월경을 HealthKit에 갱신 (startDate~오늘)
-        try await saveMenstrualRecord(openRecord, deleteThrough: Date())
-        return false
     }
 }
 

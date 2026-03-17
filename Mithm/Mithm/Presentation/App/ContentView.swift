@@ -32,22 +32,12 @@ struct ContentView: View {
             }
         }
         .task {
-            appState.loadUserSettings()
-            do {
-                try await appState.requestHealthKitAuthorization()
-                try await appState.refreshMenstrualData()
-            } catch {
-                appState.menstrualRecordError = error
-            }
+            await appState.performInitialLoad()
         }
         .onChange(of: scenePhase) {
             if scenePhase == .active {
                 Task {
-                    do {
-                        try await appState.refreshMenstrualData()
-                    } catch {
-                        appState.menstrualRecordError = error
-                    }
+                    await appState.refreshOnForeground()
                 }
             }
         }
@@ -70,6 +60,8 @@ struct ContentView: View {
 }
 
 #Preview {
+    let appState = AppDIContainer.makeAppState()
     ContentView()
-        .environmentObject(AppDIContainer.makeAppState())
+        .environmentObject(appState)
+        .environmentObject(AppDIContainer.makeHomeViewModel(appState: appState))
 }
