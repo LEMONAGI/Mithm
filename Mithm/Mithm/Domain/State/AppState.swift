@@ -63,8 +63,8 @@ final class AppState: ObservableObject {
 
     // MARK: - Save
 
-    func saveMenstrualRecord(_ record: MenstrualRecord) async throws {
-        try await menstrualRecordUseCase.saveMenstrualRecored(record)
+    func saveMenstrualRecord(_ record: MenstrualRecord, deleteFrom: Date? = nil, deleteThrough: Date? = nil) async throws {
+        try await menstrualRecordUseCase.saveMenstrualRecored(record, deleteFrom: deleteFrom, deleteThrough: deleteThrough)
         try await refreshMenstrualData()
     }
 
@@ -86,17 +86,20 @@ final class AppState: ObservableObject {
         let predictedPeriodLength = menstrualOverview.prediction?.predictedPeriodLength
             ?? MenstrualPredictionEngine.Config.defaultPeriodLength
 
-        guard let closedRecord = openPeriodAutoCloser.tryAutoClose(
+        if let closedRecord = openPeriodAutoCloser.tryAutoClose(
             openRecord: openRecord,
             predictedPeriodLength: predictedPeriodLength,
             referenceDate: Date(),
             calendar: calendar
-        ) else {
-            return false
+        ) {
+            // 자동 종료 조건 충족: 확정된 기록 저장, 이전 open record 범위까지 삭제
+            try await saveMenstrualRecord(closedRecord, deleteThrough: Date())
+            return true
         }
 
-        try await saveMenstrualRecord(closedRecord)
-        return true
+        // 자동 종료 조건 미충족: 진행 중인 월경을 HealthKit에 갱신 (startDate~오늘)
+        try await saveMenstrualRecord(openRecord, deleteThrough: Date())
+        return false
     }
 }
 

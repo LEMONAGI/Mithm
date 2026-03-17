@@ -70,8 +70,8 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
             prediction: predictionResult)
     }
     
-    func saveMenstrualRecored(_ record: MenstrualRecord) async throws {
+    func saveMenstrualRecored(_ record: MenstrualRecord, deleteFrom: Date? = nil, deleteThrough: Date? = nil) async throws {
         try await healthKitRepository.checkWriteAuthorization(for: .menstrualCycle)
-        try await healthKitRepository.updateMenstrualCycleRecord(record)
+        try await healthKitRepository.updateMenstrualCycleRecord(record, deleteFrom: deleteFrom, deleteThrough: deleteThrough)
     }
 }

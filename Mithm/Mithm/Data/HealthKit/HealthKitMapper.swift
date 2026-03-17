@@ -91,7 +91,7 @@ enum HealthKitMapper {
     /// 하나의 월경 기록을 여러 날에 걸쳐 있는 menstrualFlow 샘플들로 분리한다.
     static func hkMenstrualCycleSamples(from record: MenstrualRecord) throws -> [HKCategorySample] {
         let startDay = calendar.startOfDay(for: record.startDate)
-        let endDay   = calendar.startOfDay(for: record.endDate ?? record.startDate)
+        let endDay   = calendar.startOfDay(for: record.endDate ?? Date())
         guard let healthType = record.type.healthDataType else { return [] }
         let type = try HealthKitMapper.hkCategoryType(from: healthType)
         let value = HKCategoryValueVaginalBleeding.unspecified

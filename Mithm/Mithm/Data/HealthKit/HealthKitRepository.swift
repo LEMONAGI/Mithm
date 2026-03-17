@@ -40,8 +40,13 @@ protocol HealthKitRepository {
     
     /// 해당 월경 기록을 healthKit에 업데이트 한다
     ///
-    /// - 기록 범위에 있는 healthKit 월경 기록을 삭제하고, 입력받은 월경 기록을 새로 저장한다.
+    /// - `deleteFrom ~ deleteThrough` 범위의 기존 샘플을 삭제한 뒤, record를 새로 저장한다.
+    /// - `deleteFrom`: 삭제 시작점. nil이면 record.startDate를 사용한다.
+    /// - `deleteThrough`: 삭제 끝점. nil이면 record.endDate(또는 record.startDate)를 사용한다.
+    /// - 기록 수정 시에는 이전 기록 범위를, open record 갱신 시에는 Date()를 지정한다.
     func updateMenstrualCycleRecord(
-        _ record: MenstrualRecord
+        _ record: MenstrualRecord,
+        deleteFrom: Date?,
+        deleteThrough: Date?
     ) async throws
 }

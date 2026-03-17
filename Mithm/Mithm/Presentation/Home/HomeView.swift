@@ -125,7 +125,7 @@ private extension HomeView {
         Button {
             if isMenstruating {
                 isPickingEndDate = true
-                selectedDate = menstrualStartDate ?? Date()
+                selectedDate = Date()
             } else {
                 isPickingEndDate = false
                 selectedDate = Date()
@@ -172,7 +172,7 @@ private extension HomeView {
                     if isPickingEndDate {
                         await endMenstruation(endDate: selectedDate)
                     } else {
-                        startMenstruation(startDate: selectedDate)
+                        await startMenstruation(startDate: selectedDate)
                     }
                 }
             } label: {
@@ -266,10 +266,21 @@ private extension HomeView {
 
 private extension HomeView {
     
-    func startMenstruation(startDate: Date) {
-        menstrualStartDateString = FormatterUtility.iso8601.string(
-            from: calendar.startOfDay(for: startDate)
+    func startMenstruation(startDate: Date) async {
+        let normalizedStart = calendar.startOfDay(for: startDate)
+        menstrualStartDateString = FormatterUtility.iso8601.string(from: normalizedStart)
+
+        // HealthKit에 진행 중인 월경(endDate nil) 저장
+        let openRecord = MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: normalizedStart,
+            endDate: nil
         )
+        do {
+            try await appState.saveMenstrualRecord(openRecord)
+        } catch {
+            // open record 저장 실패해도 월경 시작 상태는 유지
+        }
     }
     
     func endMenstruation(endDate: Date) async {
@@ -283,7 +294,8 @@ private extension HomeView {
         )
         
         do {
-            try await appState.saveMenstrualRecord(record)
+            // 이전에 저장된 open record(startDate~오늘)까지 삭제 후 확정 기록 저장
+            try await appState.saveMenstrualRecord(record, deleteThrough: Date())
             menstrualStartDateString = ""
         } catch {
             // 저장 실패 시 월경 시작 상태를 유지하여 데이터 손실 방지

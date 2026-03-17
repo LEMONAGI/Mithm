@@ -46,7 +46,8 @@ struct HomePhaseUseCaseImpl: HomePhaseUseCase {
         // 1) 사용자가 직접 시작한 진행 중 월경이 있으면 가장 우선한다.
         if let activeMenstrualWindow = makeActiveMenstrualWindow(
             activeMenstrualStartDate: activeMenstrualStartDate,
-            predictedPeriodLength: menstrualOverview.prediction?.predictedPeriodLength
+            predictedPeriodLength: menstrualOverview.prediction?.predictedPeriodLength,
+            today: today
         ) {
             return activeMenstrualWindow
         }
@@ -128,7 +129,8 @@ struct HomePhaseUseCaseImpl: HomePhaseUseCase {
     /// 예측 기간 또는 기본 기간을 사용해 월경기 구간을 만든다.
     private func makeActiveMenstrualWindow(
         activeMenstrualStartDate: Date?,
-        predictedPeriodLength: Int?
+        predictedPeriodLength: Int?,
+        today: Date
     ) -> PhaseWindow? {
         guard let activeMenstrualStartDate else { return nil }
 
@@ -143,7 +145,7 @@ struct HomePhaseUseCaseImpl: HomePhaseUseCase {
         return PhaseWindow(
             phase: .menstrual,
             startDate: activeStartDate,
-            endDate: predictedEndDate
+            endDate: max(predictedEndDate, today)
         )
     }
 

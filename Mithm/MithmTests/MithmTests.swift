@@ -2084,7 +2084,7 @@ private struct MockHealthKitRepository: HealthKitRepository {
         []
     }
 
-    func updateMenstrualCycleRecord(_ record: MenstrualRecord) async throws {}
+    func updateMenstrualCycleRecord(_ record: MenstrualRecord, deleteFrom: Date?, deleteThrough: Date?) async throws {}
 }
 
 // MARK: - Test Calendar Helper

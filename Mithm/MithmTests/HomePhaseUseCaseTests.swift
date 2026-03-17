@@ -30,6 +30,44 @@ struct HomePhaseUseCaseTests {
         #expect(window.endDate == date("2026-03-16"))
     }
 
+    @Test("진행 중 월경에서 오늘이 예상 종료일을 넘어서면 종료일이 오늘로 확장된다")
+    func activeMenstrualExtendsEndDateWhenTodayExceedsPrediction() {
+        let useCase = HomePhaseUseCaseImpl(
+            calendar: calendar,
+            defaultPeriodLength: 5
+        )
+
+        let window = useCase.execute(
+            menstrualOverview: MenstrualOverview(),
+            activeMenstrualStartDate: date("2026-03-10"),
+            today: date("2026-03-20")
+        )
+
+        // 기본 5일 → 예상 종료일 3/14, 오늘 3/20이 넘어섰으므로 endDate는 3/20
+        #expect(window.phase == .menstrual)
+        #expect(window.startDate == date("2026-03-10"))
+        #expect(window.endDate == date("2026-03-20"))
+    }
+
+    @Test("진행 중 월경에서 오늘이 예상 종료일과 같으면 종료일이 예상 종료일 그대로 유지된다")
+    func activeMenstrualKeepsEndDateWhenTodayEqualsPrediction() {
+        let useCase = HomePhaseUseCaseImpl(
+            calendar: calendar,
+            defaultPeriodLength: 5
+        )
+
+        let window = useCase.execute(
+            menstrualOverview: MenstrualOverview(),
+            activeMenstrualStartDate: date("2026-03-10"),
+            today: date("2026-03-14")
+        )
+
+        // 기본 5일 → 예상 종료일 3/14, 오늘도 3/14이므로 endDate는 3/14
+        #expect(window.phase == .menstrual)
+        #expect(window.startDate == date("2026-03-10"))
+        #expect(window.endDate == date("2026-03-14"))
+    }
+
     @Test("난포기는 이전 월경기와 다음 배란기 사이의 날짜로 계산한다")
     func buildsFollicularWindowFromGap() {
         let useCase = HomePhaseUseCaseImpl(calendar: calendar)

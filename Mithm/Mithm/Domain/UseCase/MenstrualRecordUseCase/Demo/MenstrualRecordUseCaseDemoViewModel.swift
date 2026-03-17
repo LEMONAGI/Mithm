@@ -80,7 +80,7 @@ final class MenstrualRecordUseCaseDemoViewModel: ObservableObject {
                     endDate: max(normalizedStart, normalizedEnd)
                 )
 
-                try await self.useCase.saveMenstrualRecored(record)
+                try await self.useCase.saveMenstrualRecored(record, deleteFrom: nil, deleteThrough: nil)
                 try await self.loadRecords()
             }
         }

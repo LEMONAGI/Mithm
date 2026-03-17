@@ -112,14 +112,18 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
     }
 
     func updateMenstrualCycleRecord(
-        _ record: MenstrualRecord
+        _ record: MenstrualRecord,
+        deleteFrom: Date? = nil,
+        deleteThrough: Date? = nil
     ) async throws {
         do {
             let objectType = HealthKitMapper.hkObjectType(from: .menstrualCycle)
+            let deleteStart = deleteFrom ?? record.startDate
+            let deleteEnd = deleteThrough ?? record.endDate ?? record.startDate
             try await dataStore.deleteSamples(
                 type: objectType,
-                from: record.startDate,
-                to: record.endDate ?? record.startDate
+                from: deleteStart,
+                to: deleteEnd
             )
         } catch let error as HealthKitError {
             throw error
