@@ -81,7 +81,7 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
                 type: try HealthKitMapper.hkCategoryType(from: .menstrualCycle),
                 from: startDate,
                 to: endDate
-            )
+            ).filter { $0.value != HKCategoryValueVaginalBleeding.none.rawValue}
             guard !samples.isEmpty else { throw HealthKitError.emptyResult }
             return HealthKitMapper.menstrualCycleRecords(from: samples)
         } catch let error as HealthKitError {
