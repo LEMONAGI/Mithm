@@ -96,18 +96,9 @@ extension CalendarView {
 
     private var monthHeader: some View {
         HStack {
-            Button {
-                moveMonth(by: 0) // tap on title — no-op or future picker
-            } label: {
-                HStack(spacing: 4) {
-                    Text(monthYearString)
-                        .font(.pretendardBold(20))
-                        .foregroundStyle(.textPrimary)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.textPrimary)
-                }
-            }
+            Text(monthYearString)
+                .font(.pretendardBold(20))
+                .foregroundStyle(.textPrimary)
 
             Spacer()
 
