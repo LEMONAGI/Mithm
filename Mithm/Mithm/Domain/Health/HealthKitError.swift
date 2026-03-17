@@ -38,3 +38,43 @@ enum HealthKitError: Error {
     /// 알 수 없는 에러 (콘솔에 원본 에러가 로깅됨)
     case unknown
 }
+
+// MARK: - Alert Info
+
+extension HealthKitError: AlertPresentable {
+    var alertTitle: String {
+        switch self {
+        case .notAvailableOnDevice:
+            return "건강 앱을 사용할 수 없어요"
+        case .authorizationNotDetermined, .authorizationDenied:
+            return "건강 앱 접근 권한이 필요해요"
+        case .readFailed, .writeFailed, .deleteFailed:
+            return "건강 데이터 처리에 실패했어요"
+        case .emptyResult:
+            return "월경 기록이 없어요"
+        case .unknown:
+            return "알 수 없는 오류가 발생했어요"
+        }
+    }
+
+    var alertMessage: String {
+        switch self {
+        case .notAvailableOnDevice:
+            return "이 기기에서는 건강 앱이 지원되지 않아요."
+        case .authorizationNotDetermined:
+            return "건강 앱 접근 권한을 허용해 주세요."
+        case .authorizationDenied:
+            return "설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요."
+        case .readFailed:
+            return "건강 데이터를 불러오지 못했어요.\n잠시 후 다시 시도해 주세요."
+        case .writeFailed:
+            return "건강 데이터를 저장하지 못했어요.\n잠시 후 다시 시도해 주세요."
+        case .deleteFailed:
+            return "건강 데이터를 삭제하지 못했어요.\n잠시 후 다시 시도해 주세요."
+        case .emptyResult:
+            return "건강 앱에서 월경 기록을 추가하거나,\n설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요."
+        case .unknown:
+            return "잠시 후 다시 시도해 주세요."
+        }
+    }
+}

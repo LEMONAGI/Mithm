@@ -13,7 +13,6 @@ struct HomeView: View {
     @State private var showDatePicker = false
     @State private var isPickingEndDate = false
     @State private var selectedDate = Date()
-    @State private var showEmptyRecordsAlert = false
     
     private let calendar = Calendar.current
     
@@ -53,21 +52,6 @@ struct HomeView: View {
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
                 .presentationDetents([.medium])
-        }
-        .alert("월경 기록이 없어요", isPresented: $showEmptyRecordsAlert) {
-            Button("설정으로 이동") {
-                if let url = URL(string: "x-apple-health://") {
-                    UIApplication.shared.open(url)
-                }
-            }
-            Button("확인", role: .cancel) {}
-        } message: {
-            Text("건강 앱에서 월경 기록을 추가하거나,\n설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요.")
-        }
-        .onChange(of: appState.menstrualRecordError != nil) {
-            if appState.menstrualRecordError != nil {
-                showEmptyRecordsAlert = true
-            }
         }
         .task {
             await autoCloseOpenMenstruationIfNeeded()
@@ -279,7 +263,7 @@ private extension HomeView {
         do {
             try await appState.saveMenstrualRecord(openRecord)
         } catch {
-            // open record 저장 실패해도 월경 시작 상태는 유지
+            appState.menstrualRecordError = error
         }
     }
     
@@ -298,7 +282,7 @@ private extension HomeView {
             try await appState.saveMenstrualRecord(record, deleteThrough: Date())
             menstrualStartDateString = ""
         } catch {
-            // 저장 실패 시 월경 시작 상태를 유지하여 데이터 손실 방지
+            appState.menstrualRecordError = error
         }
     }
     
