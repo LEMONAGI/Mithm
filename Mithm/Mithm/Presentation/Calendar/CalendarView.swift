@@ -10,6 +10,7 @@ import SwiftUI
 struct CalendarView: View {
     @EnvironmentObject private var appState: AppState
     @State private var displayedMonth: Date = Date()
+    @State private var showMonthPicker = false
 
     private let calendar = Calendar.current
     private let dayOfWeekSymbols = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
@@ -96,9 +97,22 @@ extension CalendarView {
 
     private var monthHeader: some View {
         HStack {
-            Text(monthYearString)
-                .font(.pretendardBold(20))
-                .foregroundStyle(.textPrimary)
+            Button {
+                showMonthPicker.toggle()
+            } label: {
+                HStack(spacing: 4) {
+                    Text(monthYearString)
+                        .font(.pretendardBold(20))
+                        .foregroundStyle(.textPrimary)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.textPrimary)
+                }
+            }
+            .popover(isPresented: $showMonthPicker) {
+                monthYearPickerPopover
+                    .presentationCompactAdaptation(.popover)
+            }
 
             Spacer()
 
@@ -181,6 +195,49 @@ extension CalendarView {
                         .fill(Color(.systemGray6))
                 )
         }
+    }
+
+    private var monthYearPickerPopover: some View {
+        let currentYear = calendar.component(.year, from: Date())
+        let years = Array((currentYear - 80)...(currentYear + 1))
+        let months = Array(1...12)
+
+        return HStack(spacing: 0) {
+            Picker("년", selection: Binding(
+                get: { calendar.component(.year, from: displayedMonth) },
+                set: { newYear in
+                    var components = calendar.dateComponents([.year, .month, .day], from: displayedMonth)
+                    components.year = newYear
+                    components.day = 1
+                    if let date = calendar.date(from: components) {
+                        displayedMonth = date
+                    }
+                }
+            )) {
+                ForEach(years, id: \.self) { year in
+                    Text("\(String(year))년").tag(year)
+                }
+            }
+            .pickerStyle(.wheel)
+
+            Picker("월", selection: Binding(
+                get: { calendar.component(.month, from: displayedMonth) },
+                set: { newMonth in
+                    var components = calendar.dateComponents([.year, .month, .day], from: displayedMonth)
+                    components.month = newMonth
+                    components.day = 1
+                    if let date = calendar.date(from: components) {
+                        displayedMonth = date
+                    }
+                }
+            )) {
+                ForEach(months, id: \.self) { month in
+                    Text("\(month)월").tag(month)
+                }
+            }
+            .pickerStyle(.wheel)
+        }
+        .frame(width: 280, height: 200)
     }
 }
 
