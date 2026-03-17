@@ -133,12 +133,22 @@ enum HealthKitMapper {
     // MARK: - DTO -> Entity
     
     /// 여러 날에 걸쳐 있는 menstrualFlow 샘플들을 "연속된 날짜"를 기준으로 하나의 월경 기록으로 묶는다.
+    /// 샘플이 여러 날에 걸쳐 있는 경우(startDate~endDate) 날짜 단위로 펼쳐서 처리한다.
     static func menstrualCycleRecords(from samples: [HKCategorySample]) -> [MenstrualRecord] {
         guard !samples.isEmpty else { return [] }
         
-        let days = Array(
-            Set(samples.map { calendar.startOfDay(for: $0.startDate) })
-        ).sorted()
+        var daySet = Set<Date>()
+        for sample in samples {
+            let start = calendar.startOfDay(for: sample.startDate)
+            let end = calendar.startOfDay(for: sample.endDate)
+            var current = start
+            while current <= end {
+                daySet.insert(current)
+                guard let next = calendar.date(byAdding: .day, value: 1, to: current) else { break }
+                current = next
+            }
+        }
+        let days = daySet.sorted()
         
         var records: [MenstrualRecord] = []
         var currentStart = days[0]
