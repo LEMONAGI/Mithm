@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var appState: AppState
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: Int = 0
     
     var body: some View {
@@ -36,6 +37,17 @@ struct ContentView: View {
                 try await appState.refreshMenstrualData()
             } catch {
                 appState.menstrualRecordError = error
+            }
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                Task {
+                    do {
+                        try await appState.refreshMenstrualData()
+                    } catch {
+                        appState.menstrualRecordError = error
+                    }
+                }
             }
         }
     }
