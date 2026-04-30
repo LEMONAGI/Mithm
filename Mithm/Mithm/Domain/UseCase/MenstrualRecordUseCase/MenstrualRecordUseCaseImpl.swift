@@ -26,7 +26,14 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
         self.calendar = calendar
     }
     
-    func fetchMenstrualRecords() async throws -> [MenstrualRecord] {
+    func requestHealthKitAuthorization() async throws {
+        try await healthKitRepository.requestAuthorization(
+            writeTypes: [.menstrualCycle],
+            readTypes: [.menstrualCycle, .wristTemperature]
+        )
+    }
+
+    func fetchMenstrualOverview() async throws -> MenstrualOverview {
         let now = Date()
         let from = calendar.date(byAdding: .year, value: -100, to: now)!
         let to = now
@@ -49,17 +56,22 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
             calendar: calendar
         )
 
-        return (baseRecords + ovulationRecords)
+        let allRecords = (baseRecords + ovulationRecords)
             .sorted { lhs, rhs in
                 if lhs.startDate == rhs.startDate {
                     return (lhs.endDate ?? lhs.startDate) < (rhs.endDate ?? rhs.startDate)
                 }
                 return lhs.startDate < rhs.startDate
             }
+        
+        return MenstrualOverview(
+            actualRecords: actualRecords,
+            allRecords: allRecords,
+            prediction: predictionResult)
     }
     
-    func saveMenstrualRecored(_ record: MenstrualRecord) async throws {
+    func saveMenstrualRecored(_ record: MenstrualRecord, deleteFrom: Date? = nil, deleteThrough: Date? = nil) async throws {
         try await healthKitRepository.checkWriteAuthorization(for: .menstrualCycle)
-        try await healthKitRepository.updateMenstrualCycleRecord(record)
+        try await healthKitRepository.updateMenstrualCycleRecord(record, deleteFrom: deleteFrom, deleteThrough: deleteThrough)
     }
 }

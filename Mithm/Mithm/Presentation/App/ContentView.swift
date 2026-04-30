@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
+    @EnvironmentObject private var appState: AppState
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: Int = 0
+    @State private var showErrorAlert = false
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -29,9 +31,37 @@ struct ContentView: View {
                 Label("설정", systemImage: "gearshape")
             }
         }
+        .task {
+            await appState.performInitialLoad()
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                Task {
+                    await appState.refreshOnForeground()
+                }
+            }
+        }
+        .onChange(of: appState.menstrualRecordError != nil) {
+            if appState.menstrualRecordError != nil {
+                showErrorAlert = true
+            }
+        }
+        .alert(
+            appState.menstrualRecordError?.alertTitle ?? "",
+            isPresented: $showErrorAlert
+        ) {
+            Button("확인", role: .cancel) {
+                appState.menstrualRecordError = nil
+            }
+        } message: {
+            Text(appState.menstrualRecordError?.alertMessage ?? "")
+        }
     }
 }
 
 #Preview {
+    let appState = AppDIContainer.makeAppState()
     ContentView()
+        .environmentObject(appState)
+        .environmentObject(AppDIContainer.makeHomeViewModel(appState: appState))
 }

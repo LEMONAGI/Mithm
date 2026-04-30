@@ -8,57 +8,175 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State var currentType: PhaseType = .luteal
+    @EnvironmentObject private var homeViewModel: HomeViewModel
+    @State private var showDatePicker = false
+    @State private var isPickingEndDate = false
+    @State private var selectedDate = Date()
+    
+    // MARK: - Body
+    
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            currentType.color
-                .ignoresSafeArea()
-            Image(currentType.image)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 402, height: 402/373*470)
-                .offset(y: 30)
-                
-            VStack(alignment: .leading, spacing: 0) {
-                Text("다음 월경")
-                    .bold()
-                Spacer().frame(height: 6)
-                Text("12월 18일 · D-23")
-                    .bold()
-                    .font(.title2)
-                Spacer()
-                Spacer()
-                Spacer()
-                Spacer()
-                Spacer()
-                Spacer()
-                Spacer()
-                Text(currentType.name)
-                    .font(.system(size: 100, weight: .black, design: .monospaced))
-                Text(currentType.description)
-                    .bold()
-                Spacer()
-                Button {
-                    currentType = currentType.nextType
-                } label: {
-                    RoundedRectangle(cornerRadius: 30)
-                        .foregroundStyle(Color.black)
-                        .frame(height: 120)
-                        .overlay {
-                            Text("월경 시작")
-                                .foregroundStyle(.white)
-                                .bold()
-                                .font(.title)
+        GeometryReader { geometry in
+            ZStack {
+                // Background
+                homeViewModel.currentPhase.color
+                    .ignoresSafeArea()
+                VStack {
+                    // Main image - fills available space
+                    Image(homeViewModel.currentPhase.mainImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: geometry.size.width)
+                        .overlay(alignment: .topLeading) {
+                            headerSection
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 20)
+                                .padding(.top, 14)
                         }
+                        .padding(.top, 14)
+                    Spacer()
                 }
                 
-                Spacer()
+                VStack(spacing: 0) {
+                    Spacer()
+                    bottomSection
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 54)
+                }
             }
-           .padding()
+        }
+        .ignoresSafeArea(edges: .horizontal)
+        .sheet(isPresented: $showDatePicker) {
+            datePickerSheet
+                .presentationDetents([.medium])
+        }
+        .task {
+            await homeViewModel.autoCloseOpenMenstruationIfNeeded()
         }
     }
 }
 
+// MARK: - Subviews
+
+private extension HomeView {
+    
+    var headerSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("다음 월경 예정일")
+                .font(.body5)
+                .foregroundStyle(.primaryBlack)
+            Text(homeViewModel.nextMenstrualString)
+                .font(.heading4)
+                .foregroundStyle(.primaryBlack)
+        }
+    }
+    
+    var bottomSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Phase date range
+            Text(homeViewModel.currentPhaseDateRangeString)
+                .font(.heading1)
+                .foregroundStyle(.primaryBlack)
+                .padding(.bottom, 4)
+            
+            // Phase name + info
+            HStack(alignment: .bottom, spacing: 10) {
+                Text(homeViewModel.currentPhase.name)
+                    .font(.highlight1)
+                    .foregroundStyle(.primaryBlack)
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundStyle(.gray)
+                    .offset(y: -12)
+            }
+            .padding(.bottom, 10)
+            
+            // Description
+            Text(homeViewModel.currentPhase.description)
+                .font(.heading5)
+                .foregroundStyle(.primaryBlack)
+                .padding(.bottom, 26)
+            
+            // Action button
+            actionButton
+        }
+    }
+    
+    var actionButton: some View {
+        Button {
+            if homeViewModel.isMenstruating {
+                isPickingEndDate = true
+                selectedDate = Date()
+            } else {
+                isPickingEndDate = false
+                selectedDate = Date()
+            }
+            showDatePicker = true
+        } label: {
+            Text(homeViewModel.isMenstruating ? "월경 종료" : "월경 시작")
+                .font(.pretendardBold(30))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 80)
+                .background(
+                    RoundedRectangle(cornerRadius: 30)
+                        .fill(Color.primaryBlack)
+                )
+        }
+    }
+    
+    var datePickerSheet: some View {
+        VStack(spacing: 0) {
+            Text(isPickingEndDate ? "월경 종료일을 선택하세요" : "월경 시작일을 선택하세요")
+                .font(.pretendardBold(24))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.top, 28)
+                .padding(.bottom, 16)
+            
+            DatePicker(
+                "",
+                selection: $selectedDate,
+                in: homeViewModel.selectableDateRange(isPickingEndDate: isPickingEndDate),
+                displayedComponents: [.date]
+            )
+            .datePickerStyle(.wheel)
+            .labelsHidden()
+            .environment(\.locale, Locale(identifier: "ko_KR"))
+            .padding(.horizontal, 20)
+            
+            Spacer()
+            
+            Button {
+                showDatePicker = false
+                Task {
+                    if isPickingEndDate {
+                        await homeViewModel.endMenstruation(endDate: selectedDate)
+                    } else {
+                        await homeViewModel.startMenstruation(startDate: selectedDate)
+                    }
+                }
+            } label: {
+                Text("선택 완료")
+                    .font(.pretendardBold(20))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 64)
+                    .background(
+                        RoundedRectangle(cornerRadius: 32)
+                            .fill(Color.primaryBlack)
+                    )
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
+        }
+    }
+}
+
+// MARK: - Preview
+
 #Preview {
+    let appState = AppDIContainer.makeAppState()
     HomeView()
+        .environmentObject(AppDIContainer.makeHomeViewModel(appState: appState))
 }
