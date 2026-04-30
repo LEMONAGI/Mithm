@@ -34,7 +34,9 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
     }
 
     func fetchMenstrualOverview(
-        activeMenstrualStartDate: Date? = nil
+        activeMenstrualStartDate: Date? = nil,
+        userInput: MenstrualUserInput? = nil,
+        userInputMode: UserInputMode? = nil
     ) async throws -> MenstrualOverview {
         let now = Date()
         let from = calendar.date(byAdding: .year, value: -100, to: now)!
@@ -49,8 +51,10 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
             from: actualRecords,
             activeMenstrualStartDate: activeMenstrualStartDate
         )
+        let predictionEngine = makePredictionEngine(userInputMode: userInputMode)
         let predictionResult = predictionEngine.predict(
             from: predictionSourceRecords,
+            userInput: userInput,
             calendar: calendar
         )
         let predictedMenstrualRecords = predictionResult.menstrualPredictions
@@ -100,5 +104,18 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
         )
 
         return recordsExcludingActiveEpisode + [openRecord]
+    }
+
+    private func makePredictionEngine(
+        userInputMode: UserInputMode?
+    ) -> MenstrualPredictionEngine {
+        guard let userInputMode else {
+            return predictionEngine
+        }
+
+        return MenstrualPredictionEngine(
+            config: predictionEngine.config,
+            userInputMode: userInputMode
+        )
     }
 }

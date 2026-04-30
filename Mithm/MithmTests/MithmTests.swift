@@ -1760,6 +1760,66 @@ struct MenstrualRecordUseCaseTests {
         #expect(result.filter { $0.type == .menstrualPrediction }.count == 3)
     }
 
+    @Test("fetchMenstrualOverview는 전달된 사용자 입력을 예측에 반영한다")
+    func fetchMenstrualOverviewUsesUserInput() async throws {
+        let repository = MockHealthKitRepository(records: [])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            calendar: calendar
+        )
+
+        let overview = try await useCase.fetchMenstrualOverview(
+            activeMenstrualStartDate: nil,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 7),
+            userInputMode: .blendUserInput
+        )
+
+        #expect(overview.prediction?.predictedCycleLength == 35)
+        #expect(overview.prediction?.predictedPeriodLength == 7)
+        #expect(overview.prediction?.menstrualPredictions.count == 3)
+    }
+
+    @Test("fetchMenstrualOverview는 notBlendUserInput이면 전달된 사용자 입력을 무시한다")
+    func fetchMenstrualOverviewCanIgnoreUserInput() async throws {
+        let repository = MockHealthKitRepository(records: [])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            calendar: calendar
+        )
+
+        let overview = try await useCase.fetchMenstrualOverview(
+            activeMenstrualStartDate: nil,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 7),
+            userInputMode: .notBlendUserInput
+        )
+
+        #expect(overview.prediction?.predictedCycleLength == 28)
+        #expect(overview.prediction?.predictedPeriodLength == 5)
+        #expect(overview.prediction?.usedDefaultRule == true)
+    }
+
+    @Test("fetchMenstrualOverview는 userInputMode만 바꾸고 주입된 예측 엔진 config는 유지한다")
+    func fetchMenstrualOverviewPreservesInjectedPredictionConfig() async throws {
+        let repository = MockHealthKitRepository(records: [])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            predictionEngine: MenstrualPredictionEngine(
+                config: Self.makePredictionConfig(predictionCount: 5)
+            ),
+            calendar: calendar
+        )
+
+        let overview = try await useCase.fetchMenstrualOverview(
+            activeMenstrualStartDate: nil,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 7),
+            userInputMode: .onlyUserInput
+        )
+
+        #expect(overview.prediction?.predictedCycleLength == 35)
+        #expect(overview.prediction?.predictedPeriodLength == 7)
+        #expect(overview.prediction?.menstrualPredictions.count == 5)
+    }
+
     @Test("fetchMenstrualOverview는 진행 중 실제 기록(endDate nil)을 제거하고 예측 월경 예정기간으로 교체한다")
     func fetchMenstrualOverviewReplacesOpenEndedActualRecord() async throws {
         let repository = MockHealthKitRepository(records: [
@@ -1818,6 +1878,46 @@ struct MenstrualRecordUseCaseTests {
         formatter.timeZone = calendar.timeZone
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date)
+    }
+
+    private static func makePredictionConfig(
+        predictionCount: Int
+    ) -> MenstrualPredictionEngine.Config {
+        let c = MenstrualPredictionEngine.Config.default
+        return MenstrualPredictionEngine.Config(
+            validPeriodRange: c.validPeriodRange,
+            validCycleRange: c.validCycleRange,
+            allowedUserInputCycleRange: c.allowedUserInputCycleRange,
+            allowedUserInputPeriodRange: c.allowedUserInputPeriodRange,
+            outlierNormalThreshold: c.outlierNormalThreshold,
+            outlierMildThreshold: c.outlierMildThreshold,
+            outlierMildWeight: c.outlierMildWeight,
+            outlierSevereWeight: c.outlierSevereWeight,
+            variabilityRegularMaxRange: c.variabilityRegularMaxRange,
+            variabilityModerateMaxRange: c.variabilityModerateMaxRange,
+            ewmaAlphaRegular: c.ewmaAlphaRegular,
+            ewmaAlphaModerate: c.ewmaAlphaModerate,
+            ewmaAlphaIrregular: c.ewmaAlphaIrregular,
+            cycleWeightRegular: c.cycleWeightRegular,
+            cycleWeightModerate: c.cycleWeightModerate,
+            cycleWeightIrregular: c.cycleWeightIrregular,
+            cycleWeightShift: c.cycleWeightShift,
+            cycleWeightReduced: c.cycleWeightReduced,
+            periodWeightStable: c.periodWeightStable,
+            periodWeightIrregular: c.periodWeightIrregular,
+            recencyDecayDays: c.recencyDecayDays,
+            recencyMinimumWeight: c.recencyMinimumWeight,
+            userInputMode: c.userInputMode,
+            userInputCycleWeightVeryLowHistory: c.userInputCycleWeightVeryLowHistory,
+            userInputCycleWeightLowHistory: c.userInputCycleWeightLowHistory,
+            userInputCycleWeightHighHistory: c.userInputCycleWeightHighHistory,
+            userInputCycleWeightHighConfidenceOverride: c.userInputCycleWeightHighConfidenceOverride,
+            userInputPeriodWeightVeryLowHistory: c.userInputPeriodWeightVeryLowHistory,
+            userInputPeriodWeightLowHistory: c.userInputPeriodWeightLowHistory,
+            userInputPeriodWeightHighHistory: c.userInputPeriodWeightHighHistory,
+            shiftThreshold: c.shiftThreshold,
+            predictionCount: predictionCount
+        )
     }
 }
 

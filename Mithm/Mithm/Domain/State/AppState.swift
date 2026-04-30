@@ -66,11 +66,11 @@ final class AppState: ObservableObject {
 
     /// 월경 기록 변경 후 데이터 갱신
     func refreshMenstrualData() async throws {
-        var overview = try await menstrualRecordUseCase.fetchMenstrualOverview()
+        var overview = try await fetchMenstrualOverview()
         var status = resolveCurrentMenstrualStatus(from: overview)
 
         if status.isActive, let activeStartDate = status.activeStartDate {
-            overview = try await menstrualRecordUseCase.fetchMenstrualOverview(
+            overview = try await fetchMenstrualOverview(
                 activeMenstrualStartDate: activeStartDate
             )
             status = resolveCurrentMenstrualStatus(from: overview)
@@ -96,7 +96,7 @@ final class AppState: ObservableObject {
                     closedReason: .autoClosed
                 )
             )
-            overview = try await menstrualRecordUseCase.fetchMenstrualOverview()
+            overview = try await fetchMenstrualOverview()
             status = resolveCurrentMenstrualStatus(from: overview)
         }
 
@@ -124,6 +124,16 @@ final class AppState: ObservableObject {
             actualRecords: overview.actualRecords,
             currentEpisode: currentMenstrualEpisodeStore.loadCurrentEpisode(),
             predictedPeriodLength: overview.prediction?.predictedPeriodLength
+        )
+    }
+
+    private func fetchMenstrualOverview(
+        activeMenstrualStartDate: Date? = nil
+    ) async throws -> MenstrualOverview {
+        try await menstrualRecordUseCase.fetchMenstrualOverview(
+            activeMenstrualStartDate: activeMenstrualStartDate,
+            userInput: userSetting.menstrualUserInput,
+            userInputMode: userSetting.userInputMode
         )
     }
 }
