@@ -33,7 +33,9 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
         )
     }
 
-    func fetchMenstrualOverview() async throws -> MenstrualOverview {
+    func fetchMenstrualOverview(
+        activeMenstrualStartDate: Date? = nil
+    ) async throws -> MenstrualOverview {
         let now = Date()
         let from = calendar.date(byAdding: .year, value: -100, to: now)!
         let to = now
@@ -42,9 +44,13 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
             from: from,
             to: to
         )
-        
-        let predictionResult = predictionEngine.predict(
+
+        let predictionSourceRecords = makePredictionSourceRecords(
             from: actualRecords,
+            activeMenstrualStartDate: activeMenstrualStartDate
+        )
+        let predictionResult = predictionEngine.predict(
+            from: predictionSourceRecords,
             calendar: calendar
         )
         let predictedMenstrualRecords = predictionResult.menstrualPredictions
@@ -73,5 +79,26 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
     func saveMenstrualRecored(_ record: MenstrualRecord, deleteFrom: Date? = nil, deleteThrough: Date? = nil) async throws {
         try await healthKitRepository.checkWriteAuthorization(for: .menstrualCycle)
         try await healthKitRepository.updateMenstrualCycleRecord(record, deleteFrom: deleteFrom, deleteThrough: deleteThrough)
+    }
+
+    private func makePredictionSourceRecords(
+        from actualRecords: [MenstrualRecord],
+        activeMenstrualStartDate: Date?
+    ) -> [MenstrualRecord] {
+        guard let activeMenstrualStartDate else {
+            return actualRecords
+        }
+
+        let activeStartDate = calendar.startOfDay(for: activeMenstrualStartDate)
+        let recordsExcludingActiveEpisode = actualRecords.filter {
+            !calendar.isDate($0.startDate, inSameDayAs: activeStartDate)
+        }
+        let openRecord = MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: activeStartDate,
+            endDate: nil
+        )
+
+        return recordsExcludingActiveEpisode + [openRecord]
     }
 }

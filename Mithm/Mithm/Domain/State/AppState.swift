@@ -16,23 +16,30 @@ final class AppState: ObservableObject {
     @Published var menstrualOverview: MenstrualOverview = MenstrualOverview()
     @Published var menstrualRecordError: Error?
     @Published var userSetting = UserSettingState()
+    @Published var currentMenstrualStatus: CurrentMenstrualStatus = .inactive()
 
     // MARK: - Dependencies
 
     private let menstrualRecordUseCase: MenstrualRecordUseCase
     private let syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase
     private let userSettingUseCase: UserSettingUseCase
+    private let currentMenstrualEpisodeStore: CurrentMenstrualEpisodeStore
+    private let currentMenstrualStatusResolver: CurrentMenstrualStatusResolver
 
     // MARK: - Init
 
     init(
         menstrualRecordUseCase: MenstrualRecordUseCase,
         syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase,
-        userSettingUseCase: UserSettingUseCase
+        userSettingUseCase: UserSettingUseCase,
+        currentMenstrualEpisodeStore: CurrentMenstrualEpisodeStore,
+        currentMenstrualStatusResolver: CurrentMenstrualStatusResolver
     ) {
         self.menstrualRecordUseCase = menstrualRecordUseCase
         self.syncMenstrualCalendarUseCase = syncMenstrualCalendarUseCase
         self.userSettingUseCase = userSettingUseCase
+        self.currentMenstrualEpisodeStore = currentMenstrualEpisodeStore
+        self.currentMenstrualStatusResolver = currentMenstrualStatusResolver
     }
 
     // MARK: - Public Actions
@@ -59,8 +66,42 @@ final class AppState: ObservableObject {
 
     /// 월경 기록 변경 후 데이터 갱신
     func refreshMenstrualData() async throws {
-        let overview = try await menstrualRecordUseCase.fetchMenstrualOverview()
+        var overview = try await menstrualRecordUseCase.fetchMenstrualOverview()
+        var status = resolveCurrentMenstrualStatus(from: overview)
+
+        if status.isActive, let activeStartDate = status.activeStartDate {
+            overview = try await menstrualRecordUseCase.fetchMenstrualOverview(
+                activeMenstrualStartDate: activeStartDate
+            )
+            status = resolveCurrentMenstrualStatus(from: overview)
+        }
+
+        if status.shouldAutoClose,
+           let latestStartDate = status.latestStartDate,
+           let expectedEndDate = status.expectedEndDate {
+            let closedRecord = MenstrualRecord(
+                type: .menstrualRecord,
+                startDate: latestStartDate,
+                endDate: expectedEndDate
+            )
+            try await menstrualRecordUseCase.saveMenstrualRecored(
+                closedRecord,
+                deleteFrom: latestStartDate,
+                deleteThrough: Date()
+            )
+            currentMenstrualEpisodeStore.saveCurrentEpisode(
+                CurrentMenstrualEpisode(
+                    startDate: latestStartDate,
+                    endDate: expectedEndDate,
+                    closedReason: .autoClosed
+                )
+            )
+            overview = try await menstrualRecordUseCase.fetchMenstrualOverview()
+            status = resolveCurrentMenstrualStatus(from: overview)
+        }
+
         menstrualOverview = overview
+        currentMenstrualStatus = status
 
         try await syncMenstrualCalendarUseCase.execute(
             records: overview.allRecords,
@@ -75,5 +116,14 @@ final class AppState: ObservableObject {
             userInputMode: userSettingUseCase.loadUserInputMode()
         )
     }
-}
 
+    private func resolveCurrentMenstrualStatus(
+        from overview: MenstrualOverview
+    ) -> CurrentMenstrualStatus {
+        currentMenstrualStatusResolver.resolve(
+            actualRecords: overview.actualRecords,
+            currentEpisode: currentMenstrualEpisodeStore.loadCurrentEpisode(),
+            predictedPeriodLength: overview.prediction?.predictedPeriodLength
+        )
+    }
+}

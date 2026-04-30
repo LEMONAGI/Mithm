@@ -50,9 +50,6 @@ struct HomeView: View {
             datePickerSheet
                 .presentationDetents([.medium])
         }
-        .task {
-            await homeViewModel.autoCloseOpenMenstruationIfNeeded()
-        }
     }
 }
 

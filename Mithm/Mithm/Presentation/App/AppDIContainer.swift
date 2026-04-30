@@ -28,11 +28,14 @@ struct AppDIContainer {
         let userSettingUseCase = UserSettingUseCaseImpl(
             userSettingRepository: userSettingRepository
         )
+        let currentMenstrualEpisodeStore = UserDefaultsCurrentMenstrualEpisodeStore()
 
         return AppState(
             menstrualRecordUseCase: menstrualRecordUseCase,
             syncMenstrualCalendarUseCase: syncMenstrualCalendarUseCase,
-            userSettingUseCase: userSettingUseCase
+            userSettingUseCase: userSettingUseCase,
+            currentMenstrualEpisodeStore: currentMenstrualEpisodeStore,
+            currentMenstrualStatusResolver: CurrentMenstrualStatusResolver()
         )
     }
 
@@ -44,15 +47,15 @@ struct AppDIContainer {
             healthKitRepository: healthKitRepository,
             calendar: calendar
         )
-        let openPeriodAutoCloser = OpenPeriodAutoCloser()
         let homePhaseUseCase = HomePhaseUseCaseImpl()
+        let currentMenstrualEpisodeStore = UserDefaultsCurrentMenstrualEpisodeStore()
 
         return HomeViewModel(
             appState: appState,
             calendar: calendar,
             menstrualRecordUseCase: menstrualRecordUseCase,
             homePhaseUseCase: homePhaseUseCase,
-            openPeriodAutoCloser: openPeriodAutoCloser
+            currentMenstrualEpisodeStore: currentMenstrualEpisodeStore
         )
     }
 }
