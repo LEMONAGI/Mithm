@@ -136,7 +136,22 @@ struct CurrentMenstrualStatusResolver {
             )
         }
 
+        let todayHasHealthRecord = latestHealthRecord.map {
+            contains($0, day: today, calendar: calendar)
+        } ?? false
+        let hasOpenEpisode = isOpenEpisode(currentEpisode, for: startDate, calendar: calendar)
+
         if today > deadline {
+            if hasOpenEpisode {
+                return CurrentMenstrualStatus(
+                    isActive: true,
+                    activeStartDate: startDate,
+                    latestStartDate: startDate,
+                    expectedEndDate: expectedEndDate,
+                    shouldAutoClose: true
+                )
+            }
+
             return .inactive(
                 latestStartDate: startDate,
                 expectedEndDate: expectedEndDate,
@@ -144,9 +159,6 @@ struct CurrentMenstrualStatusResolver {
             )
         }
 
-        let todayHasHealthRecord = latestHealthRecord.map {
-            contains($0, day: today, calendar: calendar)
-        } ?? false
         let isWithinAutoCloseWindow = startDate <= today && today <= deadline
 
         guard todayHasHealthRecord || isWithinAutoCloseWindow else {
@@ -191,6 +203,17 @@ struct CurrentMenstrualStatusResolver {
         calendar: Calendar
     ) -> Bool {
         guard let currentEpisode, currentEpisode.isClosed else {
+            return false
+        }
+        return calendar.isDate(currentEpisode.startDate, inSameDayAs: startDate)
+    }
+
+    private func isOpenEpisode(
+        _ currentEpisode: CurrentMenstrualEpisode?,
+        for startDate: Date,
+        calendar: Calendar
+    ) -> Bool {
+        guard let currentEpisode, currentEpisode.closedReason == nil else {
             return false
         }
         return calendar.isDate(currentEpisode.startDate, inSameDayAs: startDate)

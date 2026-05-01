@@ -25,6 +25,7 @@ final class AppState: ObservableObject {
     private let userSettingUseCase: UserSettingUseCase
     private let currentMenstrualEpisodeStore: CurrentMenstrualEpisodeStore
     private let currentMenstrualStatusResolver: CurrentMenstrualStatusResolver
+    private var hasPerformedLaunchAutoCloseCheck = false
 
     // MARK: - Init
 
@@ -49,7 +50,9 @@ final class AppState: ObservableObject {
         loadUserSettings()
         do {
             try await menstrualRecordUseCase.requestHealthKitAuthorization()
-            try await refreshMenstrualData()
+            let shouldRunAutoClose = !hasPerformedLaunchAutoCloseCheck
+            hasPerformedLaunchAutoCloseCheck = true
+            try await refreshMenstrualData(runAutoClose: shouldRunAutoClose)
         } catch {
             menstrualRecordError = error
         }
@@ -66,6 +69,10 @@ final class AppState: ObservableObject {
 
     /// 월경 기록 변경 후 데이터 갱신
     func refreshMenstrualData() async throws {
+        try await refreshMenstrualData(runAutoClose: false)
+    }
+
+    private func refreshMenstrualData(runAutoClose: Bool) async throws {
         var overview = try await fetchMenstrualOverview()
         var status = resolveCurrentMenstrualStatus(from: overview)
 
@@ -76,7 +83,8 @@ final class AppState: ObservableObject {
             status = resolveCurrentMenstrualStatus(from: overview)
         }
 
-        if status.shouldAutoClose,
+        if runAutoClose,
+           status.shouldAutoClose,
            let latestStartDate = status.latestStartDate,
            let expectedEndDate = status.expectedEndDate {
             let closedRecord = MenstrualRecord(

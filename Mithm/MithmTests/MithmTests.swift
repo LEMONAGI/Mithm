@@ -2041,6 +2041,28 @@ struct CurrentMenstrualStatusResolverTests {
         #expect(status.expectedEndDate == date("2026-01-14"))
     }
 
+    @Test("열려 있는 앱 에피소드는 자동 종료 기준을 지나도 월경 중으로 유지하고 자동 종료 대상으로 표시한다")
+    func openEpisodeAfterDeadlineStaysActiveAndRequiresAutoClose() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-01-10", end: "2026-01-10")
+            ],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-01-10"),
+                endDate: nil,
+                closedReason: nil
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-01-17"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive)
+        #expect(status.shouldAutoClose)
+        #expect(status.activeStartDate == date("2026-01-10"))
+        #expect(status.expectedEndDate == date("2026-01-14"))
+    }
+
     private func makeRecord(start: String, end: String) -> MenstrualRecord {
         MenstrualRecord(
             type: .menstrualRecord,
