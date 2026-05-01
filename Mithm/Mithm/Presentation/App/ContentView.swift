@@ -64,4 +64,5 @@ struct ContentView: View {
     ContentView()
         .environmentObject(appState)
         .environmentObject(AppDIContainer.makeHomeViewModel(appState: appState))
+        .environmentObject(AppDIContainer.makeCalendarViewModel(appState: appState))
 }

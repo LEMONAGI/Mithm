@@ -19,11 +19,11 @@ struct HomeView: View {
         GeometryReader { geometry in
             ZStack {
                 // Background
-                homeViewModel.currentPhase.color
+                homeViewModel.currentPhasePresentation.color
                     .ignoresSafeArea()
                 VStack {
                     // Main image - fills available space
-                    Image(homeViewModel.currentPhase.mainImage)
+                    Image(homeViewModel.currentPhasePresentation.mainImage)
                         .resizable()
                         .scaledToFit()
                         .frame(width: geometry.size.width)
@@ -78,7 +78,7 @@ private extension HomeView {
             
             // Phase name + info
             HStack(alignment: .bottom, spacing: 10) {
-                Text(homeViewModel.currentPhase.name)
+                Text(homeViewModel.currentPhasePresentation.name)
                     .font(.highlight1)
                     .foregroundStyle(.primaryBlack)
                 Image(systemName: "info.circle.fill")
@@ -89,7 +89,7 @@ private extension HomeView {
             .padding(.bottom, 10)
             
             // Description
-            Text(homeViewModel.currentPhase.description)
+            Text(homeViewModel.currentPhasePresentation.description)
                 .font(.heading5)
                 .foregroundStyle(.primaryBlack)
                 .padding(.bottom, 26)

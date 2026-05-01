@@ -7,9 +7,15 @@
 
 import Foundation
 
+struct AppDependencyGraph {
+    let appState: AppState
+    let homeViewModel: HomeViewModel
+    let calendarViewModel: CalendarViewModel
+}
+
 struct AppDIContainer {
 
-    static func makeAppState() -> AppState {
+    static func makeAppDependencyGraph() -> AppDependencyGraph {
         let calendar = Calendar.current
         let healthKitDataStore = HealthKitDataStoreImpl()
         let healthKitRepository = HealthKitRepositoryImpl(dataStore: healthKitDataStore)
@@ -28,34 +34,81 @@ struct AppDIContainer {
         let userSettingUseCase = UserSettingUseCaseImpl(
             userSettingRepository: userSettingRepository
         )
+        let loadUserSettingsUseCase = LoadUserSettingsUseCaseImpl(
+            userSettingUseCase: userSettingUseCase
+        )
         let currentMenstrualEpisodeStore = UserDefaultsCurrentMenstrualEpisodeStore()
 
-        return AppState(
+        let refreshMenstrualCycleUseCase = RefreshMenstrualCycleUseCaseImpl(
             menstrualRecordUseCase: menstrualRecordUseCase,
             syncMenstrualCalendarUseCase: syncMenstrualCalendarUseCase,
-            userSettingUseCase: userSettingUseCase,
             currentMenstrualEpisodeStore: currentMenstrualEpisodeStore,
-            currentMenstrualStatusResolver: CurrentMenstrualStatusResolver()
+            currentMenstrualStatusResolver: CurrentMenstrualStatusResolver(),
+            calendar: calendar
         )
+        let recordCurrentMenstrualPeriodUseCase = RecordCurrentMenstrualPeriodUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: currentMenstrualEpisodeStore,
+            calendar: calendar
+        )
+        let homePhaseUseCase = HomePhaseUseCaseImpl()
+        let cycleCalendarUseCase = CycleCalendarUseCaseImpl(calendar: calendar)
+
+        let appState = AppState(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            refreshMenstrualCycleUseCase: refreshMenstrualCycleUseCase,
+            loadUserSettingsUseCase: loadUserSettingsUseCase
+        )
+
+        let homeViewModel = HomeViewModel(
+            appState: appState,
+            calendar: calendar,
+            recordCurrentMenstrualPeriodUseCase: recordCurrentMenstrualPeriodUseCase,
+            homePhaseUseCase: homePhaseUseCase
+        )
+        let calendarViewModel = CalendarViewModel(
+            appState: appState,
+            cycleCalendarUseCase: cycleCalendarUseCase
+        )
+
+        return AppDependencyGraph(
+            appState: appState,
+            homeViewModel: homeViewModel,
+            calendarViewModel: calendarViewModel
+        )
+    }
+
+    static func makeAppState() -> AppState {
+        makeAppDependencyGraph().appState
     }
 
     static func makeHomeViewModel(appState: AppState) -> HomeViewModel {
         let calendar = Calendar.current
-        let healthKitDataStore = HealthKitDataStoreImpl()
-        let healthKitRepository = HealthKitRepositoryImpl(dataStore: healthKitDataStore)
+        let healthKitRepository = HealthKitRepositoryImpl(
+            dataStore: HealthKitDataStoreImpl()
+        )
         let menstrualRecordUseCase = MenstrualRecordUseCaseImpl(
             healthKitRepository: healthKitRepository,
             calendar: calendar
         )
-        let homePhaseUseCase = HomePhaseUseCaseImpl()
-        let currentMenstrualEpisodeStore = UserDefaultsCurrentMenstrualEpisodeStore()
+        let recordCurrentMenstrualPeriodUseCase = RecordCurrentMenstrualPeriodUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: UserDefaultsCurrentMenstrualEpisodeStore(),
+            calendar: calendar
+        )
 
         return HomeViewModel(
             appState: appState,
             calendar: calendar,
-            menstrualRecordUseCase: menstrualRecordUseCase,
-            homePhaseUseCase: homePhaseUseCase,
-            currentMenstrualEpisodeStore: currentMenstrualEpisodeStore
+            recordCurrentMenstrualPeriodUseCase: recordCurrentMenstrualPeriodUseCase,
+            homePhaseUseCase: HomePhaseUseCaseImpl()
+        )
+    }
+
+    static func makeCalendarViewModel(appState: AppState) -> CalendarViewModel {
+        CalendarViewModel(
+            appState: appState,
+            cycleCalendarUseCase: CycleCalendarUseCaseImpl()
         )
     }
 }

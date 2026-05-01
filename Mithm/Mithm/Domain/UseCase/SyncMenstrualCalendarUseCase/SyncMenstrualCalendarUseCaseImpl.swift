@@ -6,15 +6,10 @@
 //
 
 import Foundation
-import os
 
 struct SyncMenstrualCalendarUseCaseImpl: SyncMenstrualCalendarUseCase {
 
     private let eventKitRepository: EventKitRepository
-    private let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "com.mithm",
-        category: "SyncMenstrualCalendarUseCase"
-    )
 
     init(eventKitRepository: EventKitRepository) {
         self.eventKitRepository = eventKitRepository

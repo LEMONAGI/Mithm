@@ -18,9 +18,8 @@ final class HomeViewModel: ObservableObject {
 
     private let appState: AppState
     private let calendar: Calendar
-    private let menstrualRecordUseCase: MenstrualRecordUseCase
+    private let recordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase
     private let homePhaseUseCase: HomePhaseUseCase
-    private let currentMenstrualEpisodeStore: CurrentMenstrualEpisodeStore
 
     // MARK: - Combine
 
@@ -31,15 +30,13 @@ final class HomeViewModel: ObservableObject {
     init(
         appState: AppState,
         calendar: Calendar = .current,
-        menstrualRecordUseCase: MenstrualRecordUseCase,
-        homePhaseUseCase: HomePhaseUseCase,
-        currentMenstrualEpisodeStore: CurrentMenstrualEpisodeStore
+        recordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase,
+        homePhaseUseCase: HomePhaseUseCase
     ) {
         self.appState = appState
         self.calendar = calendar
-        self.menstrualRecordUseCase = menstrualRecordUseCase
+        self.recordCurrentMenstrualPeriodUseCase = recordCurrentMenstrualPeriodUseCase
         self.homePhaseUseCase = homePhaseUseCase
-        self.currentMenstrualEpisodeStore = currentMenstrualEpisodeStore
         self.isMenstruating = appState.currentMenstrualStatus.isActive
 
         self.currentPhaseWindow = PhaseWindow(
@@ -87,6 +84,10 @@ final class HomeViewModel: ObservableObject {
         currentPhaseWindow.phase
     }
 
+    var currentPhasePresentation: PhasePresentation {
+        currentPhase.presentation
+    }
+
     var currentPhaseDateRangeString: String {
         "\(FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.startDate)) - \(FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.endDate))"
     }
@@ -124,26 +125,8 @@ final class HomeViewModel: ObservableObject {
     // MARK: - Public Actions
 
     func startMenstruation(startDate: Date) async {
-        let normalizedStart = calendar.startOfDay(for: startDate)
-
-        let startRecord = MenstrualRecord(
-            type: .menstrualRecord,
-            startDate: normalizedStart,
-            endDate: normalizedStart
-        )
         do {
-            try await menstrualRecordUseCase.saveMenstrualRecored(
-                startRecord,
-                deleteFrom: normalizedStart,
-                deleteThrough: normalizedStart
-            )
-            currentMenstrualEpisodeStore.saveCurrentEpisode(
-                CurrentMenstrualEpisode(
-                    startDate: normalizedStart,
-                    endDate: nil,
-                    closedReason: nil
-                )
-            )
+            try await recordCurrentMenstrualPeriodUseCase.start(on: startDate)
             try await appState.refreshMenstrualData()
         } catch {
             appState.menstrualRecordError = error
@@ -151,29 +134,14 @@ final class HomeViewModel: ObservableObject {
     }
 
     func endMenstruation(endDate: Date) async {
-        guard let startDate = appState.currentMenstrualStatus.activeStartDate else { return }
-        let normalizedEndDate = max(calendar.startOfDay(for: endDate), startDate)
-
-        let record = MenstrualRecord(
-            type: .menstrualRecord,
-            startDate: startDate,
-            endDate: normalizedEndDate
-        )
-
         do {
-            try await menstrualRecordUseCase.saveMenstrualRecored(
-                record,
-                deleteFrom: startDate,
-                deleteThrough: Date()
+            let didEnd = try await recordCurrentMenstrualPeriodUseCase.end(
+                on: endDate,
+                currentStatus: appState.currentMenstrualStatus
             )
-            currentMenstrualEpisodeStore.saveCurrentEpisode(
-                CurrentMenstrualEpisode(
-                    startDate: startDate,
-                    endDate: normalizedEndDate,
-                    closedReason: .userEnded
-                )
-            )
-            try await appState.refreshMenstrualData()
+            if didEnd {
+                try await appState.refreshMenstrualData()
+            }
         } catch {
             appState.menstrualRecordError = error
         }
