@@ -2023,6 +2023,47 @@ struct CurrentMenstrualStatusResolverTests {
         #expect(status.shouldAutoClose == false)
     }
 
+    @Test("사용자가 오늘 종료한 에피소드는 홈 표시용 월경 기간을 유지한다")
+    func userClosedEpisodeTodayKeepsDisplayWindow() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-05-01", end: "2026-05-03")
+            ],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-05-01"),
+                endDate: date("2026-05-03"),
+                closedReason: .userEnded
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-05-03"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive == false)
+        #expect(status.displayWindow?.startDate == date("2026-05-01"))
+        #expect(status.displayWindow?.endDate == date("2026-05-03"))
+    }
+
+    @Test("사용자가 종료한 에피소드는 다음 날 홈 표시용 월경 기간을 제거한다")
+    func userClosedEpisodeAfterEndDateClearsDisplayWindow() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-05-01", end: "2026-05-03")
+            ],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-05-01"),
+                endDate: date("2026-05-03"),
+                closedReason: .userEnded
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-05-04"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive == false)
+        #expect(status.displayWindow == nil)
+    }
+
     @Test("자동 종료 기준을 지나면 자동 종료 대상으로 판단한다")
     func detectsAutoCloseAfterDeadline() {
         let status = resolver.resolve(

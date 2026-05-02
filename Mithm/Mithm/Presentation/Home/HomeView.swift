@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @State private var showDatePicker = false
+    @State private var showMenstrualEndCompletionAlert = false
     @State private var isPickingEndDate = false
     @State private var selectedDate = Date()
     
@@ -49,6 +50,14 @@ struct HomeView: View {
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
                 .presentationDetents([.medium])
+        }
+        .alert(
+            "이번 월경을 기록하였습니다",
+            isPresented: $showMenstrualEndCompletionAlert
+        ) {
+            Button("확인", role: .cancel) { }
+        } message: {
+            Text("내일부터 난포기가 시작됩니다.")
         }
     }
 }
@@ -101,7 +110,7 @@ private extension HomeView {
     
     var actionButton: some View {
         Button {
-            if homeViewModel.isMenstruating {
+            if homeViewModel.showsMenstrualEndAction {
                 isPickingEndDate = true
                 selectedDate = Date()
             } else {
@@ -110,7 +119,7 @@ private extension HomeView {
             }
             showDatePicker = true
         } label: {
-            Text(homeViewModel.isMenstruating ? "월경 종료" : "월경 시작")
+            Text(homeViewModel.showsMenstrualEndAction ? "월경 종료" : "월경 시작")
                 .font(.pretendardBold(30))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -148,7 +157,12 @@ private extension HomeView {
                 showDatePicker = false
                 Task {
                     if isPickingEndDate {
-                        await homeViewModel.endMenstruation(endDate: selectedDate)
+                        let didRecord = await homeViewModel.endMenstruation(endDate: selectedDate)
+                        if didRecord {
+                            await MainActor.run {
+                                showMenstrualEndCompletionAlert = true
+                            }
+                        }
                     } else {
                         await homeViewModel.startMenstruation(startDate: selectedDate)
                     }

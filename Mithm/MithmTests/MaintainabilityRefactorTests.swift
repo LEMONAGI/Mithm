@@ -89,6 +89,49 @@ struct RecordCurrentMenstrualPeriodUseCaseTests {
         #expect(episodeStore.episode == nil)
     }
 
+    @Test("오늘 종료한 표시용 월경 기간은 다시 종료 기록을 저장할 수 있다")
+    func endPersistsAgainWhenDisplayWindowExists() async throws {
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let episodeStore = FakeCurrentMenstrualEpisodeStore()
+        let now = date("2026-05-03 18:00")
+        let useCase = RecordCurrentMenstrualPeriodUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: episodeStore,
+            calendar: calendar,
+            now: { now }
+        )
+        let status = CurrentMenstrualStatus.inactive(
+            latestStartDate: date("2026-05-01 00:00"),
+            expectedEndDate: date("2026-05-05 00:00"),
+            displayWindow: MenstrualDisplayWindow(
+                startDate: date("2026-05-01 00:00"),
+                endDate: date("2026-05-03 00:00")
+            )
+        )
+
+        let firstDidEnd = try await useCase.end(
+            on: date("2026-05-03 12:00"),
+            currentStatus: status
+        )
+        let secondDidEnd = try await useCase.end(
+            on: date("2026-05-03 13:00"),
+            currentStatus: status
+        )
+
+        #expect(firstDidEnd)
+        #expect(secondDidEnd)
+        #expect(menstrualRecordUseCase.savedRecords.count == 2)
+        #expect(menstrualRecordUseCase.savedRecords.allSatisfy {
+            $0.record.startDate == date("2026-05-01 00:00")
+                && $0.record.endDate == date("2026-05-03 00:00")
+                && $0.deleteFrom == date("2026-05-01 00:00")
+                && $0.deleteThrough == now
+        })
+        #expect(episodeStore.episode?.startDate == date("2026-05-01 00:00"))
+        #expect(episodeStore.episode?.endDate == date("2026-05-03 00:00"))
+        #expect(episodeStore.episode?.closedReason == .userEnded)
+    }
+
     private func date(_ value: String) -> Date {
         RefactorTestCalendar.dateTime(value, calendar: calendar)
     }
@@ -170,6 +213,79 @@ struct RefreshMenstrualCycleUseCaseTests {
         #expect(snapshot.currentStatus.isActive == false)
         #expect(snapshot.currentStatus.shouldAutoClose == false)
         #expect(menstrualRecordUseCase.savedRecords.isEmpty)
+    }
+
+    @Test("건강앱에 같은 시작일이 있어도 종료일이 달라지면 stale closed episode를 정리한다")
+    func refreshClearsStaleClosedEpisodeWhenHealthRecordEndDateChanged() async throws {
+        let episodeStore = FakeCurrentMenstrualEpisodeStore(
+            episode: CurrentMenstrualEpisode(
+                startDate: date("2026-05-01"),
+                endDate: date("2026-05-03"),
+                closedReason: .userEnded
+            )
+        )
+        let changedOverview = overview(
+            actualRecords: [record(.menstrualRecord, "2026-05-01", "2026-05-02")],
+            predictedPeriodLength: 5
+        )
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase(
+            overviewResponses: [
+                changedOverview,
+                changedOverview
+            ]
+        )
+        let useCase = makeRefreshUseCase(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            episodeStore: episodeStore
+        )
+
+        let snapshot = try await useCase.execute(
+            userSetting: UserSettingState(),
+            runAutoClose: false,
+            referenceDate: date("2026-05-03")
+        )
+
+        #expect(episodeStore.episode == nil)
+        #expect(episodeStore.clearCount == 1)
+        #expect(snapshot.currentStatus.isActive)
+        #expect(snapshot.currentStatus.activeStartDate == date("2026-05-01"))
+        #expect(menstrualRecordUseCase.fetchRequests.count == 2)
+        #expect(menstrualRecordUseCase.fetchRequests[1].activeMenstrualStartDate == date("2026-05-01"))
+    }
+
+    @Test("건강앱의 시작일과 종료일이 같으면 closed episode를 유지한다")
+    func refreshKeepsClosedEpisodeWhenHealthRecordRangeMatches() async throws {
+        let episode = CurrentMenstrualEpisode(
+            startDate: date("2026-05-01"),
+            endDate: date("2026-05-03"),
+            closedReason: .userEnded
+        )
+        let episodeStore = FakeCurrentMenstrualEpisodeStore(episode: episode)
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase(
+            overviewResponses: [
+                overview(
+                    actualRecords: [record(.menstrualRecord, "2026-05-01", "2026-05-03")],
+                    predictedPeriodLength: 5
+                )
+            ]
+        )
+        let useCase = makeRefreshUseCase(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            episodeStore: episodeStore
+        )
+
+        let snapshot = try await useCase.execute(
+            userSetting: UserSettingState(),
+            runAutoClose: false,
+            referenceDate: date("2026-05-03")
+        )
+
+        #expect(episodeStore.episode == episode)
+        #expect(episodeStore.clearCount == 0)
+        #expect(snapshot.currentStatus.isActive == false)
+        #expect(snapshot.currentStatus.displayWindow?.startDate == date("2026-05-01"))
+        #expect(snapshot.currentStatus.displayWindow?.endDate == date("2026-05-03"))
+        #expect(menstrualRecordUseCase.fetchRequests.count == 1)
     }
 
     @Test("건강앱 최신 시작일과 로컬 episode 시작일이 다르면 로컬 episode를 무시하고 건강앱 기준으로 갱신한다")

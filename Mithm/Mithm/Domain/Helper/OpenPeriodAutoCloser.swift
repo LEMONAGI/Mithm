@@ -125,9 +125,15 @@ struct CurrentMenstrualStatusResolver {
         ) ?? expectedEndDate
 
         if isClosedEpisode(currentEpisode, for: startDate, calendar: calendar) {
+            let displayWindow = userClosedEpisodeDisplayWindow(
+                currentEpisode,
+                today: today,
+                calendar: calendar
+            )
             return .inactive(
                 latestStartDate: startDate,
-                expectedEndDate: expectedEndDate
+                expectedEndDate: expectedEndDate,
+                displayWindow: displayWindow
             )
         }
 
@@ -145,7 +151,8 @@ struct CurrentMenstrualStatusResolver {
                     activeStartDate: startDate,
                     latestStartDate: startDate,
                     expectedEndDate: expectedEndDate,
-                    shouldAutoClose: true
+                    shouldAutoClose: true,
+                    displayWindow: MenstrualDisplayWindow(startDate: startDate, endDate: nil)
                 )
             }
 
@@ -170,7 +177,8 @@ struct CurrentMenstrualStatusResolver {
             activeStartDate: startDate,
             latestStartDate: startDate,
             expectedEndDate: expectedEndDate,
-            shouldAutoClose: false
+            shouldAutoClose: false,
+            displayWindow: MenstrualDisplayWindow(startDate: startDate, endDate: nil)
         )
     }
 
@@ -194,6 +202,30 @@ struct CurrentMenstrualStatusResolver {
             return false
         }
         return calendar.isDate(currentEpisode.startDate, inSameDayAs: startDate)
+    }
+
+    private func userClosedEpisodeDisplayWindow(
+        _ currentEpisode: CurrentMenstrualEpisode?,
+        today: Date,
+        calendar: Calendar
+    ) -> MenstrualDisplayWindow? {
+        guard let currentEpisode,
+              currentEpisode.closedReason == .userEnded,
+              let endDate = currentEpisode.endDate
+        else {
+            return nil
+        }
+
+        let startDate = calendar.startOfDay(for: currentEpisode.startDate)
+        let normalizedEndDate = calendar.startOfDay(for: endDate)
+        guard calendar.isDate(normalizedEndDate, inSameDayAs: today) else {
+            return nil
+        }
+
+        return MenstrualDisplayWindow(
+            startDate: startDate,
+            endDate: normalizedEndDate
+        )
     }
 
     private func contains(

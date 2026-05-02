@@ -50,7 +50,8 @@ struct RecordCurrentMenstrualPeriodUseCaseImpl: RecordCurrentMenstrualPeriodUseC
         on endDate: Date,
         currentStatus: CurrentMenstrualStatus
     ) async throws -> Bool {
-        guard let startDate = currentStatus.activeStartDate else {
+        guard let startDate = currentStatus.activeStartDate
+            ?? currentStatus.displayWindow?.startDate else {
             return false
         }
 

@@ -39,24 +39,48 @@ struct CurrentMenstrualEpisode: Codable, Equatable {
     }
 }
 
+struct MenstrualDisplayWindow: Equatable {
+    let startDate: Date
+    let endDate: Date?
+}
+
 struct CurrentMenstrualStatus: Equatable {
     let isActive: Bool
     let activeStartDate: Date?
     let latestStartDate: Date?
     let expectedEndDate: Date?
     let shouldAutoClose: Bool
+    let displayWindow: MenstrualDisplayWindow?
+
+    init(
+        isActive: Bool,
+        activeStartDate: Date?,
+        latestStartDate: Date?,
+        expectedEndDate: Date?,
+        shouldAutoClose: Bool,
+        displayWindow: MenstrualDisplayWindow? = nil
+    ) {
+        self.isActive = isActive
+        self.activeStartDate = activeStartDate
+        self.latestStartDate = latestStartDate
+        self.expectedEndDate = expectedEndDate
+        self.shouldAutoClose = shouldAutoClose
+        self.displayWindow = displayWindow
+    }
 
     static func inactive(
         latestStartDate: Date? = nil,
         expectedEndDate: Date? = nil,
-        shouldAutoClose: Bool = false
+        shouldAutoClose: Bool = false,
+        displayWindow: MenstrualDisplayWindow? = nil
     ) -> CurrentMenstrualStatus {
         CurrentMenstrualStatus(
             isActive: false,
             activeStartDate: nil,
             latestStartDate: latestStartDate,
             expectedEndDate: expectedEndDate,
-            shouldAutoClose: shouldAutoClose
+            shouldAutoClose: shouldAutoClose,
+            displayWindow: displayWindow
         )
     }
 }

@@ -122,13 +122,28 @@ struct RefreshMenstrualCycleUseCaseImpl: RefreshMenstrualCycleUseCase {
         }
 
         let episodeStartDate = calendar.startOfDay(for: currentEpisode.startDate)
-        let hasMatchingHealthRecord = actualRecords.contains {
+        guard let matchingHealthRecord = actualRecords.first(where: {
             $0.type == .menstrualRecord
                 && calendar.isDate($0.startDate, inSameDayAs: episodeStartDate)
+        }) else {
+            currentMenstrualEpisodeStore.clearCurrentEpisode()
+            return
         }
 
-        if !hasMatchingHealthRecord {
+        if currentEpisode.isClosed
+            && !isSameDay(currentEpisode.endDate, matchingHealthRecord.endDate) {
             currentMenstrualEpisodeStore.clearCurrentEpisode()
+        }
+    }
+
+    private func isSameDay(_ lhs: Date?, _ rhs: Date?) -> Bool {
+        switch (lhs, rhs) {
+        case let (lhs?, rhs?):
+            return calendar.isDate(lhs, inSameDayAs: rhs)
+        case (nil, nil):
+            return true
+        default:
+            return false
         }
     }
 

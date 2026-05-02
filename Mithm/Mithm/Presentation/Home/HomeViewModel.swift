@@ -13,6 +13,7 @@ final class HomeViewModel: ObservableObject {
 
     @Published private(set) var currentPhaseWindow: PhaseWindow
     @Published private(set) var isMenstruating: Bool = false
+    @Published private(set) var showsMenstrualEndAction: Bool = false
 
     // MARK: - Dependencies
 
@@ -38,6 +39,7 @@ final class HomeViewModel: ObservableObject {
         self.recordCurrentMenstrualPeriodUseCase = recordCurrentMenstrualPeriodUseCase
         self.homePhaseUseCase = homePhaseUseCase
         self.isMenstruating = appState.currentMenstrualStatus.isActive
+        self.showsMenstrualEndAction = appState.currentMenstrualStatus.displayWindow != nil
 
         self.currentPhaseWindow = PhaseWindow(
             phase: .luteal,
@@ -62,18 +64,16 @@ final class HomeViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
                 self?.isMenstruating = status.isActive
+                self?.showsMenstrualEndAction = status.displayWindow != nil
                 self?.recomputePhaseWindow()
             }
             .store(in: &cancellables)
     }
 
     private func recomputePhaseWindow() {
-        let activeStartDate = appState.currentMenstrualStatus.isActive
-            ? appState.currentMenstrualStatus.activeStartDate
-            : nil
         currentPhaseWindow = homePhaseUseCase.execute(
             menstrualOverview: appState.menstrualOverview,
-            activeMenstrualStartDate: activeStartDate,
+            menstrualDisplayWindow: appState.currentMenstrualStatus.displayWindow,
             today: Date()
         )
     }
@@ -115,7 +115,9 @@ final class HomeViewModel: ObservableObject {
     func selectableDateRange(isPickingEndDate: Bool) -> ClosedRange<Date> {
         let today = calendar.startOfDay(for: Date())
 
-        if isPickingEndDate, let start = appState.currentMenstrualStatus.activeStartDate {
+        if isPickingEndDate,
+           let start = appState.currentMenstrualStatus.activeStartDate
+            ?? appState.currentMenstrualStatus.displayWindow?.startDate {
             return start...today
         }
 
@@ -133,7 +135,7 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    func endMenstruation(endDate: Date) async {
+    func endMenstruation(endDate: Date) async -> Bool {
         do {
             let didEnd = try await recordCurrentMenstrualPeriodUseCase.end(
                 on: endDate,
@@ -142,8 +144,10 @@ final class HomeViewModel: ObservableObject {
             if didEnd {
                 try await appState.refreshMenstrualData()
             }
+            return didEnd
         } catch {
             appState.menstrualRecordError = error
+            return false
         }
     }
 
