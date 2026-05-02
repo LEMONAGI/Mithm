@@ -2041,6 +2041,47 @@ struct CurrentMenstrualStatusResolverTests {
         #expect(status.expectedEndDate == date("2026-01-14"))
     }
 
+    @Test("건강앱 기록이 없으면 로컬 open episode가 있어도 현재 월경 중으로 판단하지 않는다")
+    func inactiveWhenOnlyLocalOpenEpisodeExists() {
+        let status = resolver.resolve(
+            actualRecords: [],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-01-10"),
+                endDate: nil,
+                closedReason: nil
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-01-12"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive == false)
+        #expect(status.shouldAutoClose == false)
+        #expect(status.activeStartDate == nil)
+        #expect(status.latestStartDate == nil)
+    }
+
+    @Test("건강앱 최신 기록과 로컬 episode 시작일이 다르면 건강앱 기록만 기준으로 판단한다")
+    func ignoresLocalEpisodeWhenStartDateDoesNotMatchLatestHealthRecord() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-01-08", end: "2026-01-08")
+            ],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-01-10"),
+                endDate: nil,
+                closedReason: nil
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-01-12"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive)
+        #expect(status.activeStartDate == date("2026-01-08"))
+        #expect(status.latestStartDate == date("2026-01-08"))
+    }
+
     @Test("열려 있는 앱 에피소드는 자동 종료 기준을 지나도 월경 중으로 유지하고 자동 종료 대상으로 표시한다")
     func openEpisodeAfterDeadlineStaysActiveAndRequiresAutoClose() {
         let status = resolver.resolve(

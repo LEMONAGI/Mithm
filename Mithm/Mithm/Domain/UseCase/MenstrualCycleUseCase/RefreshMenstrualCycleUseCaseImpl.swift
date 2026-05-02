@@ -35,6 +35,7 @@ struct RefreshMenstrualCycleUseCaseImpl: RefreshMenstrualCycleUseCase {
         var overview = try await fetchMenstrualOverview(
             userSetting: userSetting
         )
+        clearStaleCurrentEpisodeIfNeeded(actualRecords: overview.actualRecords)
         var status = resolveCurrentMenstrualStatus(
             from: overview,
             referenceDate: referenceDate
@@ -111,6 +112,24 @@ struct RefreshMenstrualCycleUseCaseImpl: RefreshMenstrualCycleUseCase {
             today: referenceDate,
             calendar: calendar
         )
+    }
+
+    private func clearStaleCurrentEpisodeIfNeeded(
+        actualRecords: [MenstrualRecord]
+    ) {
+        guard let currentEpisode = currentMenstrualEpisodeStore.loadCurrentEpisode() else {
+            return
+        }
+
+        let episodeStartDate = calendar.startOfDay(for: currentEpisode.startDate)
+        let hasMatchingHealthRecord = actualRecords.contains {
+            $0.type == .menstrualRecord
+                && calendar.isDate($0.startDate, inSameDayAs: episodeStartDate)
+        }
+
+        if !hasMatchingHealthRecord {
+            currentMenstrualEpisodeStore.clearCurrentEpisode()
+        }
     }
 
     private func closeCurrentEpisode(

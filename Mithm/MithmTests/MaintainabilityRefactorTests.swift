@@ -137,6 +137,81 @@ struct RefreshMenstrualCycleUseCaseTests {
         #expect(menstrualRecordUseCase.fetchRequests[1].activeMenstrualStartDate == activeStartDate)
     }
 
+    @Test("건강앱에 대응되는 시작일이 없으면 stale current episode를 정리한다")
+    func refreshClearsStaleCurrentEpisodeWhenHealthRecordWasDeleted() async throws {
+        let episodeStore = FakeCurrentMenstrualEpisodeStore(
+            episode: CurrentMenstrualEpisode(
+                startDate: date("2026-03-10"),
+                endDate: nil,
+                closedReason: nil
+            )
+        )
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase(
+            overviewResponses: [
+                overview(
+                    actualRecords: [],
+                    predictedPeriodLength: 5
+                )
+            ]
+        )
+        let useCase = makeRefreshUseCase(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            episodeStore: episodeStore
+        )
+
+        let snapshot = try await useCase.execute(
+            userSetting: UserSettingState(),
+            runAutoClose: true,
+            referenceDate: date("2026-03-17")
+        )
+
+        #expect(episodeStore.episode == nil)
+        #expect(episodeStore.clearCount == 1)
+        #expect(snapshot.currentStatus.isActive == false)
+        #expect(snapshot.currentStatus.shouldAutoClose == false)
+        #expect(menstrualRecordUseCase.savedRecords.isEmpty)
+    }
+
+    @Test("건강앱 최신 시작일과 로컬 episode 시작일이 다르면 로컬 episode를 무시하고 건강앱 기준으로 갱신한다")
+    func refreshIgnoresLocalEpisodeWhenHealthRecordStartDateDiffers() async throws {
+        let episodeStore = FakeCurrentMenstrualEpisodeStore(
+            episode: CurrentMenstrualEpisode(
+                startDate: date("2026-03-10"),
+                endDate: nil,
+                closedReason: nil
+            )
+        )
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase(
+            overviewResponses: [
+                overview(
+                    actualRecords: [record(.menstrualRecord, "2026-03-08", "2026-03-08")],
+                    predictedPeriodLength: 5
+                ),
+                overview(
+                    actualRecords: [record(.menstrualRecord, "2026-03-08", "2026-03-08")],
+                    predictedPeriodLength: 5
+                )
+            ]
+        )
+        let useCase = makeRefreshUseCase(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            episodeStore: episodeStore
+        )
+
+        let snapshot = try await useCase.execute(
+            userSetting: UserSettingState(),
+            runAutoClose: false,
+            referenceDate: date("2026-03-12")
+        )
+
+        #expect(episodeStore.episode == nil)
+        #expect(episodeStore.clearCount == 1)
+        #expect(snapshot.currentStatus.isActive)
+        #expect(snapshot.currentStatus.activeStartDate == date("2026-03-08"))
+        #expect(menstrualRecordUseCase.fetchRequests.count == 2)
+        #expect(menstrualRecordUseCase.fetchRequests[1].activeMenstrualStartDate == date("2026-03-08"))
+    }
+
     @Test("캘린더 동기화 토글 on/off 값은 sync usecase에 그대로 전달된다")
     func refreshPassesCalendarExportToggleToSyncUseCase() async throws {
         let syncUseCase = FakeSyncMenstrualCalendarUseCase()
@@ -582,6 +657,7 @@ private struct FakeLoadUserSettingsUseCase: LoadUserSettingsUseCase {
 
 private final class FakeCurrentMenstrualEpisodeStore: CurrentMenstrualEpisodeStore {
     var episode: CurrentMenstrualEpisode?
+    private(set) var clearCount = 0
 
     init(episode: CurrentMenstrualEpisode? = nil) {
         self.episode = episode
@@ -596,6 +672,7 @@ private final class FakeCurrentMenstrualEpisodeStore: CurrentMenstrualEpisodeSto
     }
 
     func clearCurrentEpisode() {
+        clearCount += 1
         episode = nil
     }
 }

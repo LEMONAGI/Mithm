@@ -106,16 +106,11 @@ struct CurrentMenstrualStatusResolver {
             }
             .last
 
-        let latestStartDate = latestStartDate(
-            latestHealthRecord: latestHealthRecord,
-            currentEpisode: currentEpisode,
-            calendar: calendar
-        )
-
-        guard let latestStartDate else {
+        guard let latestHealthRecord else {
             return .inactive()
         }
 
+        let latestStartDate = calendar.startOfDay(for: latestHealthRecord.startDate)
         let startDate = calendar.startOfDay(for: latestStartDate)
         let resolvedPeriodLength = predictedPeriodLength ?? defaultPeriodLength
         let expectedEndDate = calendar.date(
@@ -136,9 +131,11 @@ struct CurrentMenstrualStatusResolver {
             )
         }
 
-        let todayHasHealthRecord = latestHealthRecord.map {
-            contains($0, day: today, calendar: calendar)
-        } ?? false
+        let todayHasHealthRecord = contains(
+            latestHealthRecord,
+            day: today,
+            calendar: calendar
+        )
         let hasOpenEpisode = isOpenEpisode(currentEpisode, for: startDate, calendar: calendar)
 
         if today > deadline {
@@ -175,26 +172,6 @@ struct CurrentMenstrualStatusResolver {
             expectedEndDate: expectedEndDate,
             shouldAutoClose: false
         )
-    }
-
-    private func latestStartDate(
-        latestHealthRecord: MenstrualRecord?,
-        currentEpisode: CurrentMenstrualEpisode?,
-        calendar: Calendar
-    ) -> Date? {
-        let healthStartDate = latestHealthRecord.map { calendar.startOfDay(for: $0.startDate) }
-        let episodeStartDate = currentEpisode.map { calendar.startOfDay(for: $0.startDate) }
-
-        switch (healthStartDate, episodeStartDate) {
-        case let (health?, episode?):
-            return max(health, episode)
-        case let (health?, nil):
-            return health
-        case let (nil, episode?):
-            return episode
-        case (nil, nil):
-            return nil
-        }
     }
 
     private func isClosedEpisode(
