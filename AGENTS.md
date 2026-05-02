@@ -83,13 +83,22 @@ Utility/        FormatterUtility 등
 
 `isPrediction`/`isEstimated`로 구분. HealthKit에 기록되는 것은 `.menstrualRecord`와 `.menstrualPrediction`(`healthDataType == .menstrualCycle`)뿐. 나머지는 앱 내부 표시용.
 
-### 진행 중 월경(open period)
+### 현재 월경 상태 판정
 
-`MenstrualRecord.endDate == nil`이면 **사용자가 시작은 눌렀지만 아직 종료를 누르지 않은 상태**. 핵심 분기점이다:
+현재 월경 여부의 source of truth는 **HealthKit에 실제로 남아 있는 최신 `.menstrualRecord`**다. 로컬 `CurrentMenstrualEpisode`(`UserDefaults`)는 HealthKit 기록을 대체하는 저장소가 아니라, 같은 시작일의 월경에 대해 "사용자가 종료했는지/자동 종료됐는지"만 보조로 기억한다.
 
-- `HomePhaseUseCase`는 open record가 있으면 무조건 `.menstrual` phase로 진입(최우선 규칙).
-- `OpenPeriodAutoCloser`가 예측 기간 + 유예 2일을 초과하면 자동 종료(`endDate` 채움).
-- 예측 엔진은 open record를 마지막 anchor로 삼아 다음 사이클을 예측.
+- HealthKit mapper는 샘플 날짜 범위를 그대로 닫힌 record로 읽는다. 오늘 샘플이라고 `endDate = nil`로 바꾸지 않는다.
+- 월경 시작 버튼은 선택한 시작일 하루만 HealthKit에 저장하고, 로컬에는 `CurrentMenstrualEpisode(startDate, endDate: nil, closedReason: nil)`을 저장한다.
+- `CurrentMenstrualStatusResolver`는 HealthKit 최신 월경 시작일을 기준으로 현재 상태를 계산한다.
+  - 오늘이 최신 HealthKit 월경 record 범위 안이면 월경 중.
+  - 오늘 기록이 없어도 최신 시작일이 `predictedPeriodLength` 기반 예상 종료일 + 유예 2일 이내면 월경 중.
+  - 같은 시작일의 로컬 episode가 `.userEnded` 또는 `.autoClosed`면 월경 중이 아니다.
+  - HealthKit 기록이 없으면 로컬 open episode가 있어도 월경 중으로 보지 않는다.
+  - HealthKit 최신 시작일과 로컬 episode 시작일이 다르면 로컬 episode는 stale로 보고 무시한다.
+- `RefreshMenstrualCycleUseCaseImpl`은 HealthKit에 대응되는 시작일이 없는 stale 로컬 episode를 `clearCurrentEpisode()`로 정리한다. 사용자가 건강 앱에서 월경 기록을 삭제한 경우 앱이 다시 월경 중으로 되살리거나 자동 종료로 재저장하지 않게 하기 위함이다.
+- 자동 종료는 HealthKit 최신 기록이 있고, 같은 시작일의 open episode가 있으며, 예상 종료일 + 유예 2일을 지난 경우에만 실행한다. 이때 HealthKit에는 시작일~예상 종료일까지 닫힌 월경 기록을 저장하고 로컬 episode는 `.autoClosed`로 저장한다.
+- `HomePhaseUseCase`는 `CurrentMenstrualStatus.activeStartDate`가 있을 때만 `.menstrual` phase를 최우선 표시한다. 예측 월경일이 지났지만 사용자가 시작하지 않았다면 월경기로 바꾸지 않고 기존 난포기/배란기/황체기 규칙을 따른다.
+- 예측 엔진에는 현재 월경 중일 때 `MenstrualRecordUseCaseImpl.makePredictionSourceRecords`가 해당 시작일의 실제 record를 제외하고 `endDate == nil` open record를 임시 주입한다. 이는 예측 anchor용이며 HealthKit 원본이 open record라는 뜻은 아니다.
 
 ### `HomePhaseUseCase` — 현재 phase 판정 우선순위
 
@@ -127,7 +136,7 @@ Utility/        FormatterUtility 등
 ### `MenstrualOverview` — UseCase 레이어의 합성 결과물
 
 ```swift
-actualRecords  // HealthKit 원본 (open record 포함)
+actualRecords  // HealthKit 원본 (실제 샘플 날짜 범위 그대로 닫힌 record)
 allRecords     // actual(endDate 있는 것만) + 미래 월경 예측 + 추정/예측 배란 record, 시작일 정렬
 prediction     // MenstrualPredictionResult (예측 길이, 신뢰도, shift 감지 여부 등)
 ```
@@ -139,14 +148,18 @@ prediction     // MenstrualPredictionResult (예측 길이, 신뢰도, shift 감
 ```
 HomeView Tap
   → HomeViewModel.startMenstruation()
-  → MenstrualRecordUseCase.saveMenstrualRecored(...)         // open record (endDate=nil)
+  → RecordCurrentMenstrualPeriodUseCase.start(...)
+       → HealthKit에는 시작일 하루짜리 .menstrualRecord 저장
+       → UserDefaults에는 open CurrentMenstrualEpisode 저장
   → HealthKitRepository.updateMenstrualCycleRecord(...)
   → HealthKit (시스템)
   → AppState.refreshMenstrualData()
+       → RefreshMenstrualCycleUseCase.execute(...)
        → MenstrualRecordUseCase.fetchMenstrualOverview()
             → readMenstrualCycleRecords + predictionEngine + ovulationRecordGenerator
+       → CurrentMenstrualStatusResolver.resolve(...)
        → SyncMenstrualCalendarUseCase.execute(...)            // 토글 켜졌을 때만
-  → @Published menstrualOverview 갱신
+  → @Published menstrualOverview/currentMenstrualStatus 갱신
   → HomeViewModel이 관찰 → PhaseWindow 재계산 → View 재렌더링
 ```
 
@@ -156,6 +169,7 @@ Swift Testing(`@Test`) 사용. 두 개 파일이 비즈니스 로직의 핵심�
 
 - `MithmTests/MithmTests.swift` — 예측 엔진. record 필터링/검증, period·cycle 표본화, 이상치 가중치, variability 분류, EWMA, blend 로직, 신뢰도 산정 등 80+ 케이스.
 - `MithmTests/HomePhaseUseCaseTests.swift` — phase window 계산. 진행 중 월경, 예측 record 제외, 배란기 포함, gap 기반 follicular/luteal, fallback 시나리오.
+- `MithmTests/MaintainabilityRefactorTests.swift` — 현재 월경 시작/종료 use case, refresh orchestration, stale `CurrentMenstrualEpisode` 정리, 자동 종료 흐름.
 
 테스트 헬퍼: `TestCalendar`/`HomePhaseTestCalendar`로 결정론적 날짜 조작, `makeRecord(...)` 팩토리 사용. UI 흐름은 자동화 테스트 없이 시뮬레이터에서 수동 검증.
 
@@ -173,6 +187,7 @@ Swift Testing(`@Test`) 사용. 두 개 파일이 비즈니스 로직의 핵심�
 | 작업 | 파일 |
 | --- | --- |
 | 예측 알고리즘 튜닝 | `Domain/Helper/MenstrualPredictionEngine.swift` (`Config.default`) |
+| 현재 월경 상태 판정 | `Domain/Helper/OpenPeriodAutoCloser.swift` (`CurrentMenstrualStatusResolver`), `Domain/UseCase/MenstrualCycleUseCase/RefreshMenstrualCycleUseCaseImpl.swift` |
 | 현재 phase 판정 규칙 | `Domain/UseCase/HomePhaseUseCase/HomePhaseUseCaseImpl.swift` |
 | 새 UseCase/Repository 등록 | `Presentation/App/AppDIContainer.swift` |
 | 앱 라이프사이클(권한·갱신) | `Domain/State/AppState.swift` |
