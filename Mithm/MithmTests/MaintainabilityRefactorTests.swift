@@ -545,6 +545,94 @@ struct AppStateRefreshTests {
 }
 
 @MainActor
+struct HomeViewModelEndMenstruationTests {
+
+    private let calendar = RefactorTestCalendar.make()
+
+    @Test("월경 종료일이 오늘이면 저장 성공 후 완료 알럿 표시 대상으로 반환한다")
+    func endTodayReturnsEndsTodayAlertKind() async {
+        let viewModel = makeViewModel(
+            endResult: true,
+            now: dateTime("2026-05-04 10:00")
+        )
+
+        let result = await viewModel.endMenstruation(
+            endDate: dateTime("2026-05-04 08:00")
+        )
+
+        #expect(result.didRecord)
+        #expect(result.completionAlertKind == .endsToday)
+    }
+
+    @Test("월경 종료일이 오늘 이전이면 일반 기록 완료 알럿 대상으로 반환한다")
+    func endPastDateReturnsRecordedAlertKind() async {
+        let viewModel = makeViewModel(
+            endResult: true,
+            now: dateTime("2026-05-04 10:00")
+        )
+
+        let result = await viewModel.endMenstruation(
+            endDate: dateTime("2026-05-03 08:00")
+        )
+
+        #expect(result.didRecord)
+        #expect(result.completionAlertKind == .recorded)
+    }
+
+    @Test("월경 종료 저장이 수행되지 않으면 알럿 대상으로 반환하지 않는다")
+    func ignoredEndReturnsNoAlertKind() async {
+        let viewModel = makeViewModel(
+            endResult: false,
+            now: dateTime("2026-05-04 10:00")
+        )
+
+        let result = await viewModel.endMenstruation(
+            endDate: dateTime("2026-05-04 08:00")
+        )
+
+        #expect(!result.didRecord)
+        #expect(result.completionAlertKind == nil)
+    }
+
+    private func makeViewModel(
+        endResult: Bool,
+        now: Date
+    ) -> HomeViewModel {
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase()
+        )
+        appState.currentMenstrualStatus = CurrentMenstrualStatus(
+            isActive: true,
+            activeStartDate: dateTime("2026-05-01 00:00"),
+            latestStartDate: dateTime("2026-05-01 00:00"),
+            expectedEndDate: dateTime("2026-05-05 00:00"),
+            shouldAutoClose: false,
+            displayWindow: MenstrualDisplayWindow(
+                startDate: dateTime("2026-05-01 00:00"),
+                endDate: nil
+            )
+        )
+
+        return HomeViewModel(
+            appState: appState,
+            calendar: calendar,
+            recordCurrentMenstrualPeriodUseCase: FakeRecordCurrentMenstrualPeriodUseCase(
+                endResult: endResult
+            ),
+            homePhaseUseCase: HomePhaseUseCaseImpl(calendar: calendar),
+            now: { now }
+        )
+    }
+
+    private func dateTime(_ value: String) -> Date {
+        RefactorTestCalendar.dateTime(value, calendar: calendar)
+    }
+}
+
+@MainActor
 struct CycleCalendarUseCaseTests {
 
     private let calendar = RefactorTestCalendar.make()
@@ -721,6 +809,23 @@ private final class FakeSyncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCa
 
     func execute(records: [MenstrualRecord], isEnabled: Bool) async throws {
         calls.append((records: records, isEnabled: isEnabled))
+    }
+}
+
+private final class FakeRecordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase {
+    private let endResult: Bool
+
+    init(endResult: Bool) {
+        self.endResult = endResult
+    }
+
+    func start(on startDate: Date) async throws { }
+
+    func end(
+        on endDate: Date,
+        currentStatus: CurrentMenstrualStatus
+    ) async throws -> Bool {
+        endResult
     }
 }
 

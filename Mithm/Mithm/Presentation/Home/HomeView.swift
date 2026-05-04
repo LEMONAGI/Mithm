@@ -10,7 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @State private var showDatePicker = false
-    @State private var showMenstrualEndCompletionAlert = false
+    @State private var menstrualEndCompletionAlertKind: HomeViewModel.EndMenstruationAlertKind?
     @State private var isPickingEndDate = false
     @State private var selectedDate = Date()
     
@@ -52,12 +52,21 @@ struct HomeView: View {
                 .presentationDetents([.medium])
         }
         .alert(
-            "이번 월경을 기록하였습니다",
-            isPresented: $showMenstrualEndCompletionAlert
+            menstrualEndCompletionAlertTitle,
+            isPresented: Binding(
+                get: { menstrualEndCompletionAlertKind != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        menstrualEndCompletionAlertKind = nil
+                    }
+                }
+            )
         ) {
             Button("확인", role: .cancel) { }
         } message: {
-            Text("내일부터 난포기가 시작됩니다.")
+            if let message = menstrualEndCompletionAlertMessage {
+                Text(message)
+            }
         }
     }
 }
@@ -156,10 +165,10 @@ private extension HomeView {
                 showDatePicker = false
                 Task {
                     if isPickingEndDate {
-                        let didRecord = await homeViewModel.endMenstruation(endDate: selectedDate)
-                        if didRecord {
+                        let result = await homeViewModel.endMenstruation(endDate: selectedDate)
+                        if let completionAlertKind = result.completionAlertKind {
                             await MainActor.run {
-                                showMenstrualEndCompletionAlert = true
+                                menstrualEndCompletionAlertKind = completionAlertKind
                             }
                         }
                     } else {
@@ -179,6 +188,26 @@ private extension HomeView {
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 16)
+        }
+    }
+
+    var menstrualEndCompletionAlertTitle: String {
+        switch menstrualEndCompletionAlertKind {
+        case .endsToday:
+            return String(localized: "이번 월경을 기록하였습니다")
+        case .recorded:
+            return String(localized: "월경이 기록되었습니다!")
+        case nil:
+            return ""
+        }
+    }
+
+    var menstrualEndCompletionAlertMessage: String? {
+        switch menstrualEndCompletionAlertKind {
+        case .endsToday:
+            return String(localized: "내일부터 난포기가 시작됩니다.")
+        case .recorded, nil:
+            return nil
         }
     }
 }

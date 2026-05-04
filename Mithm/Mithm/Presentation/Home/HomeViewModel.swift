@@ -15,12 +15,23 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var isMenstruating: Bool = false
     @Published private(set) var showsMenstrualEndAction: Bool = false
 
+    enum EndMenstruationAlertKind: Equatable {
+        case endsToday
+        case recorded
+    }
+
+    struct EndMenstruationResult: Equatable {
+        let didRecord: Bool
+        let completionAlertKind: EndMenstruationAlertKind?
+    }
+
     // MARK: - Dependencies
 
     private let appState: AppState
     private let calendar: Calendar
     private let recordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase
     private let homePhaseUseCase: HomePhaseUseCase
+    private let now: () -> Date
 
     // MARK: - Combine
 
@@ -32,12 +43,14 @@ final class HomeViewModel: ObservableObject {
         appState: AppState,
         calendar: Calendar = .current,
         recordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase,
-        homePhaseUseCase: HomePhaseUseCase
+        homePhaseUseCase: HomePhaseUseCase,
+        now: @escaping () -> Date = Date.init
     ) {
         self.appState = appState
         self.calendar = calendar
         self.recordCurrentMenstrualPeriodUseCase = recordCurrentMenstrualPeriodUseCase
         self.homePhaseUseCase = homePhaseUseCase
+        self.now = now
         self.isMenstruating = appState.currentMenstrualStatus.isActive
         self.showsMenstrualEndAction = appState.currentMenstrualStatus.displayWindow != nil
 
@@ -74,7 +87,7 @@ final class HomeViewModel: ObservableObject {
         currentPhaseWindow = homePhaseUseCase.execute(
             menstrualOverview: appState.menstrualOverview,
             menstrualDisplayWindow: appState.currentMenstrualStatus.displayWindow,
-            today: Date()
+            today: now()
         )
     }
 
@@ -96,7 +109,7 @@ final class HomeViewModel: ObservableObject {
 
     var nextMenstrualString: String {
         guard let nextDate = earliestPredictedMenstrualDate else { return "-" }
-        let today = calendar.startOfDay(for: Date())
+        let today = calendar.startOfDay(for: now())
         let target = calendar.startOfDay(for: nextDate)
         let days = calendar.dateComponents([.day], from: today, to: target).day ?? 0
 
@@ -115,7 +128,7 @@ final class HomeViewModel: ObservableObject {
     }
 
     func selectableDateRange(isPickingEndDate: Bool) -> ClosedRange<Date> {
-        let today = calendar.startOfDay(for: Date())
+        let today = calendar.startOfDay(for: now())
 
         if isPickingEndDate,
            let start = appState.currentMenstrualStatus.activeStartDate
@@ -137,7 +150,7 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    func endMenstruation(endDate: Date) async -> Bool {
+    func endMenstruation(endDate: Date) async -> EndMenstruationResult {
         do {
             let didEnd = try await recordCurrentMenstrualPeriodUseCase.end(
                 on: endDate,
@@ -146,14 +159,33 @@ final class HomeViewModel: ObservableObject {
             if didEnd {
                 try await appState.refreshMenstrualData()
             }
-            return didEnd
+            return EndMenstruationResult(
+                didRecord: didEnd,
+                completionAlertKind: completionAlertKind(
+                    didRecord: didEnd,
+                    endDate: endDate
+                )
+            )
         } catch {
             appState.menstrualRecordError = error
-            return false
+            return EndMenstruationResult(
+                didRecord: false,
+                completionAlertKind: nil
+            )
         }
     }
 
     // MARK: - Private Helpers
+
+    private func completionAlertKind(
+        didRecord: Bool,
+        endDate: Date
+    ) -> EndMenstruationAlertKind? {
+        guard didRecord else { return nil }
+        return calendar.isDate(endDate, inSameDayAs: now())
+            ? .endsToday
+            : .recorded
+    }
 
     private var earliestPredictedMenstrualDate: Date? {
         let predictedRecords = appState.menstrualOverview.allRecords
