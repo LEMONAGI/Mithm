@@ -134,7 +134,7 @@ extension CalendarView {
     private var dayOfWeekHeader: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 0) {
             ForEach(dayOfWeekSymbols, id: \.self) { symbol in
-                Text(symbol)
+                Text(LocalizedStringKey(symbol))
                     .font(.pretendardMedium(12))
                     .foregroundStyle(Color(.systemGray2))
                     .frame(maxWidth: .infinity)
@@ -160,7 +160,7 @@ extension CalendarView {
         }
     }
 
-    private func statRow(title: String, value: Int?, unit: String) -> some View {
+    private func statRow(title: LocalizedStringKey, value: Int?, unit: LocalizedStringKey) -> some View {
         HStack {
             Text(title)
                 .font(.pretendardMedium(16))
@@ -217,7 +217,7 @@ extension CalendarView {
                 }
             )) {
                 ForEach(years, id: \.self) { year in
-                    Text("\(String(year))년").tag(year)
+                    Text(String(format: String(localized: "calendar.year.format"), year)).tag(year)
                 }
             }
             .pickerStyle(.wheel)
@@ -234,7 +234,7 @@ extension CalendarView {
                 }
             )) {
                 ForEach(months, id: \.self) { month in
-                    Text("\(month)월").tag(month)
+                    Text(String(format: String(localized: "calendar.month.format"), month)).tag(month)
                 }
             }
             .pickerStyle(.wheel)
@@ -316,10 +316,9 @@ extension CalendarView {
 extension CalendarView {
 
     private var monthYearString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy년 M월"
-        formatter.locale = Locale(identifier: "ko_KR")
-        return formatter.string(from: displayedMonth)
+        let year = calendar.component(.year, from: displayedMonth)
+        let month = calendar.component(.month, from: displayedMonth)
+        return String(format: String(localized: "calendar.month_year.format"), year, month)
     }
 
     private func moveMonth(by value: Int) {

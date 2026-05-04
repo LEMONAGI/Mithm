@@ -151,9 +151,10 @@
 				};
 			};
 			buildConfigurationList = 39415BFC2ECC65610056A3F8 /* Build configuration list for PBXProject "Mithm" */;
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				ko,
 				en,
 				Base,
 			);

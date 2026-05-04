@@ -5,6 +5,8 @@
 //  Created by YunhakLee on 11/18/25.
 //
 
+import Foundation
+
 
 enum EventKitError: Error {
     
@@ -41,22 +43,22 @@ extension EventKitError: AlertPresentable {
     var alertTitle: String {
         switch self {
         case .accessDenied:
-            return "캘린더 접근 권한이 필요해요"
+            return String(localized: "캘린더 접근 권한이 필요해요")
         case .noCalendarSource:
-            return "캘린더를 생성할 수 없어요"
+            return String(localized: "캘린더를 생성할 수 없어요")
         case .syncFailed:
-            return "캘린더 동기화에 실패했어요"
+            return String(localized: "캘린더 동기화에 실패했어요")
         }
     }
 
     var alertMessage: String {
         switch self {
         case .accessDenied:
-            return "설정 > 개인정보 보호 > 캘린더에서\nMithm의 접근 권한을 확인해 주세요."
+            return String(localized: "설정 > 개인정보 보호 > 캘린더에서\nMithm의 접근 권한을 확인해 주세요.")
         case .noCalendarSource:
-            return "캘린더 계정을 추가한 뒤 다시 시도해 주세요."
+            return String(localized: "캘린더 계정을 추가한 뒤 다시 시도해 주세요.")
         case .syncFailed:
-            return "캘린더에 월경 기록을 내보내지 못했어요.\n잠시 후 다시 시도해 주세요."
+            return String(localized: "캘린더에 월경 기록을 내보내지 못했어요.\n잠시 후 다시 시도해 주세요.")
         }
     }
 }

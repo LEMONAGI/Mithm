@@ -16,11 +16,11 @@ enum SettingMenuItem: CaseIterable {
 
     var title: String {
         switch self {
-        case .healthSync: "건강앱과 연동하기"
-        case .calendarExport: "캘린더로 내보내기"
-        case .cycleSetting: "월경 주기·길이 변경"
-        case .privacyPolicy: "개인정보 처리방침"
-        case .support: "지원"
+        case .healthSync: String(localized: "건강앱과 연동하기")
+        case .calendarExport: String(localized: "캘린더로 내보내기")
+        case .cycleSetting: String(localized: "월경 주기·길이 변경")
+        case .privacyPolicy: String(localized: "개인정보 처리방침")
+        case .support: String(localized: "지원")
         }
     }
 

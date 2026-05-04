@@ -89,7 +89,9 @@ final class HomeViewModel: ObservableObject {
     }
 
     var currentPhaseDateRangeString: String {
-        "\(FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.startDate)) - \(FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.endDate))"
+        let startDate = FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.startDate)
+        let endDate = FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.endDate)
+        return String(format: String(localized: "home.phase_range.format"), startDate, endDate)
     }
 
     var nextMenstrualString: String {
@@ -102,14 +104,14 @@ final class HomeViewModel: ObservableObject {
 
         let dDay: String
         if days == 0 {
-            dDay = "D-Day"
+            dDay = String(localized: "home.next_menstrual.d_day")
         } else if days > 0 {
-            dDay = "D-\(days)"
+            dDay = String(format: String(localized: "home.next_menstrual.d_minus.format"), days)
         } else {
-            dDay = "D+\(abs(days))"
+            dDay = String(format: String(localized: "home.next_menstrual.d_plus.format"), abs(days))
         }
 
-        return "\(dateStr) · \(dDay)"
+        return String(format: String(localized: "home.next_menstrual.date_and_d_day.format"), dateStr, dDay)
     }
 
     func selectableDateRange(isPickingEndDate: Bool) -> ClosedRange<Date> {

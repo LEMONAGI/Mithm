@@ -119,7 +119,7 @@ private extension HomeView {
             }
             showDatePicker = true
         } label: {
-            Text(homeViewModel.showsMenstrualEndAction ? "월경 종료" : "월경 시작")
+            Text(homeViewModel.showsMenstrualEndAction ? String(localized: "월경 종료") : String(localized: "월경 시작"))
                 .font(.pretendardBold(30))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -133,7 +133,7 @@ private extension HomeView {
     
     var datePickerSheet: some View {
         VStack(spacing: 0) {
-            Text(isPickingEndDate ? "월경 종료일을 선택하세요" : "월경 시작일을 선택하세요")
+            Text(isPickingEndDate ? String(localized: "월경 종료일을 선택하세요") : String(localized: "월경 시작일을 선택하세요"))
                 .font(.pretendardBold(24))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
@@ -148,7 +148,6 @@ private extension HomeView {
             )
             .datePickerStyle(.wheel)
             .labelsHidden()
-            .environment(\.locale, Locale(identifier: "ko_KR"))
             .padding(.horizontal, 20)
             
             Spacer()
