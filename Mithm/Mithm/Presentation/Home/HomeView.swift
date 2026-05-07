@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @State private var showDatePicker = false
+    @State private var menstrualEndCompletionAlertKind: HomeViewModel.EndMenstruationAlertKind?
     @State private var isPickingEndDate = false
     @State private var selectedDate = Date()
     
@@ -19,11 +20,11 @@ struct HomeView: View {
         GeometryReader { geometry in
             ZStack {
                 // Background
-                homeViewModel.currentPhase.color
+                homeViewModel.currentPhasePresentation.color
                     .ignoresSafeArea()
                 VStack {
                     // Main image - fills available space
-                    Image(homeViewModel.currentPhase.mainImage)
+                    Image(homeViewModel.currentPhasePresentation.mainImage)
                         .resizable()
                         .scaledToFit()
                         .frame(width: geometry.size.width)
@@ -50,8 +51,22 @@ struct HomeView: View {
             datePickerSheet
                 .presentationDetents([.medium])
         }
-        .task {
-            await homeViewModel.autoCloseOpenMenstruationIfNeeded()
+        .alert(
+            menstrualEndCompletionAlertTitle,
+            isPresented: Binding(
+                get: { menstrualEndCompletionAlertKind != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        menstrualEndCompletionAlertKind = nil
+                    }
+                }
+            )
+        ) {
+            Button("확인", role: .cancel) { }
+        } message: {
+            if let message = menstrualEndCompletionAlertMessage {
+                Text(message)
+            }
         }
     }
 }
@@ -81,7 +96,7 @@ private extension HomeView {
             
             // Phase name + info
             HStack(alignment: .bottom, spacing: 10) {
-                Text(homeViewModel.currentPhase.name)
+                Text(homeViewModel.currentPhasePresentation.name)
                     .font(.highlight1)
                     .foregroundStyle(.primaryBlack)
                 Image(systemName: "info.circle.fill")
@@ -92,7 +107,7 @@ private extension HomeView {
             .padding(.bottom, 10)
             
             // Description
-            Text(homeViewModel.currentPhase.description)
+            Text(homeViewModel.currentPhasePresentation.description)
                 .font(.heading5)
                 .foregroundStyle(.primaryBlack)
                 .padding(.bottom, 26)
@@ -104,7 +119,7 @@ private extension HomeView {
     
     var actionButton: some View {
         Button {
-            if homeViewModel.isMenstruating {
+            if homeViewModel.showsMenstrualEndAction {
                 isPickingEndDate = true
                 selectedDate = Date()
             } else {
@@ -113,7 +128,7 @@ private extension HomeView {
             }
             showDatePicker = true
         } label: {
-            Text(homeViewModel.isMenstruating ? "월경 종료" : "월경 시작")
+            Text(homeViewModel.showsMenstrualEndAction ? String(localized: "월경 종료") : String(localized: "월경 시작"))
                 .font(.pretendardBold(30))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -127,7 +142,7 @@ private extension HomeView {
     
     var datePickerSheet: some View {
         VStack(spacing: 0) {
-            Text(isPickingEndDate ? "월경 종료일을 선택하세요" : "월경 시작일을 선택하세요")
+            Text(isPickingEndDate ? String(localized: "월경 종료일을 선택하세요") : String(localized: "월경 시작일을 선택하세요"))
                 .font(.pretendardBold(24))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
@@ -142,7 +157,6 @@ private extension HomeView {
             )
             .datePickerStyle(.wheel)
             .labelsHidden()
-            .environment(\.locale, Locale(identifier: "ko_KR"))
             .padding(.horizontal, 20)
             
             Spacer()
@@ -151,7 +165,12 @@ private extension HomeView {
                 showDatePicker = false
                 Task {
                     if isPickingEndDate {
-                        await homeViewModel.endMenstruation(endDate: selectedDate)
+                        let result = await homeViewModel.endMenstruation(endDate: selectedDate)
+                        if let completionAlertKind = result.completionAlertKind {
+                            await MainActor.run {
+                                menstrualEndCompletionAlertKind = completionAlertKind
+                            }
+                        }
                     } else {
                         await homeViewModel.startMenstruation(startDate: selectedDate)
                     }
@@ -169,6 +188,26 @@ private extension HomeView {
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 16)
+        }
+    }
+
+    var menstrualEndCompletionAlertTitle: String {
+        switch menstrualEndCompletionAlertKind {
+        case .endsToday:
+            return String(localized: "이번 월경을 기록하였습니다")
+        case .recorded:
+            return String(localized: "월경이 기록되었습니다!")
+        case nil:
+            return ""
+        }
+    }
+
+    var menstrualEndCompletionAlertMessage: String? {
+        switch menstrualEndCompletionAlertKind {
+        case .endsToday:
+            return String(localized: "내일부터 난포기가 시작됩니다.")
+        case .recorded, nil:
+            return nil
         }
     }
 }

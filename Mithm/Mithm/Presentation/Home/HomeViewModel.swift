@@ -13,28 +13,25 @@ final class HomeViewModel: ObservableObject {
 
     @Published private(set) var currentPhaseWindow: PhaseWindow
     @Published private(set) var isMenstruating: Bool = false
+    @Published private(set) var showsMenstrualEndAction: Bool = false
+
+    enum EndMenstruationAlertKind: Equatable {
+        case endsToday
+        case recorded
+    }
+
+    struct EndMenstruationResult: Equatable {
+        let didRecord: Bool
+        let completionAlertKind: EndMenstruationAlertKind?
+    }
 
     // MARK: - Dependencies
 
     private let appState: AppState
     private let calendar: Calendar
-    private let menstrualRecordUseCase: MenstrualRecordUseCase
+    private let recordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase
     private let homePhaseUseCase: HomePhaseUseCase
-    private let openPeriodAutoCloser: OpenPeriodAutoCloser
-    private var hasPerformedAutoCloseCheck = false
-
-    // MARK: - Persistence
-
-    private static let menstrualStartDateKey = "menstrualStartDate"
-
-    private var menstrualStartDateString: String {
-        get { UserDefaults.standard.string(forKey: Self.menstrualStartDateKey) ?? "" }
-        set {
-            UserDefaults.standard.set(newValue, forKey: Self.menstrualStartDateKey)
-            isMenstruating = !newValue.isEmpty
-            recomputePhaseWindow()
-        }
-    }
+    private let now: () -> Date
 
     // MARK: - Combine
 
@@ -45,18 +42,17 @@ final class HomeViewModel: ObservableObject {
     init(
         appState: AppState,
         calendar: Calendar = .current,
-        menstrualRecordUseCase: MenstrualRecordUseCase,
+        recordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase,
         homePhaseUseCase: HomePhaseUseCase,
-        openPeriodAutoCloser: OpenPeriodAutoCloser
+        now: @escaping () -> Date = Date.init
     ) {
         self.appState = appState
         self.calendar = calendar
-        self.menstrualRecordUseCase = menstrualRecordUseCase
+        self.recordCurrentMenstrualPeriodUseCase = recordCurrentMenstrualPeriodUseCase
         self.homePhaseUseCase = homePhaseUseCase
-        self.openPeriodAutoCloser = openPeriodAutoCloser
-
-        let storedString = UserDefaults.standard.string(forKey: Self.menstrualStartDateKey) ?? ""
-        self.isMenstruating = !storedString.isEmpty
+        self.now = now
+        self.isMenstruating = appState.currentMenstrualStatus.isActive
+        self.showsMenstrualEndAction = appState.currentMenstrualStatus.displayWindow != nil
 
         self.currentPhaseWindow = PhaseWindow(
             phase: .luteal,
@@ -76,13 +72,22 @@ final class HomeViewModel: ObservableObject {
                 self?.recomputePhaseWindow()
             }
             .store(in: &cancellables)
+
+        appState.$currentMenstrualStatus
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                self?.isMenstruating = status.isActive
+                self?.showsMenstrualEndAction = status.displayWindow != nil
+                self?.recomputePhaseWindow()
+            }
+            .store(in: &cancellables)
     }
 
     private func recomputePhaseWindow() {
         currentPhaseWindow = homePhaseUseCase.execute(
             menstrualOverview: appState.menstrualOverview,
-            activeMenstrualStartDate: menstrualStartDate,
-            today: Date()
+            menstrualDisplayWindow: appState.currentMenstrualStatus.displayWindow,
+            today: now()
         )
     }
 
@@ -92,13 +97,19 @@ final class HomeViewModel: ObservableObject {
         currentPhaseWindow.phase
     }
 
+    var currentPhasePresentation: PhasePresentation {
+        currentPhase.presentation
+    }
+
     var currentPhaseDateRangeString: String {
-        "\(FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.startDate)) - \(FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.endDate))"
+        let startDate = FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.startDate)
+        let endDate = FormatterUtility.homePhaseRange.string(from: currentPhaseWindow.endDate)
+        return String(format: String(localized: "home.phase_range.format"), startDate, endDate)
     }
 
     var nextMenstrualString: String {
         guard let nextDate = earliestPredictedMenstrualDate else { return "-" }
-        let today = calendar.startOfDay(for: Date())
+        let today = calendar.startOfDay(for: now())
         let target = calendar.startOfDay(for: nextDate)
         let days = calendar.dateComponents([.day], from: today, to: target).day ?? 0
 
@@ -106,20 +117,22 @@ final class HomeViewModel: ObservableObject {
 
         let dDay: String
         if days == 0 {
-            dDay = "D-Day"
+            dDay = String(localized: "home.next_menstrual.d_day")
         } else if days > 0 {
-            dDay = "D-\(days)"
+            dDay = String(format: String(localized: "home.next_menstrual.d_minus.format"), days)
         } else {
-            dDay = "D+\(abs(days))"
+            dDay = String(format: String(localized: "home.next_menstrual.d_plus.format"), abs(days))
         }
 
-        return "\(dateStr) · \(dDay)"
+        return String(format: String(localized: "home.next_menstrual.date_and_d_day.format"), dateStr, dDay)
     }
 
     func selectableDateRange(isPickingEndDate: Bool) -> ClosedRange<Date> {
-        let today = calendar.startOfDay(for: Date())
+        let today = calendar.startOfDay(for: now())
 
-        if isPickingEndDate, let start = menstrualStartDate {
+        if isPickingEndDate,
+           let start = appState.currentMenstrualStatus.activeStartDate
+            ?? appState.currentMenstrualStatus.displayWindow?.startDate {
             return start...today
         }
 
@@ -129,60 +142,60 @@ final class HomeViewModel: ObservableObject {
     // MARK: - Public Actions
 
     func startMenstruation(startDate: Date) async {
-        let normalizedStart = calendar.startOfDay(for: startDate)
-        menstrualStartDateString = FormatterUtility.iso8601.string(from: normalizedStart)
-
-        let openRecord = MenstrualRecord(
-            type: .menstrualRecord,
-            startDate: normalizedStart,
-            endDate: nil
-        )
         do {
-            try await saveMenstrualRecord(openRecord)
+            try await recordCurrentMenstrualPeriodUseCase.start(on: startDate)
+            try await appState.refreshMenstrualData()
         } catch {
             appState.menstrualRecordError = error
         }
     }
 
-    func endMenstruation(endDate: Date) async {
-        guard let startDate = menstrualStartDate else { return }
-        let normalizedEndDate = max(calendar.startOfDay(for: endDate), startDate)
-
-        let record = MenstrualRecord(
-            type: .menstrualRecord,
-            startDate: startDate,
-            endDate: normalizedEndDate
-        )
-
+    func endMenstruation(endDate: Date) async -> EndMenstruationResult {
         do {
-            try await saveMenstrualRecord(record, deleteThrough: Date())
-            menstrualStartDateString = ""
-        } catch {
-            appState.menstrualRecordError = error
-        }
-    }
-
-    func autoCloseOpenMenstruationIfNeeded() async {
-        guard !hasPerformedAutoCloseCheck else { return }
-        hasPerformedAutoCloseCheck = true
-
-        do {
-            let didAutoClose = try await performAutoClose()
-            if didAutoClose {
-                menstrualStartDateString = ""
+            let didEnd = try await recordCurrentMenstrualPeriodUseCase.end(
+                on: endDate,
+                currentStatus: appState.currentMenstrualStatus
+            )
+            if didEnd {
+                refreshMenstrualDataAfterRecording()
             }
+            return EndMenstruationResult(
+                didRecord: didEnd,
+                completionAlertKind: completionAlertKind(
+                    didRecord: didEnd,
+                    endDate: endDate
+                )
+            )
         } catch {
             appState.menstrualRecordError = error
+            return EndMenstruationResult(
+                didRecord: false,
+                completionAlertKind: nil
+            )
         }
     }
 
     // MARK: - Private Helpers
 
-    private var menstrualStartDate: Date? {
-        guard let date = FormatterUtility.iso8601.date(from: menstrualStartDateString) else {
-            return nil
+    private func refreshMenstrualDataAfterRecording() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                try await appState.refreshMenstrualData()
+            } catch {
+                appState.menstrualRecordError = error
+            }
         }
-        return calendar.startOfDay(for: date)
+    }
+
+    private func completionAlertKind(
+        didRecord: Bool,
+        endDate: Date
+    ) -> EndMenstruationAlertKind? {
+        guard didRecord else { return nil }
+        return calendar.isDate(endDate, inSameDayAs: now())
+            ? .endsToday
+            : .recorded
     }
 
     private var earliestPredictedMenstrualDate: Date? {
@@ -191,42 +204,5 @@ final class HomeViewModel: ObservableObject {
         let targetIndex = isMenstruating ? 1 : 0
         guard predictedRecords.indices.contains(targetIndex) else { return nil }
         return predictedRecords[targetIndex].startDate
-    }
-
-    private func saveMenstrualRecord(
-        _ record: MenstrualRecord,
-        deleteFrom: Date? = nil,
-        deleteThrough: Date? = nil
-    ) async throws {
-        try await menstrualRecordUseCase.saveMenstrualRecored(
-            record,
-            deleteFrom: deleteFrom,
-            deleteThrough: deleteThrough
-        )
-        try await appState.refreshMenstrualData()
-    }
-
-    private func performAutoClose() async throws -> Bool {
-        guard let activeMenstrualStartDate = menstrualStartDate else { return false }
-        let openRecord = MenstrualRecord(
-            type: .menstrualRecord,
-            startDate: calendar.startOfDay(for: activeMenstrualStartDate),
-            endDate: nil
-        )
-        let predictedPeriodLength = appState.menstrualOverview.prediction?.predictedPeriodLength
-            ?? MenstrualPredictionEngine.Config.defaultPeriodLength
-
-        if let closedRecord = openPeriodAutoCloser.tryAutoClose(
-            openRecord: openRecord,
-            predictedPeriodLength: predictedPeriodLength,
-            referenceDate: Date(),
-            calendar: calendar
-        ) {
-            try await saveMenstrualRecord(closedRecord, deleteThrough: Date())
-            return true
-        }
-
-        try await saveMenstrualRecord(openRecord, deleteThrough: Date())
-        return false
     }
 }

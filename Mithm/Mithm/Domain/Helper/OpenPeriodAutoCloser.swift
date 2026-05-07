@@ -74,3 +74,167 @@ struct OpenPeriodAutoCloser {
         )
     }
 }
+
+struct CurrentMenstrualStatusResolver {
+
+    private let gracePeriodDays: Int
+    private let defaultPeriodLength: Int
+
+    init(
+        gracePeriodDays: Int = OpenPeriodAutoCloser.Config.default.gracePeriodDays,
+        defaultPeriodLength: Int = MenstrualPredictionEngine.Config.defaultPeriodLength
+    ) {
+        self.gracePeriodDays = gracePeriodDays
+        self.defaultPeriodLength = defaultPeriodLength
+    }
+
+    func resolve(
+        actualRecords: [MenstrualRecord],
+        currentEpisode: CurrentMenstrualEpisode?,
+        predictedPeriodLength: Int?,
+        today: Date = Date(),
+        calendar: Calendar = .current
+    ) -> CurrentMenstrualStatus {
+        let today = calendar.startOfDay(for: today)
+        let latestHealthRecord = actualRecords
+            .filter { $0.type == .menstrualRecord }
+            .sorted {
+                if $0.startDate == $1.startDate {
+                    return ($0.endDate ?? $0.startDate) < ($1.endDate ?? $1.startDate)
+                }
+                return $0.startDate < $1.startDate
+            }
+            .last
+
+        guard let latestHealthRecord else {
+            return .inactive()
+        }
+
+        let latestStartDate = calendar.startOfDay(for: latestHealthRecord.startDate)
+        let startDate = calendar.startOfDay(for: latestStartDate)
+        let resolvedPeriodLength = predictedPeriodLength ?? defaultPeriodLength
+        let expectedEndDate = calendar.date(
+            byAdding: .day,
+            value: max(resolvedPeriodLength - 1, 0),
+            to: startDate
+        ) ?? startDate
+        let deadline = calendar.date(
+            byAdding: .day,
+            value: gracePeriodDays,
+            to: expectedEndDate
+        ) ?? expectedEndDate
+
+        if isClosedEpisode(currentEpisode, for: startDate, calendar: calendar) {
+            let displayWindow = userClosedEpisodeDisplayWindow(
+                currentEpisode,
+                today: today,
+                calendar: calendar
+            )
+            return .inactive(
+                latestStartDate: startDate,
+                expectedEndDate: expectedEndDate,
+                displayWindow: displayWindow
+            )
+        }
+
+        let todayHasHealthRecord = contains(
+            latestHealthRecord,
+            day: today,
+            calendar: calendar
+        )
+        let hasOpenEpisode = isOpenEpisode(currentEpisode, for: startDate, calendar: calendar)
+
+        if today > deadline {
+            if hasOpenEpisode {
+                return CurrentMenstrualStatus(
+                    isActive: true,
+                    activeStartDate: startDate,
+                    latestStartDate: startDate,
+                    expectedEndDate: expectedEndDate,
+                    shouldAutoClose: true,
+                    displayWindow: MenstrualDisplayWindow(startDate: startDate, endDate: nil)
+                )
+            }
+
+            return .inactive(
+                latestStartDate: startDate,
+                expectedEndDate: expectedEndDate,
+                shouldAutoClose: true
+            )
+        }
+
+        let isWithinAutoCloseWindow = startDate <= today && today <= deadline
+
+        guard todayHasHealthRecord || isWithinAutoCloseWindow else {
+            return .inactive(
+                latestStartDate: startDate,
+                expectedEndDate: expectedEndDate
+            )
+        }
+
+        return CurrentMenstrualStatus(
+            isActive: true,
+            activeStartDate: startDate,
+            latestStartDate: startDate,
+            expectedEndDate: expectedEndDate,
+            shouldAutoClose: false,
+            displayWindow: MenstrualDisplayWindow(startDate: startDate, endDate: nil)
+        )
+    }
+
+    private func isClosedEpisode(
+        _ currentEpisode: CurrentMenstrualEpisode?,
+        for startDate: Date,
+        calendar: Calendar
+    ) -> Bool {
+        guard let currentEpisode, currentEpisode.isClosed else {
+            return false
+        }
+        return calendar.isDate(currentEpisode.startDate, inSameDayAs: startDate)
+    }
+
+    private func isOpenEpisode(
+        _ currentEpisode: CurrentMenstrualEpisode?,
+        for startDate: Date,
+        calendar: Calendar
+    ) -> Bool {
+        guard let currentEpisode, currentEpisode.closedReason == nil else {
+            return false
+        }
+        return calendar.isDate(currentEpisode.startDate, inSameDayAs: startDate)
+    }
+
+    private func userClosedEpisodeDisplayWindow(
+        _ currentEpisode: CurrentMenstrualEpisode?,
+        today: Date,
+        calendar: Calendar
+    ) -> MenstrualDisplayWindow? {
+        guard let currentEpisode,
+              currentEpisode.closedReason == .userEnded,
+              let endDate = currentEpisode.endDate
+        else {
+            return nil
+        }
+
+        let startDate = calendar.startOfDay(for: currentEpisode.startDate)
+        let normalizedEndDate = calendar.startOfDay(for: endDate)
+        guard calendar.isDate(normalizedEndDate, inSameDayAs: today) else {
+            return nil
+        }
+
+        return MenstrualDisplayWindow(
+            startDate: startDate,
+            endDate: normalizedEndDate
+        )
+    }
+
+    private func contains(
+        _ record: MenstrualRecord,
+        day: Date,
+        calendar: Calendar
+    ) -> Bool {
+        let startDate = calendar.startOfDay(for: record.startDate)
+        let endDate = calendar.startOfDay(for: record.endDate ?? record.startDate)
+        return startDate <= day && day <= endDate
+    }
+}

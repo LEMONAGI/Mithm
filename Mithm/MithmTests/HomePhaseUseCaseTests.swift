@@ -68,6 +68,47 @@ struct HomePhaseUseCaseTests {
         #expect(window.endDate == date("2026-03-14"))
     }
 
+    @Test("오늘 종료한 월경 표시 기간은 종료일 당일 월경기를 유지한다")
+    func endedTodayDisplayWindowKeepsMenstrualPhase() {
+        let useCase = HomePhaseUseCaseImpl(calendar: calendar)
+
+        let window = useCase.execute(
+            menstrualOverview: MenstrualOverview(),
+            menstrualDisplayWindow: MenstrualDisplayWindow(
+                startDate: date("2026-05-01"),
+                endDate: date("2026-05-03")
+            ),
+            today: date("2026-05-03")
+        )
+
+        #expect(window.phase == .menstrual)
+        #expect(window.startDate == date("2026-05-01"))
+        #expect(window.endDate == date("2026-05-03"))
+    }
+
+    @Test("표시용 월경 기간이 없으면 종료 다음 날 기존 gap 규칙으로 난포기를 계산한다")
+    func afterEndedDisplayWindowClearsUsesFollicularGap() {
+        let useCase = HomePhaseUseCaseImpl(calendar: calendar)
+        let overview = MenstrualOverview(
+            allRecords: [
+                record(.menstrualRecord, "2026-05-01", "2026-05-03"),
+                record(.ovulationFertileWindowPrediction, "2026-05-10", "2026-05-16"),
+                record(.ovulationPrediction, "2026-05-15", "2026-05-15"),
+                record(.menstrualPrediction, "2026-05-29", "2026-06-02")
+            ]
+        )
+
+        let window = useCase.execute(
+            menstrualOverview: overview,
+            menstrualDisplayWindow: nil,
+            today: date("2026-05-04")
+        )
+
+        #expect(window.phase == .follicular)
+        #expect(window.startDate == date("2026-05-04"))
+        #expect(window.endDate == date("2026-05-09"))
+    }
+
     @Test("난포기는 이전 월경기와 다음 배란기 사이의 날짜로 계산한다")
     func buildsFollicularWindowFromGap() {
         let useCase = HomePhaseUseCaseImpl(calendar: calendar)

@@ -76,3 +76,34 @@ final class UserSettingRepositoryImpl: UserSettingRepository {
         return UserInputMode(rawValue: rawValue)
     }
 }
+
+final class UserDefaultsCurrentMenstrualEpisodeStore: CurrentMenstrualEpisodeStore {
+
+    private enum Key {
+        static let currentEpisode = "currentMenstrualEpisode"
+    }
+
+    private let defaults: UserDefaults
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    func loadCurrentEpisode() -> CurrentMenstrualEpisode? {
+        guard let data = defaults.data(forKey: Key.currentEpisode) else {
+            return nil
+        }
+        return try? decoder.decode(CurrentMenstrualEpisode.self, from: data)
+    }
+
+    func saveCurrentEpisode(_ episode: CurrentMenstrualEpisode) {
+        guard let data = try? encoder.encode(episode) else { return }
+        defaults.set(data, forKey: Key.currentEpisode)
+    }
+
+    func clearCurrentEpisode() {
+        defaults.removeObject(forKey: Key.currentEpisode)
+    }
+}

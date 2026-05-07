@@ -11,13 +11,13 @@ import Foundation
 enum FormatterUtility {
     static let homePhaseRange: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "M.dd"
+        formatter.dateFormat = String(localized: "home.phase_range.date_format")
         return formatter
     }()
 
     static let homeNextMenstrual: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "M월 d일"
+        formatter.dateFormat = String(localized: "home.next_menstrual.date_format")
         return formatter
     }()
 

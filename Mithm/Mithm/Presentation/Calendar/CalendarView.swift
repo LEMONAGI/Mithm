@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CalendarView: View {
-    @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var calendarViewModel: CalendarViewModel
     @State private var displayedMonth: Date = Date()
     @State private var showMonthPicker = false
 
@@ -134,7 +134,7 @@ extension CalendarView {
     private var dayOfWeekHeader: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 0) {
             ForEach(dayOfWeekSymbols, id: \.self) { symbol in
-                Text(symbol)
+                Text(LocalizedStringKey(symbol))
                     .font(.pretendardMedium(12))
                     .foregroundStyle(Color(.systemGray2))
                     .frame(maxWidth: .infinity)
@@ -143,22 +143,24 @@ extension CalendarView {
     }
 
     private var daysGrid: some View {
-        let days = daysForGrid()
+        let days = calendarViewModel.makeMonth(
+            displayedMonth: displayedMonth
+        ).days
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
-            ForEach(Array(days.enumerated()), id: \.offset) { _, date in
-                dayCell(for: date)
+            ForEach(days, id: \.date) { day in
+                dayCell(for: day)
             }
         }
     }
 
     private var statsView: some View {
         VStack(spacing: 8) {
-            statRow(title: "현재 월경 기간", value: predictedPeriodLength, unit: "일")
-            statRow(title: "현재 월경 주기", value: predictedCycleLength, unit: "일")
+            statRow(title: "현재 월경 기간", value: calendarViewModel.predictedPeriodLength, unit: "일")
+            statRow(title: "현재 월경 주기", value: calendarViewModel.predictedCycleLength, unit: "일")
         }
     }
 
-    private func statRow(title: String, value: Int?, unit: String) -> some View {
+    private func statRow(title: LocalizedStringKey, value: Int?, unit: LocalizedStringKey) -> some View {
         HStack {
             Text(title)
                 .font(.pretendardMedium(16))
@@ -215,7 +217,7 @@ extension CalendarView {
                 }
             )) {
                 ForEach(years, id: \.self) { year in
-                    Text("\(String(year))년").tag(year)
+                    Text(String(format: String(localized: "calendar.year.format"), year)).tag(year)
                 }
             }
             .pickerStyle(.wheel)
@@ -232,7 +234,7 @@ extension CalendarView {
                 }
             )) {
                 ForEach(months, id: \.self) { month in
-                    Text("\(month)월").tag(month)
+                    Text(String(format: String(localized: "calendar.month.format"), month)).tag(month)
                 }
             }
             .pickerStyle(.wheel)
@@ -246,12 +248,11 @@ extension CalendarView {
 extension CalendarView {
 
     @ViewBuilder
-    private func dayCell(for date: Date) -> some View {
-        let dayNumber = calendar.component(.day, from: date)
-        let isCurrentMonth = calendar.isDate(date, equalTo: displayedMonth, toGranularity: .month)
+    private func dayCell(for day: CycleCalendarDay) -> some View {
+        let dayNumber = calendar.component(.day, from: day.date)
 
-        if isCurrentMonth {
-            let style = dayStyle(for: date)
+        if day.isCurrentMonth {
+            let style = dayStyle(for: day.kind)
             Text("\(dayNumber)")
                 .font(style.font)
                 .foregroundStyle(style.textColor)
@@ -274,63 +275,39 @@ extension CalendarView {
         let font: Font
     }
 
-    private func dayStyle(for date: Date) -> DayCellStyle {
-        let allRecords = loadedRecords
-        let day = calendar.startOfDay(for: date)
-        let today = calendar.startOfDay(for: Date())
-
-        let isMenstrual = allRecords.contains { r in
-            (r.type == .menstrualRecord || r.type == .menstrualPrediction)
-            && dateIsInRange(day, start: r.startDate, end: r.endDate)
-        }
-
-        let isOvulationDay = allRecords.contains { r in
-            (r.type == .ovulationEstimated || r.type == .ovulationPrediction)
-            && dateIsInRange(day, start: r.startDate, end: r.endDate)
-        }
-
-        let isFertileWindow = allRecords.contains { r in
-            (r.type == .ovulationFertileWindowEstimated || r.type == .ovulationFertileWindowPrediction)
-            && dateIsInRange(day, start: r.startDate, end: r.endDate)
-        }
-
-        if isMenstrual {
+    private func dayStyle(for kind: CycleDayKind) -> DayCellStyle {
+        switch kind {
+        case .menstrual:
             return DayCellStyle(
                 textColor: .primaryOrange,
                 backgroundColor: Color.primaryOrange.opacity(0.15),
                 font: .pretendardSemiBold(16)
             )
-        } else if isOvulationDay {
+        case .ovulationDay:
             return DayCellStyle(
                 textColor: .white,
                 backgroundColor: .accentTeal,
                 font: .pretendardBold(16)
             )
-        } else if isFertileWindow {
+        case .fertileWindow:
             return DayCellStyle(
                 textColor: .accentTeal,
                 backgroundColor: .clear,
                 font: .pretendardSemiBold(16)
             )
-        } else if calendar.isDate(day, inSameDayAs: today) {
+        case .today:
             return DayCellStyle(
                 textColor: .textPrimary,
                 backgroundColor: Color.accentTeal.opacity(0.12),
                 font: .pretendardSemiBold(16)
             )
-        } else {
+        case .none:
             return DayCellStyle(
                 textColor: .textPrimary,
                 backgroundColor: .clear,
                 font: .pretendardRegular(16)
             )
         }
-    }
-
-    private func dateIsInRange(_ date: Date, start: Date, end: Date?) -> Bool {
-        let s = calendar.startOfDay(for: start)
-        let e = calendar.startOfDay(for: end ?? start)
-        return date >= s && date <= e
     }
 }
 
@@ -339,10 +316,9 @@ extension CalendarView {
 extension CalendarView {
 
     private var monthYearString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy년 M월"
-        formatter.locale = Locale(identifier: "ko_KR")
-        return formatter.string(from: displayedMonth)
+        let year = calendar.component(.year, from: displayedMonth)
+        let month = calendar.component(.month, from: displayedMonth)
+        return String(format: String(localized: "calendar.month_year.format"), year, month)
     }
 
     private func moveMonth(by value: Int) {
@@ -352,44 +328,10 @@ extension CalendarView {
         displayedMonth = newMonth
     }
 
-    private static let gridCellCount = 42 // 6 rows × 7 columns
-
-    private func daysForGrid() -> [Date] {
-        let components = calendar.dateComponents([.year, .month], from: displayedMonth)
-        guard let firstDayOfMonth = calendar.date(from: components) else { return [] }
-
-        // Sunday = 1, so leading days from previous month = firstWeekday - 1
-        let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth)
-        let leadingDays = firstWeekday - 1
-
-        // 1일이 첫 번째 줄에 오도록, 이전 달 날짜로 앞을 채운 뒤 6주(42셀)를 표시
-        guard let gridStart = calendar.date(byAdding: .day, value: -leadingDays, to: firstDayOfMonth)
-        else { return [] }
-
-        return (0..<Self.gridCellCount).compactMap { offset in
-            calendar.date(byAdding: .day, value: offset, to: gridStart)
-        }
-    }
-
-    private var loadedRecords: [MenstrualRecord] {
-        appState.menstrualOverview.allRecords
-    }
-}
-
-// MARK: - Stats Logic
-
-extension CalendarView {
-
-    private var predictedPeriodLength: Int? {
-        appState.menstrualOverview.prediction.flatMap { $0.predictedPeriodLength }
-    }
-
-    private var predictedCycleLength: Int? {
-        appState.menstrualOverview.prediction.flatMap { $0.predictedCycleLength }
-    }
 }
 
 #Preview {
+    let appState = AppDIContainer.makeAppState()
     CalendarView()
-        .environmentObject(AppDIContainer.makeAppState())
+        .environmentObject(AppDIContainer.makeCalendarViewModel(appState: appState))
 }

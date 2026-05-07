@@ -25,7 +25,15 @@
 		39415C492ECCA3BE0056A3F8 /* Exceptions for "Mithm" folder in "Mithm" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Core/AGENTS.md,
+				Core/CLAUDE.md,
+				Data/AGENTS.md,
+				Data/CLAUDE.md,
+				Domain/AGENTS.md,
+				Domain/CLAUDE.md,
 				Info.plist,
+				Presentation/AGENTS.md,
+				Presentation/CLAUDE.md,
 			);
 			target = 39415C002ECC65610056A3F8 /* Mithm */;
 		};
@@ -151,9 +159,10 @@
 				};
 			};
 			buildConfigurationList = 39415BFC2ECC65610056A3F8 /* Build configuration list for PBXProject "Mithm" */;
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				ko,
 				en,
 				Base,
 			);

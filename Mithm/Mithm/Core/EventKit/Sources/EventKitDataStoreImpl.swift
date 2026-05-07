@@ -13,7 +13,9 @@ actor EventKitDataStoreImpl: EventKitDataStore {
     let eventStore: EKEventStore
     
     /// 앱 전용 캘린더 이름
-    private let calendarBaseTitle = "미듬"
+    private var calendarBaseTitle: String {
+        String(localized: "미듬")
+    }
     
     /// UserDefaults에 캘린더 ID 저장할 때 쓸 키
     private let calendarIdKey = "mithm_calendar_identifier"

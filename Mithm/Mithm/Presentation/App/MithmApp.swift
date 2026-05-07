@@ -11,12 +11,14 @@ import SwiftUI
 struct MithmApp: App {
     @StateObject private var appState: AppState
     @StateObject private var homeViewModel: HomeViewModel
+    @StateObject private var calendarViewModel: CalendarViewModel
 
     init() {
-        let appState = AppDIContainer.makeAppState()
+        let graph = AppDIContainer.makeAppDependencyGraph()
 
-        _appState = StateObject(wrappedValue: appState)
-        _homeViewModel = StateObject(wrappedValue: AppDIContainer.makeHomeViewModel(appState: appState))
+        _appState = StateObject(wrappedValue: graph.appState)
+        _homeViewModel = StateObject(wrappedValue: graph.homeViewModel)
+        _calendarViewModel = StateObject(wrappedValue: graph.calendarViewModel)
     }
 
     var body: some Scene {
@@ -24,6 +26,7 @@ struct MithmApp: App {
             ContentView()
                 .environmentObject(appState)
                 .environmentObject(homeViewModel)
+                .environmentObject(calendarViewModel)
         }
     }
 }

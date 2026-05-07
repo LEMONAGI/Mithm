@@ -1760,6 +1760,66 @@ struct MenstrualRecordUseCaseTests {
         #expect(result.filter { $0.type == .menstrualPrediction }.count == 3)
     }
 
+    @Test("fetchMenstrualOverview는 전달된 사용자 입력을 예측에 반영한다")
+    func fetchMenstrualOverviewUsesUserInput() async throws {
+        let repository = MockHealthKitRepository(records: [])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            calendar: calendar
+        )
+
+        let overview = try await useCase.fetchMenstrualOverview(
+            activeMenstrualStartDate: nil,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 7),
+            userInputMode: .blendUserInput
+        )
+
+        #expect(overview.prediction?.predictedCycleLength == 35)
+        #expect(overview.prediction?.predictedPeriodLength == 7)
+        #expect(overview.prediction?.menstrualPredictions.count == 3)
+    }
+
+    @Test("fetchMenstrualOverview는 notBlendUserInput이면 전달된 사용자 입력을 무시한다")
+    func fetchMenstrualOverviewCanIgnoreUserInput() async throws {
+        let repository = MockHealthKitRepository(records: [])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            calendar: calendar
+        )
+
+        let overview = try await useCase.fetchMenstrualOverview(
+            activeMenstrualStartDate: nil,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 7),
+            userInputMode: .notBlendUserInput
+        )
+
+        #expect(overview.prediction?.predictedCycleLength == 28)
+        #expect(overview.prediction?.predictedPeriodLength == 5)
+        #expect(overview.prediction?.usedDefaultRule == true)
+    }
+
+    @Test("fetchMenstrualOverview는 userInputMode만 바꾸고 주입된 예측 엔진 config는 유지한다")
+    func fetchMenstrualOverviewPreservesInjectedPredictionConfig() async throws {
+        let repository = MockHealthKitRepository(records: [])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            predictionEngine: MenstrualPredictionEngine(
+                config: Self.makePredictionConfig(predictionCount: 5)
+            ),
+            calendar: calendar
+        )
+
+        let overview = try await useCase.fetchMenstrualOverview(
+            activeMenstrualStartDate: nil,
+            userInput: MenstrualUserInput(cycleLength: 35, periodLength: 7),
+            userInputMode: .onlyUserInput
+        )
+
+        #expect(overview.prediction?.predictedCycleLength == 35)
+        #expect(overview.prediction?.predictedPeriodLength == 7)
+        #expect(overview.prediction?.menstrualPredictions.count == 5)
+    }
+
     @Test("fetchMenstrualOverview는 진행 중 실제 기록(endDate nil)을 제거하고 예측 월경 예정기간으로 교체한다")
     func fetchMenstrualOverviewReplacesOpenEndedActualRecord() async throws {
         let repository = MockHealthKitRepository(records: [
@@ -1819,6 +1879,46 @@ struct MenstrualRecordUseCaseTests {
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date)
     }
+
+    private static func makePredictionConfig(
+        predictionCount: Int
+    ) -> MenstrualPredictionEngine.Config {
+        let c = MenstrualPredictionEngine.Config.default
+        return MenstrualPredictionEngine.Config(
+            validPeriodRange: c.validPeriodRange,
+            validCycleRange: c.validCycleRange,
+            allowedUserInputCycleRange: c.allowedUserInputCycleRange,
+            allowedUserInputPeriodRange: c.allowedUserInputPeriodRange,
+            outlierNormalThreshold: c.outlierNormalThreshold,
+            outlierMildThreshold: c.outlierMildThreshold,
+            outlierMildWeight: c.outlierMildWeight,
+            outlierSevereWeight: c.outlierSevereWeight,
+            variabilityRegularMaxRange: c.variabilityRegularMaxRange,
+            variabilityModerateMaxRange: c.variabilityModerateMaxRange,
+            ewmaAlphaRegular: c.ewmaAlphaRegular,
+            ewmaAlphaModerate: c.ewmaAlphaModerate,
+            ewmaAlphaIrregular: c.ewmaAlphaIrregular,
+            cycleWeightRegular: c.cycleWeightRegular,
+            cycleWeightModerate: c.cycleWeightModerate,
+            cycleWeightIrregular: c.cycleWeightIrregular,
+            cycleWeightShift: c.cycleWeightShift,
+            cycleWeightReduced: c.cycleWeightReduced,
+            periodWeightStable: c.periodWeightStable,
+            periodWeightIrregular: c.periodWeightIrregular,
+            recencyDecayDays: c.recencyDecayDays,
+            recencyMinimumWeight: c.recencyMinimumWeight,
+            userInputMode: c.userInputMode,
+            userInputCycleWeightVeryLowHistory: c.userInputCycleWeightVeryLowHistory,
+            userInputCycleWeightLowHistory: c.userInputCycleWeightLowHistory,
+            userInputCycleWeightHighHistory: c.userInputCycleWeightHighHistory,
+            userInputCycleWeightHighConfidenceOverride: c.userInputCycleWeightHighConfidenceOverride,
+            userInputPeriodWeightVeryLowHistory: c.userInputPeriodWeightVeryLowHistory,
+            userInputPeriodWeightLowHistory: c.userInputPeriodWeightLowHistory,
+            userInputPeriodWeightHighHistory: c.userInputPeriodWeightHighHistory,
+            shiftThreshold: c.shiftThreshold,
+            predictionCount: predictionCount
+        )
+    }
 }
 
 // MARK: - 18. EventKit Mapper
@@ -1863,7 +1963,211 @@ struct EventKitMapperTests {
     }
 }
 
-// MARK: - 19. OpenPeriodAutoCloser (자동 종료 판별)
+// MARK: - 19. CurrentMenstrualStatusResolver (현재 월경 상태 판별)
+
+struct CurrentMenstrualStatusResolverTests {
+    private let calendar = TestCalendar.make()
+    private let resolver = CurrentMenstrualStatusResolver()
+
+    @Test("오늘 건강앱 월경 기록이 있으면 현재 월경 중으로 판단한다")
+    func activeWhenTodayHasHealthRecord() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-01-10", end: "2026-01-12")
+            ],
+            currentEpisode: nil,
+            predictedPeriodLength: 5,
+            today: date("2026-01-12"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive)
+        #expect(status.activeStartDate == date("2026-01-10"))
+        #expect(status.expectedEndDate == date("2026-01-14"))
+    }
+
+    @Test("오늘 기록이 없어도 최신 시작일이 자동 종료 기준 전이면 현재 월경 중으로 판단한다")
+    func activeWithinAutoCloseWindowWithoutTodaySample() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-01-10", end: "2026-01-10")
+            ],
+            currentEpisode: nil,
+            predictedPeriodLength: 5,
+            today: date("2026-01-15"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive)
+        #expect(status.shouldAutoClose == false)
+        #expect(status.activeStartDate == date("2026-01-10"))
+    }
+
+    @Test("사용자가 종료한 에피소드는 자동 종료 기준 전이어도 현재 월경 중으로 판단하지 않는다")
+    func userClosedEpisodeIsInactive() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-01-10", end: "2026-01-10")
+            ],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-01-10"),
+                endDate: date("2026-01-12"),
+                closedReason: .userEnded
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-01-13"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive == false)
+        #expect(status.shouldAutoClose == false)
+    }
+
+    @Test("사용자가 오늘 종료한 에피소드는 홈 표시용 월경 기간을 유지한다")
+    func userClosedEpisodeTodayKeepsDisplayWindow() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-05-01", end: "2026-05-03")
+            ],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-05-01"),
+                endDate: date("2026-05-03"),
+                closedReason: .userEnded
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-05-03"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive == false)
+        #expect(status.displayWindow?.startDate == date("2026-05-01"))
+        #expect(status.displayWindow?.endDate == date("2026-05-03"))
+    }
+
+    @Test("사용자가 종료한 에피소드는 다음 날 홈 표시용 월경 기간을 제거한다")
+    func userClosedEpisodeAfterEndDateClearsDisplayWindow() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-05-01", end: "2026-05-03")
+            ],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-05-01"),
+                endDate: date("2026-05-03"),
+                closedReason: .userEnded
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-05-04"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive == false)
+        #expect(status.displayWindow == nil)
+    }
+
+    @Test("자동 종료 기준을 지나면 자동 종료 대상으로 판단한다")
+    func detectsAutoCloseAfterDeadline() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-01-10", end: "2026-01-10")
+            ],
+            currentEpisode: nil,
+            predictedPeriodLength: 5,
+            today: date("2026-01-17"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive == false)
+        #expect(status.shouldAutoClose)
+        #expect(status.latestStartDate == date("2026-01-10"))
+        #expect(status.expectedEndDate == date("2026-01-14"))
+    }
+
+    @Test("건강앱 기록이 없으면 로컬 open episode가 있어도 현재 월경 중으로 판단하지 않는다")
+    func inactiveWhenOnlyLocalOpenEpisodeExists() {
+        let status = resolver.resolve(
+            actualRecords: [],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-01-10"),
+                endDate: nil,
+                closedReason: nil
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-01-12"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive == false)
+        #expect(status.shouldAutoClose == false)
+        #expect(status.activeStartDate == nil)
+        #expect(status.latestStartDate == nil)
+    }
+
+    @Test("건강앱 최신 기록과 로컬 episode 시작일이 다르면 건강앱 기록만 기준으로 판단한다")
+    func ignoresLocalEpisodeWhenStartDateDoesNotMatchLatestHealthRecord() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-01-08", end: "2026-01-08")
+            ],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-01-10"),
+                endDate: nil,
+                closedReason: nil
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-01-12"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive)
+        #expect(status.activeStartDate == date("2026-01-08"))
+        #expect(status.latestStartDate == date("2026-01-08"))
+    }
+
+    @Test("열려 있는 앱 에피소드는 자동 종료 기준을 지나도 월경 중으로 유지하고 자동 종료 대상으로 표시한다")
+    func openEpisodeAfterDeadlineStaysActiveAndRequiresAutoClose() {
+        let status = resolver.resolve(
+            actualRecords: [
+                makeRecord(start: "2026-01-10", end: "2026-01-10")
+            ],
+            currentEpisode: CurrentMenstrualEpisode(
+                startDate: date("2026-01-10"),
+                endDate: nil,
+                closedReason: nil
+            ),
+            predictedPeriodLength: 5,
+            today: date("2026-01-17"),
+            calendar: calendar
+        )
+
+        #expect(status.isActive)
+        #expect(status.shouldAutoClose)
+        #expect(status.activeStartDate == date("2026-01-10"))
+        #expect(status.expectedEndDate == date("2026-01-14"))
+    }
+
+    private func makeRecord(start: String, end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: date(start),
+            endDate: date(end)
+        )
+    }
+
+    private func date(_ value: String) -> Date {
+        Self.date(value, calendar: calendar)
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+}
+
+// MARK: - 20. OpenPeriodAutoCloser (자동 종료 판별)
 
 struct OpenPeriodAutoCloserTests {
     private let calendar = TestCalendar.make()

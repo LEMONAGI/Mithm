@@ -9,12 +9,12 @@ import Foundation
 
 /// 홈 화면의 현재 phase를 "사용자 직접 시작 월경 우선" 규칙으로 계산한다.
 ///
-/// 사용자가 월경 시작을 직접 기록한 경우에만 월경기로 진입하고,
+/// 진행 중이거나 오늘 종료한 월경 표시 기간이 있는 경우에만 월경기로 진입하고,
 /// 그렇지 않으면 다음 사이클의 예측 데이터는 현재 phase 계산에서 제외한다.
 /// 이후 남아 있는 record로 배란기, 난포기, 황체기를 계산한다.
 ///
 /// 판정 순서는 다음과 같다.
-/// 1. 진행 중 월경(AppStorage)
+/// 1. 표시용 월경 기간(AppStorage)
 /// 2. 다음 사이클 시작 경계 이후의 예측 record 제외
 /// 3. 오늘이 포함된 배란기 record
 /// 4. 이전 월경기와 다음 배란기 사이 gap이면 난포기
@@ -38,21 +38,21 @@ struct HomePhaseUseCaseImpl: HomePhaseUseCase {
 
     func execute(
         menstrualOverview: MenstrualOverview,
-        activeMenstrualStartDate: Date?,
+        menstrualDisplayWindow: MenstrualDisplayWindow?,
         today: Date = Date()
     ) -> PhaseWindow {
         let today = calendar.startOfDay(for: today)
 
-        // 1) 사용자가 직접 시작한 진행 중 월경이 있으면 가장 우선한다.
+        // 1) 표시용 월경 기간이 있으면 가장 우선한다.
         if let activeMenstrualWindow = makeActiveMenstrualWindow(
-            activeMenstrualStartDate: activeMenstrualStartDate,
+            menstrualDisplayWindow: menstrualDisplayWindow,
             predictedPeriodLength: menstrualOverview.prediction?.predictedPeriodLength,
             today: today
         ) {
             return activeMenstrualWindow
         }
 
-        // 2) 사용자가 월경 시작을 직접 기록하지 않은 경우,
+        // 2) 표시할 월경 기간이 없는 경우,
         // 다음 사이클 시작 경계 이후의 예측 record는 현재 phase 계산에서 제외한다.
         let scopedRecords = makeScopedRecords(from: menstrualOverview.allRecords)
         let menstrualRecords = scopedRecords.filter {
@@ -125,16 +125,38 @@ struct HomePhaseUseCaseImpl: HomePhaseUseCase {
 
     // MARK: - Active Menstrual
 
-    /// 사용자가 직접 시작한 진행 중 월경이 있으면,
-    /// 예측 기간 또는 기본 기간을 사용해 월경기 구간을 만든다.
-    private func makeActiveMenstrualWindow(
+    func execute(
+        menstrualOverview: MenstrualOverview,
         activeMenstrualStartDate: Date?,
+        today: Date = Date()
+    ) -> PhaseWindow {
+        execute(
+            menstrualOverview: menstrualOverview,
+            menstrualDisplayWindow: activeMenstrualStartDate.map {
+                MenstrualDisplayWindow(startDate: $0, endDate: nil)
+            },
+            today: today
+        )
+    }
+
+    /// 홈에 표시할 월경 기간이 있으면 월경기 구간을 만든다.
+    /// 진행 중 월경은 예측 기간을 사용하고, 당일 종료 월경은 기록된 종료일까지 표시한다.
+    private func makeActiveMenstrualWindow(
+        menstrualDisplayWindow: MenstrualDisplayWindow?,
         predictedPeriodLength: Int?,
         today: Date
     ) -> PhaseWindow? {
-        guard let activeMenstrualStartDate else { return nil }
+        guard let menstrualDisplayWindow else { return nil }
 
-        let activeStartDate = calendar.startOfDay(for: activeMenstrualStartDate)
+        let activeStartDate = calendar.startOfDay(for: menstrualDisplayWindow.startDate)
+        if let endDate = menstrualDisplayWindow.endDate {
+            return PhaseWindow(
+                phase: .menstrual,
+                startDate: activeStartDate,
+                endDate: calendar.startOfDay(for: endDate)
+            )
+        }
+
         let resolvedPeriodLength = predictedPeriodLength ?? defaultPeriodLength
         let predictedEndDate = calendar.date(
             byAdding: .day,

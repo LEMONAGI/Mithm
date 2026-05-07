@@ -176,24 +176,15 @@ enum HealthKitMapper {
             }
         }
         
-        // 마지막에는 끊기는 지점을 찾지 못하고 넘어가므로, 예외처리 추가
-        if calendar.isDate(currentEnd, inSameDayAs: Date()) {   // currentEnd가 오늘이어서, 월경 종료 여부를 확인할 수 없는 경우
-            records.append(
-                MenstrualRecord(
-                    type: .menstrualRecord,
-                    startDate: currentStart,
-                    endDate: nil
-                )
+        // HealthKit 샘플은 항상 실제 기록된 날짜 범위로 읽고,
+        // 현재 월경 여부는 별도 상태 계산 로직에서 판단한다.
+        records.append(
+            MenstrualRecord(
+                type: .menstrualRecord,
+                startDate: currentStart,
+                endDate: currentEnd
             )
-        } else {
-            records.append(
-                MenstrualRecord(
-                    type: .menstrualRecord,
-                    startDate: currentStart,
-                    endDate: currentEnd
-                )
-            )
-        }
+        )
         
         return records
     }
