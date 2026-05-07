@@ -30,19 +30,29 @@ Mithm/
 
 ## 빌드 / 테스트
 
+시뮬레이터 이름은 로컬 설치 상태에 따라 다르므로 `iPhone 16`을 가정하지 않는다. 실행 전에 설치된 iPhone 시뮬레이터를 확인하고 그 이름을 destination에 사용한다.
+
 ```bash
+# 설치된 iPhone 시뮬레이터 확인
+xcrun simctl list devices available | rg "iPhone"
+
 # 빌드
 xcodebuild build \
   -project Mithm/Mithm.xcodeproj -scheme Mithm \
-  -destination 'platform=iOS Simulator,name=iPhone 16'
+  -destination 'platform=iOS Simulator,name=<설치된 iPhone 시뮬레이터 이름>'
 
 # 전체 테스트
 xcodebuild test \
   -project Mithm/Mithm.xcodeproj -scheme Mithm \
-  -destination 'platform=iOS Simulator,name=iPhone 16'
+  -destination 'platform=iOS Simulator,name=<설치된 iPhone 시뮬레이터 이름>'
 ```
 
-XcodeBuildMCP 툴이 사용 가능하면 셸 명령보다 우선 사용 (`session_show_defaults` → `build_run_sim` / `test_sim`).
+XcodeBuildMCP 툴이 사용 가능하면 셸 명령보다 우선 사용한다. MCP에서는 `test_sim`/`build_run_sim` 호출 전에 항상 기본값을 확정한다.
+
+1. `session_show_defaults`로 현재 기본값을 확인한다.
+2. `list_sims(enabled: true)`로 설치된 iPhone 시뮬레이터 이름을 확인한다.
+3. 기본값이 비어 있거나 현재 프로젝트와 다르면 `session_set_defaults`로 `projectPath: Mithm/Mithm.xcodeproj`, `scheme: Mithm`, `simulatorName: <설치된 iPhone 시뮬레이터 이름>`, `simulatorPlatform: iOS Simulator`를 설정한다.
+4. 이후 `build_run_sim` 또는 `test_sim`을 실행한다. `extraArgs`는 `-only-testing` 같은 추가 옵션에만 사용한다.
 
 ## 영역별 가이드
 

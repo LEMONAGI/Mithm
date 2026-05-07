@@ -26,11 +26,13 @@ struct CycleCalendarUseCaseImpl: CycleCalendarUseCase {
                 equalTo: displayedMonth,
                 toGranularity: .month
             )
+            let isToday = isCurrentMonth && calendar.isDate(date, inSameDayAs: today)
             return CycleCalendarDay(
                 date: date,
                 isCurrentMonth: isCurrentMonth,
+                isToday: isToday,
                 kind: isCurrentMonth
-                    ? dayKind(for: date, records: records, today: today)
+                    ? dayKind(for: date, records: records)
                     : .none
             )
         }
@@ -68,11 +70,9 @@ struct CycleCalendarUseCaseImpl: CycleCalendarUseCase {
 
     private func dayKind(
         for date: Date,
-        records: [MenstrualRecord],
-        today: Date
+        records: [MenstrualRecord]
     ) -> CycleDayKind {
         let day = calendar.startOfDay(for: date)
-        let today = calendar.startOfDay(for: today)
 
         let isMenstrual = records.contains { record in
             (record.type == .menstrualRecord || record.type == .menstrualPrediction)
@@ -97,8 +97,6 @@ struct CycleCalendarUseCaseImpl: CycleCalendarUseCase {
             return .ovulationDay
         } else if isFertileWindow {
             return .fertileWindow
-        } else if calendar.isDate(day, inSameDayAs: today) {
-            return .today
         } else {
             return .none
         }

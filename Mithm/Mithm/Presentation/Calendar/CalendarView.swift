@@ -252,7 +252,7 @@ extension CalendarView {
         let dayNumber = calendar.component(.day, from: day.date)
 
         if day.isCurrentMonth {
-            let style = dayStyle(for: day.kind)
+            let style = dayStyle(for: day)
             Text("\(dayNumber)")
                 .font(style.font)
                 .foregroundStyle(style.textColor)
@@ -275,37 +275,31 @@ extension CalendarView {
         let font: Font
     }
 
-    private func dayStyle(for kind: CycleDayKind) -> DayCellStyle {
-        switch kind {
+    private func dayStyle(for day: CycleCalendarDay) -> DayCellStyle {
+        switch day.kind {
         case .menstrual:
             return DayCellStyle(
                 textColor: .primaryOrange,
-                backgroundColor: Color.primaryOrange.opacity(0.15),
-                font: .pretendardSemiBold(16)
+                backgroundColor: day.isToday ? .primaryBrown : Color.primaryOrange.opacity(0.15),
+                font: day.isToday ? .pretendardBold(16) : .pretendardSemiBold(16)
             )
         case .ovulationDay:
             return DayCellStyle(
-                textColor: .white,
-                backgroundColor: .accentTeal,
+                textColor: day.isToday ? .accentTeal : .white,
+                backgroundColor: day.isToday ? .primaryBrown : .accentTeal,
                 font: .pretendardBold(16)
             )
         case .fertileWindow:
             return DayCellStyle(
                 textColor: .accentTeal,
-                backgroundColor: .clear,
-                font: .pretendardSemiBold(16)
-            )
-        case .today:
-            return DayCellStyle(
-                textColor: .textPrimary,
-                backgroundColor: Color.accentTeal.opacity(0.12),
-                font: .pretendardSemiBold(16)
+                backgroundColor: day.isToday ? .primaryBrown : .clear,
+                font: day.isToday ? .pretendardBold(16) : .pretendardSemiBold(16)
             )
         case .none:
             return DayCellStyle(
                 textColor: .textPrimary,
-                backgroundColor: .clear,
-                font: .pretendardRegular(16)
+                backgroundColor: day.isToday ? .primaryBrown : .clear,
+                font: day.isToday ? .pretendardBold(16) : .pretendardRegular(16)
             )
         }
     }

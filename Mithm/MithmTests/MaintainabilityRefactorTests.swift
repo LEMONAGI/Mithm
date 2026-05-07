@@ -485,7 +485,8 @@ struct AppStateRefreshTests {
         let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
             snapshot: MenstrualCycleSnapshot(
                 overview: overview,
-                currentStatus: expectedStatus
+                currentStatus: expectedStatus,
+                didAutoClose: false
             )
         )
         let appState = AppState(
@@ -717,7 +718,43 @@ struct CycleCalendarUseCaseTests {
         #expect(day("2026-03-12", in: month).kind == .menstrual)
         #expect(day("2026-03-15", in: month).kind == .fertileWindow)
         #expect(day("2026-03-18", in: month).kind == .ovulationDay)
-        #expect(day("2026-03-20", in: month).kind == .today)
+        #expect(day("2026-03-20", in: month).kind == .none)
+        #expect(day("2026-03-20", in: month).isToday)
+        #expect(!day("2026-03-18", in: month).isToday)
+    }
+
+    @Test("오늘 표시는 기간 분류와 독립적으로 보존된다")
+    func todayFlagIsIndependentFromDayKind() {
+        let useCase = CycleCalendarUseCaseImpl(calendar: calendar)
+        let records = [
+            record(.menstrualRecord, "2026-03-10", "2026-03-14"),
+            record(.ovulationPrediction, "2026-03-18", "2026-03-18"),
+            record(.ovulationFertileWindowPrediction, "2026-03-20", "2026-03-24")
+        ]
+
+        let menstrualMonth = useCase.makeMonth(
+            displayedMonth: date("2026-03-01"),
+            records: records,
+            today: date("2026-03-12")
+        )
+        #expect(day("2026-03-12", in: menstrualMonth).kind == .menstrual)
+        #expect(day("2026-03-12", in: menstrualMonth).isToday)
+
+        let ovulationDayMonth = useCase.makeMonth(
+            displayedMonth: date("2026-03-01"),
+            records: records,
+            today: date("2026-03-18")
+        )
+        #expect(day("2026-03-18", in: ovulationDayMonth).kind == .ovulationDay)
+        #expect(day("2026-03-18", in: ovulationDayMonth).isToday)
+
+        let fertileWindowMonth = useCase.makeMonth(
+            displayedMonth: date("2026-03-01"),
+            records: records,
+            today: date("2026-03-21")
+        )
+        #expect(day("2026-03-21", in: fertileWindowMonth).kind == .fertileWindow)
+        #expect(day("2026-03-21", in: fertileWindowMonth).isToday)
     }
 
     private func day(_ value: String, in month: CycleCalendarMonth) -> CycleCalendarDay {
@@ -904,7 +941,8 @@ private final class FakeRefreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCa
     init(
         snapshot: MenstrualCycleSnapshot = MenstrualCycleSnapshot(
             overview: MenstrualOverview(),
-            currentStatus: .inactive()
+            currentStatus: .inactive(),
+            didAutoClose: false
         ),
         error: Error? = nil,
         delayNanoseconds: UInt64 = 0

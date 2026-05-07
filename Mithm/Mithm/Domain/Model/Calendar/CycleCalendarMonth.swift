@@ -13,12 +13,12 @@ struct CycleCalendarMonth {
 struct CycleCalendarDay: Hashable {
     let date: Date
     let isCurrentMonth: Bool
+    let isToday: Bool
     let kind: CycleDayKind
 }
 
 enum CycleDayKind: Hashable {
     case none
-    case today
     case menstrual
     case fertileWindow
     case ovulationDay
