@@ -9,6 +9,7 @@ import Foundation
 struct MenstrualCycleSnapshot {
     let overview: MenstrualOverview
     let currentStatus: CurrentMenstrualStatus
+    let didAutoClose: Bool
 }
 
 struct MenstrualCycleRefreshError: Error {

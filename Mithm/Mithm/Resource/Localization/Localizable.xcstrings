@@ -780,6 +780,17 @@
         }
       }
     },
+    "이전 월경 종료를 자동으로 기록했습니다!" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전 월경 종료를 자동으로 기록했습니다!"
+          }
+        }
+      }
+    },
     "월경이 기록되었습니다!" : {
       "extractionState" : "manual",
       "localizations" : {

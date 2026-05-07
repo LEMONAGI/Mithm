@@ -15,6 +15,7 @@ final class AppState: ObservableObject {
     @Published var menstrualRecordError: Error?
     @Published var userSetting = UserSettingState()
     @Published var currentMenstrualStatus: CurrentMenstrualStatus = .inactive()
+    @Published var didAutoCloseMenstruation = false
 
     // MARK: - Dependencies
 
@@ -84,5 +85,8 @@ final class AppState: ObservableObject {
     private func apply(_ snapshot: MenstrualCycleSnapshot) {
         menstrualOverview = snapshot.overview
         currentMenstrualStatus = snapshot.currentStatus
+        if snapshot.didAutoClose {
+            didAutoCloseMenstruation = true
+        }
     }
 }

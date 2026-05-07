@@ -52,7 +52,9 @@ struct RefreshMenstrualCycleUseCaseImpl: RefreshMenstrualCycleUseCase {
             )
         }
 
+        var didAutoClose = false
         if runAutoClose,
+           status.isActive,
            status.shouldAutoClose,
            let latestStartDate = status.latestStartDate,
            let expectedEndDate = status.expectedEndDate {
@@ -61,6 +63,7 @@ struct RefreshMenstrualCycleUseCaseImpl: RefreshMenstrualCycleUseCase {
                 endDate: expectedEndDate,
                 deleteThrough: referenceDate
             )
+            didAutoClose = true
             overview = try await fetchMenstrualOverview(
                 userSetting: userSetting
             )
@@ -72,7 +75,8 @@ struct RefreshMenstrualCycleUseCaseImpl: RefreshMenstrualCycleUseCase {
 
         let snapshot = MenstrualCycleSnapshot(
             overview: overview,
-            currentStatus: status
+            currentStatus: status,
+            didAutoClose: didAutoClose
         )
 
         do {
