@@ -594,11 +594,66 @@ struct HomeViewModelEndMenstruationTests {
         #expect(result.completionAlertKind == nil)
     }
 
+    @Test("월경 종료 결과는 데이터 refresh 완료를 기다리지 않고 반환한다")
+    func endReturnsBeforeRefreshCompletes() async {
+        let clock = ContinuousClock()
+        let viewModel = makeViewModel(
+            endResult: true,
+            now: dateTime("2026-05-04 10:00"),
+            refreshUseCase: FakeRefreshMenstrualCycleUseCase(
+                delayNanoseconds: 300_000_000
+            )
+        )
+
+        let start = clock.now
+        let result = await viewModel.endMenstruation(
+            endDate: dateTime("2026-05-04 08:00")
+        )
+        let elapsed = start.duration(to: clock.now)
+
+        #expect(result.didRecord)
+        #expect(result.completionAlertKind == .endsToday)
+        #expect(elapsed < .milliseconds(150))
+    }
+
+    @Test("월경 종료 후 refresh가 실패해도 저장 성공 알럿 결과를 먼저 반환하고 에러 상태를 반영한다")
+    func endReturnsAlertKindAndStoresRefreshError() async {
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
+            error: FakeRefreshError()
+        )
+        let scenario = makeScenario(
+            endResult: true,
+            now: dateTime("2026-05-04 10:00"),
+            refreshUseCase: refreshUseCase
+        )
+
+        let result = await scenario.viewModel.endMenstruation(
+            endDate: dateTime("2026-05-04 08:00")
+        )
+        await waitForBackgroundTasks()
+
+        #expect(result.didRecord)
+        #expect(result.completionAlertKind == .endsToday)
+        #expect(scenario.appState.menstrualRecordError != nil)
+    }
+
     private func makeViewModel(
         endResult: Bool,
-        now: Date
+        now: Date,
+        refreshUseCase: FakeRefreshMenstrualCycleUseCase = FakeRefreshMenstrualCycleUseCase()
     ) -> HomeViewModel {
-        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        makeScenario(
+            endResult: endResult,
+            now: now,
+            refreshUseCase: refreshUseCase
+        ).viewModel
+    }
+
+    private func makeScenario(
+        endResult: Bool,
+        now: Date,
+        refreshUseCase: FakeRefreshMenstrualCycleUseCase = FakeRefreshMenstrualCycleUseCase()
+    ) -> (viewModel: HomeViewModel, appState: AppState) {
         let appState = AppState(
             menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
             refreshMenstrualCycleUseCase: refreshUseCase,
@@ -616,7 +671,7 @@ struct HomeViewModelEndMenstruationTests {
             )
         )
 
-        return HomeViewModel(
+        let viewModel = HomeViewModel(
             appState: appState,
             calendar: calendar,
             recordCurrentMenstrualPeriodUseCase: FakeRecordCurrentMenstrualPeriodUseCase(
@@ -625,10 +680,15 @@ struct HomeViewModelEndMenstruationTests {
             homePhaseUseCase: HomePhaseUseCaseImpl(calendar: calendar),
             now: { now }
         )
+        return (viewModel, appState)
     }
 
     private func dateTime(_ value: String) -> Date {
         RefactorTestCalendar.dateTime(value, calendar: calendar)
+    }
+
+    private func waitForBackgroundTasks() async {
+        try? await Task.sleep(nanoseconds: 50_000_000)
     }
 }
 
@@ -838,14 +898,20 @@ private struct RefreshMenstrualCycleCall {
 private final class FakeRefreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCase {
     private(set) var calls: [RefreshMenstrualCycleCall] = []
     var snapshot: MenstrualCycleSnapshot
+    var error: Error?
+    var delayNanoseconds: UInt64
 
     init(
         snapshot: MenstrualCycleSnapshot = MenstrualCycleSnapshot(
             overview: MenstrualOverview(),
             currentStatus: .inactive()
-        )
+        ),
+        error: Error? = nil,
+        delayNanoseconds: UInt64 = 0
     ) {
         self.snapshot = snapshot
+        self.error = error
+        self.delayNanoseconds = delayNanoseconds
     }
 
     func execute(
@@ -853,6 +919,9 @@ private final class FakeRefreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCa
         runAutoClose: Bool,
         referenceDate: Date
     ) async throws -> MenstrualCycleSnapshot {
+        if delayNanoseconds > 0 {
+            try await Task.sleep(nanoseconds: delayNanoseconds)
+        }
         calls.append(
             RefreshMenstrualCycleCall(
                 userSetting: userSetting,
@@ -860,9 +929,14 @@ private final class FakeRefreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCa
                 referenceDate: referenceDate
             )
         )
+        if let error {
+            throw error
+        }
         return snapshot
     }
 }
+
+private struct FakeRefreshError: Error { }
 
 private struct FakeLoadUserSettingsUseCase: LoadUserSettingsUseCase {
     let settings: UserSettingState

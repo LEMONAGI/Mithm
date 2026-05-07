@@ -157,7 +157,7 @@ final class HomeViewModel: ObservableObject {
                 currentStatus: appState.currentMenstrualStatus
             )
             if didEnd {
-                try await appState.refreshMenstrualData()
+                refreshMenstrualDataAfterRecording()
             }
             return EndMenstruationResult(
                 didRecord: didEnd,
@@ -176,6 +176,17 @@ final class HomeViewModel: ObservableObject {
     }
 
     // MARK: - Private Helpers
+
+    private func refreshMenstrualDataAfterRecording() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                try await appState.refreshMenstrualData()
+            } catch {
+                appState.menstrualRecordError = error
+            }
+        }
+    }
 
     private func completionAlertKind(
         didRecord: Bool,
