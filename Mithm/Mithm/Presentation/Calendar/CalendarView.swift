@@ -91,7 +91,7 @@ extension CalendarView {
         }
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGray6))
+                .fill(Color.gray50)
         )
     }
 
@@ -155,29 +155,24 @@ extension CalendarView {
 
     private var statsView: some View {
         VStack(spacing: 8) {
-            statRow(title: "현재 월경 기간", value: calendarViewModel.predictedPeriodLength, unit: "일")
-            statRow(title: "현재 월경 주기", value: calendarViewModel.predictedCycleLength, unit: "일")
+            statRow(title: "calendar.stats.period_length", value: calendarViewModel.predictedPeriodLength)
+            statRow(title: "calendar.stats.cycle_length", value: calendarViewModel.predictedCycleLength)
         }
     }
 
-    private func statRow(title: LocalizedStringKey, value: Int?, unit: LocalizedStringKey) -> some View {
+    private func statRow(title: LocalizedStringKey, value: Int?) -> some View {
         HStack {
             Text(title)
-                .font(.pretendardMedium(16))
+                .font(.pretendardMedium(18))
                 .foregroundStyle(.textPrimary)
             Spacer()
             if let value {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("\(value)")
-                        .font(.pretendardBold(28))
-                        .foregroundStyle(.textPrimary)
-                    Text(unit)
-                        .font(.pretendardBold(16))
-                        .foregroundStyle(.textPrimary)
-                }
+                Text(String(format: String(localized: "calendar.stats.day_value.format"), value))
+                    .font(.pretendardBold(24))
+                    .foregroundStyle(.textPrimary)
             } else {
                 Text("-")
-                    .font(.pretendardBold(28))
+                    .font(.pretendardBold(24))
                     .foregroundStyle(.textPrimary)
             }
         }
@@ -308,7 +303,7 @@ extension CalendarView {
             )
         case .none:
             return DayCellStyle(
-                textColor: .textPrimary,
+                textColor: day.isToday ? .primaryWhite : .textPrimary,
                 backgroundColor: day.isToday ? .primaryBrown : .clear,
                 font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
             )

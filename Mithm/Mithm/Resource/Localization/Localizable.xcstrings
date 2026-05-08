@@ -1064,24 +1064,35 @@
     "해당 기간 삭제" : {
 
     },
-    "현재 월경 기간" : {
+    "calendar.stats.period_length" : {
       "extractionState" : "manual",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "현재 월경 기간"
+            "value" : "최근 월경 기간"
           }
         }
       }
     },
-    "현재 월경 주기" : {
+    "calendar.stats.cycle_length" : {
       "extractionState" : "manual",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "현재 월경 주기"
+            "value" : "최근 월경 주기"
+          }
+        }
+      }
+    },
+    "calendar.stats.day_value.format" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 일"
           }
         }
       }
