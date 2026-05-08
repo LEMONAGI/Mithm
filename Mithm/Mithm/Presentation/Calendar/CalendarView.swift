@@ -102,10 +102,10 @@ extension CalendarView {
             } label: {
                 HStack(spacing: 4) {
                     Text(monthYearString)
-                        .font(.pretendardBold(20))
+                        .font(.pretendardSemiBold(17))
                         .foregroundStyle(.textPrimary)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.textPrimary)
                 }
             }
@@ -119,12 +119,12 @@ extension CalendarView {
             HStack(spacing: 20) {
                 Button { moveMonth(by: -1) } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 20, weight: .medium))
                         .foregroundStyle(.textPrimary)
                 }
                 Button { moveMonth(by: 1) } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 20, weight: .medium))
                         .foregroundStyle(.textPrimary)
                 }
             }
@@ -135,8 +135,8 @@ extension CalendarView {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 0) {
             ForEach(dayOfWeekSymbols, id: \.self) { symbol in
                 Text(LocalizedStringKey(symbol))
-                    .font(.pretendardMedium(12))
-                    .foregroundStyle(Color(.systemGray2))
+                    .font(.pretendardSemiBold(13))
+                    .foregroundStyle(.textTertiary)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -268,8 +268,8 @@ extension CalendarView {
                 )
         } else {
             Text("\(dayNumber)")
-                .font(.pretendardRegular(16))
-                .foregroundStyle(Color(.systemGray3))
+                .font(.pretendardRegular(20))
+                .foregroundStyle(.textQuaternary)
                 .frame(width: 40, height: 40)
         }
     }
@@ -286,25 +286,25 @@ extension CalendarView {
             return DayCellStyle(
                 textColor: .primaryOrange,
                 backgroundColor: day.isToday ? .primaryBrown : Color.primaryOrange.opacity(0.15),
-                font: day.isToday ? .pretendardBold(16) : .pretendardSemiBold(16)
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
             )
         case .ovulationDay:
             return DayCellStyle(
-                textColor: day.isToday ? .accentTeal : .white,
-                backgroundColor: day.isToday ? .primaryBrown : .accentTeal,
-                font: .pretendardBold(16)
+                textColor: .accentTeal,
+                backgroundColor: day.isToday ? .primaryBrown : .accentTeal.opacity(0.15),
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
             )
         case .fertileWindow:
             return DayCellStyle(
                 textColor: .accentTeal,
                 backgroundColor: day.isToday ? .primaryBrown : .clear,
-                font: day.isToday ? .pretendardBold(16) : .pretendardSemiBold(16)
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
             )
         case .none:
             return DayCellStyle(
                 textColor: .textPrimary,
                 backgroundColor: day.isToday ? .primaryBrown : .clear,
-                font: day.isToday ? .pretendardBold(16) : .pretendardRegular(16)
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
             )
         }
     }
