@@ -19,7 +19,8 @@ struct CycleCalendarDay: Hashable {
 
 enum CycleDayKind: Hashable {
     case none
-    case menstrual
+    case menstrualRecord
+    case menstrualPrediction
     case fertileWindow
     case ovulationDay
 }

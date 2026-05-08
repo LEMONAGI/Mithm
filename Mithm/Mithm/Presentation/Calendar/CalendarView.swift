@@ -282,7 +282,13 @@ extension CalendarView {
 
     private func dayStyle(for day: CycleCalendarDay) -> DayCellStyle {
         switch day.kind {
-        case .menstrual:
+        case .menstrualRecord:
+            return DayCellStyle(
+                textColor: day.isToday ? .primaryOrange : .primaryWhite,
+                backgroundColor: day.isToday ? .primaryBrown : .primaryOrange,
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
+            )
+        case .menstrualPrediction:
             return DayCellStyle(
                 textColor: .primaryOrange,
                 backgroundColor: day.isToday ? .primaryBrown : Color.primaryOrange.opacity(0.15),

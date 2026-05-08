@@ -74,8 +74,13 @@ struct CycleCalendarUseCaseImpl: CycleCalendarUseCase {
     ) -> CycleDayKind {
         let day = calendar.startOfDay(for: date)
 
-        let isMenstrual = records.contains { record in
-            (record.type == .menstrualRecord || record.type == .menstrualPrediction)
+        let isMenstrualRecord = records.contains { record in
+            record.type == .menstrualRecord
+                && dateIsInRange(day, start: record.startDate, end: record.endDate)
+        }
+
+        let isMenstrualPrediction = records.contains { record in
+            record.type == .menstrualPrediction
                 && dateIsInRange(day, start: record.startDate, end: record.endDate)
         }
 
@@ -91,8 +96,10 @@ struct CycleCalendarUseCaseImpl: CycleCalendarUseCase {
             ) && dateIsInRange(day, start: record.startDate, end: record.endDate)
         }
 
-        if isMenstrual {
-            return .menstrual
+        if isMenstrualRecord {
+            return .menstrualRecord
+        } else if isMenstrualPrediction {
+            return .menstrualPrediction
         } else if isOvulationDay {
             return .ovulationDay
         } else if isFertileWindow {

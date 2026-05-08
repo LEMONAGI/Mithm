@@ -715,12 +715,31 @@ struct CycleCalendarUseCaseTests {
         )
 
         #expect(month.days.count == 42)
-        #expect(day("2026-03-12", in: month).kind == .menstrual)
+        #expect(day("2026-03-12", in: month).kind == .menstrualRecord)
         #expect(day("2026-03-15", in: month).kind == .fertileWindow)
         #expect(day("2026-03-18", in: month).kind == .ovulationDay)
         #expect(day("2026-03-20", in: month).kind == .none)
         #expect(day("2026-03-20", in: month).isToday)
         #expect(!day("2026-03-18", in: month).isToday)
+    }
+
+    @Test("캘린더 월경 날짜 분류는 실제 기록과 예측을 구분한다")
+    func menstrualDayKindDistinguishesRecordsFromPredictions() {
+        let useCase = CycleCalendarUseCaseImpl(calendar: calendar)
+        let records = [
+            record(.menstrualRecord, "2026-03-10", "2026-03-14"),
+            record(.menstrualPrediction, "2026-03-28", "2026-04-01"),
+            record(.ovulationPrediction, "2026-03-12", "2026-03-12")
+        ]
+
+        let month = useCase.makeMonth(
+            displayedMonth: date("2026-03-01"),
+            records: records,
+            today: date("2026-03-20")
+        )
+
+        #expect(day("2026-03-12", in: month).kind == .menstrualRecord)
+        #expect(day("2026-03-29", in: month).kind == .menstrualPrediction)
     }
 
     @Test("오늘 표시는 기간 분류와 독립적으로 보존된다")
@@ -737,7 +756,7 @@ struct CycleCalendarUseCaseTests {
             records: records,
             today: date("2026-03-12")
         )
-        #expect(day("2026-03-12", in: menstrualMonth).kind == .menstrual)
+        #expect(day("2026-03-12", in: menstrualMonth).kind == .menstrualRecord)
         #expect(day("2026-03-12", in: menstrualMonth).isToday)
 
         let ovulationDayMonth = useCase.makeMonth(
