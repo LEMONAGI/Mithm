@@ -188,13 +188,18 @@ extension CalendarView {
             // TODO: Navigate to record list
         } label: {
             Text("월경 기록 확인하기")
-                .font(.pretendardSemiBold(16))
+                .font(.pretendardMedium(18))
                 .foregroundStyle(.textPrimary)
                 .frame(maxWidth: .infinity)
-                .frame(height: 56)
+                .frame(height: 58)
                 .background(
-                    RoundedRectangle(cornerRadius: 28)
-                        .fill(Color(.systemGray6))
+                    RoundedRectangle(cornerRadius: 30)
+                        .fill(Color.white)
+                        .shadow(color: .buttonshadow, radius: 1, x: 0, y: 2)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 30)
+                        .stroke(Color.gray100, lineWidth: 1)
                 )
         }
     }
