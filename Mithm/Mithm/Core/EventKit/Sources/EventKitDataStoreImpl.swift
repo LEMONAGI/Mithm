@@ -67,7 +67,7 @@ actor EventKitDataStoreImpl: EventKitDataStore {
         let calendar = EKCalendar(for: .event, eventStore: eventStore)
         calendar.title = uniqueTitle
         calendar.source = source
-        calendar.cgColor = UIColor.blue.cgColor
+        calendar.cgColor = UIColor.accent.cgColor
         
         try eventStore.saveCalendar(calendar, commit: true)
         UserDefaults.standard.set(calendar.calendarIdentifier, forKey: calendarIdKey)
