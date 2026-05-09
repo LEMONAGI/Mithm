@@ -102,6 +102,15 @@ actor EventKitDataStoreImpl: EventKitDataStore {
         throw EKError(.calendarHasNoSource)
     }
     
+    func deleteCalendarIfExists() throws {
+        guard let id = UserDefaults.standard.string(forKey: calendarIdKey),
+              let calendar = eventStore.calendar(withIdentifier: id) else {
+            return
+        }
+        try eventStore.removeCalendar(calendar, commit: true)
+        UserDefaults.standard.removeObject(forKey: calendarIdKey)
+    }
+
     private func makeUniqueCalendarTitle(base: String) -> String {
         let existingTitles = eventStore.calendars(for: .event).map(\.title)
         

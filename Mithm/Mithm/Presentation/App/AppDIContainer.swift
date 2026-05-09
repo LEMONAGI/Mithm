@@ -64,7 +64,8 @@ struct AppDIContainer {
             menstrualRecordUseCase: menstrualRecordUseCase,
             refreshMenstrualCycleUseCase: refreshMenstrualCycleUseCase,
             loadUserSettingsUseCase: loadUserSettingsUseCase,
-            userSettingUseCase: userSettingUseCase
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: syncMenstrualCalendarUseCase
         )
 
         let homeViewModel = HomeViewModel(

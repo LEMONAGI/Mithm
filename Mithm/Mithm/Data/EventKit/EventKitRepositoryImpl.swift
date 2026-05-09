@@ -34,8 +34,20 @@ final class EventKitRepositoryImpl: EventKitRepository {
     }
     
     
+    // MARK: - Remove Calendar
+
+    func removeCalendar() async throws {
+        do {
+            try dataStore.deleteCalendarIfExists()
+        } catch {
+            logger.error("캘린더 삭제 실패: \(error.localizedDescription)")
+            throw EventKitError.syncFailed(error)
+        }
+    }
+
+
     // MARK: - Sync
-    
+
     func syncRecordsToCalendar(_ records: [MenstrualRecord]) async throws {
         guard !records.isEmpty else { return }
         
