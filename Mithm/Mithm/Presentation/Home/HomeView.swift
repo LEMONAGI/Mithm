@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @State private var showDatePicker = false
+    @State private var showPhaseDetail = false
     @State private var menstrualEndCompletionAlertKind: HomeViewModel.EndMenstruationAlertKind?
     @State private var isPickingEndDate = false
     @State private var selectedDate = Date()
@@ -47,6 +48,10 @@ struct HomeView: View {
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
                 .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showPhaseDetail) {
+            PhaseDetailSheet(phase: homeViewModel.currentPhase)
+                .presentationDragIndicator(.visible)
         }
         .alert(
             menstrualEndCompletionAlertTitle,
@@ -96,10 +101,14 @@ private extension HomeView {
                 Text(homeViewModel.currentPhasePresentation.name)
                     .font(.highlight1)
                     .foregroundStyle(.primaryBlack)
-                Image(systemName: "info.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(.gray)
-                    .offset(y: -12)
+                Button {
+                    showPhaseDetail = true
+                } label: {
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.gray)
+                }
+                .offset(y: -12)
             }
             .padding(.bottom, 10)
             
