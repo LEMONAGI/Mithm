@@ -22,6 +22,7 @@ final class AppState: ObservableObject {
     private let menstrualRecordUseCase: MenstrualRecordUseCase
     private let refreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCase
     private let loadUserSettingsUseCase: LoadUserSettingsUseCase
+    private let userSettingUseCase: UserSettingUseCase
     private var hasPerformedLaunchAutoCloseCheck = false
 
     // MARK: - Init
@@ -29,11 +30,13 @@ final class AppState: ObservableObject {
     init(
         menstrualRecordUseCase: MenstrualRecordUseCase,
         refreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCase,
-        loadUserSettingsUseCase: LoadUserSettingsUseCase
+        loadUserSettingsUseCase: LoadUserSettingsUseCase,
+        userSettingUseCase: UserSettingUseCase
     ) {
         self.menstrualRecordUseCase = menstrualRecordUseCase
         self.refreshMenstrualCycleUseCase = refreshMenstrualCycleUseCase
         self.loadUserSettingsUseCase = loadUserSettingsUseCase
+        self.userSettingUseCase = userSettingUseCase
     }
 
     // MARK: - Public Actions
@@ -67,6 +70,11 @@ final class AppState: ObservableObject {
 
     func loadUserSettings() {
         userSetting = loadUserSettingsUseCase.execute()
+    }
+
+    func saveCalendarExportEnabled(_ enabled: Bool) {
+        userSettingUseCase.saveCalendarExportEnabled(enabled)
+        userSetting.calendarExportEnabled = enabled
     }
 
     private func refreshMenstrualData(runAutoClose: Bool) async throws {

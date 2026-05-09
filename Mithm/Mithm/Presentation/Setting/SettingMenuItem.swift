@@ -27,10 +27,10 @@ enum SettingMenuItem: CaseIterable {
     var imageName: String {
         switch self {
         case .calendarExport: "Setting_Follicular"
-        case .predictionMethod: "Setting_Menstrual"
+        case .predictionMethod: "Setting_Luteal"
         case .cycleSetting: "Setting_Mirideum"
         case .privacyPolicy: "Setting_Ovulatory"
-        case .support: "Setting_Luteal"
+        case .support: "Setting_Menstrual"
         }
     }
 

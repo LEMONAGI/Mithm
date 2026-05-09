@@ -9,8 +9,7 @@ import SwiftUI
 
 
 struct SettingView: View {
-    @EnvironmentObject private var appState: AppState
-    @State private var isCalendarExportOn: Bool = false
+    @EnvironmentObject private var settingViewModel: SettingViewModel
     
     var body: some View {
         NavigationStack {
@@ -35,7 +34,10 @@ extension SettingView {
     private func settingMenuRow(for item: SettingMenuItem) -> some View {
         switch item {
         case .calendarExport:
-            SettingMenuRow(item: item, isOn: $isCalendarExportOn)
+            SettingMenuRow(item: item, isOn: Binding(
+                get: { settingViewModel.calendarExportEnabled },
+                set: { settingViewModel.setCalendarExportEnabled($0) }
+            ))
         case .predictionMethod:
             SettingMenuRow(item: item, isOn: .constant(false)) {
                 // TODO: Navigate to prediction method setting
@@ -57,6 +59,7 @@ extension SettingView {
 }
 
 #Preview {
+    let graph = AppDIContainer.makeAppDependencyGraph()
     SettingView()
-        .environmentObject(AppDIContainer.makeAppState())
+        .environmentObject(graph.settingViewModel)
 }
