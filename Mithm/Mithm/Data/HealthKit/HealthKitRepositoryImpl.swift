@@ -142,4 +142,23 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
             throw HealthKitError.writeFailed
         }
     }
+
+    func deleteMenstrualCycleRecords(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws {
+        do {
+            let objectType = HealthKitMapper.hkObjectType(from: .menstrualCycle)
+            try await dataStore.deleteSamples(
+                type: objectType,
+                from: startDate,
+                to: endDate
+            )
+        } catch let error as HealthKitError {
+            throw error
+        } catch {
+            logger.error("월경 기록 삭제 실패: \(error.localizedDescription)")
+            throw HealthKitError.deleteFailed
+        }
+    }
 }

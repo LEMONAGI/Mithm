@@ -15,6 +15,7 @@ protocol MenstrualRecordUseCase {
         userInputMode: UserInputMode?
     ) async throws -> MenstrualOverview
     func saveMenstrualRecored(_ record: MenstrualRecord, deleteFrom: Date?, deleteThrough: Date?) async throws
+    func deleteMenstrualRecord(from startDate: Date, to endDate: Date) async throws
 }
 
 extension MenstrualRecordUseCase {

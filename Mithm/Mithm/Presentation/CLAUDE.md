@@ -56,4 +56,5 @@ _(이 영역의 비명백한 함정·배경 지식이 더 있다면 자유롭게
 ## 7. ⚠️ LEARNED CAUTIONS — 학습된 주의사항
 > `learn` 스킬(`/learn` 또는 Codex의 `$learn`)로 누적되는 영역.
 
-_(아직 없음)_
+- SwiftUI Liquid Glass 버튼은 `glassEffect`로 수동 구성하기 전에 Apple 공식 문서의 `buttonStyle` 계열(`.glass`, `.glassProminent`)을 먼저 확인한다.
+- iOS 기본 컴포넌트(SwiftUI/UIKit 등)를 사용할 때 API 선택이나 modifier 적용 방식이 애매하면 추측하지 말고 Apple 공식 문서를 먼저 참고한다.

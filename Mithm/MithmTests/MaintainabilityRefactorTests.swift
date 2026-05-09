@@ -138,6 +138,212 @@ struct RecordCurrentMenstrualPeriodUseCaseTests {
 }
 
 @MainActor
+struct MenstrualRecordEditingUseCaseTests {
+
+    private let calendar = RefactorTestCalendar.make()
+
+    @Test("월경 기록 수정은 기존 범위를 삭제하고 새 범위를 저장한다")
+    func updateDeletesOriginalRangeAndSavesUpdatedRecord() async throws {
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let episodeStore = FakeCurrentMenstrualEpisodeStore()
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: episodeStore,
+            calendar: calendar
+        )
+        let originalRecord = record("2026-03-10", "2026-03-15")
+
+        try await useCase.update(
+            originalRecord: originalRecord,
+            startDate: dateTime("2026-03-11 14:30"),
+            endDate: dateTime("2026-03-16 09:00")
+        )
+
+        let savedRecord = try #require(menstrualRecordUseCase.savedRecords.first)
+        #expect(savedRecord.record.startDate == date("2026-03-11"))
+        #expect(savedRecord.record.endDate == date("2026-03-16"))
+        #expect(savedRecord.deleteFrom == date("2026-03-10"))
+        #expect(savedRecord.deleteThrough == date("2026-03-15"))
+        #expect(menstrualRecordUseCase.deletedRanges.isEmpty)
+    }
+
+    @Test("월경 기록 수정은 종료일이 시작일보다 이르면 시작일로 보정한다")
+    func updateClampsEndDateToStartDate() async throws {
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: FakeCurrentMenstrualEpisodeStore(),
+            calendar: calendar
+        )
+
+        try await useCase.update(
+            originalRecord: record("2026-03-10", "2026-03-15"),
+            startDate: date("2026-03-12"),
+            endDate: date("2026-03-09")
+        )
+
+        let savedRecord = try #require(menstrualRecordUseCase.savedRecords.first)
+        #expect(savedRecord.record.startDate == date("2026-03-12"))
+        #expect(savedRecord.record.endDate == date("2026-03-12"))
+    }
+
+    @Test("현재 episode와 같은 월경 기록을 수정하면 episode도 갱신한다")
+    func updateMatchingCurrentEpisodeUpdatesEpisode() async throws {
+        let episodeStore = FakeCurrentMenstrualEpisodeStore(
+            episode: CurrentMenstrualEpisode(
+                startDate: date("2026-03-10"),
+                endDate: nil,
+                closedReason: nil
+            )
+        )
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            currentMenstrualEpisodeStore: episodeStore,
+            calendar: calendar
+        )
+
+        try await useCase.update(
+            originalRecord: record("2026-03-10", "2026-03-15"),
+            startDate: date("2026-03-11"),
+            endDate: date("2026-03-16")
+        )
+
+        #expect(episodeStore.episode?.startDate == date("2026-03-11"))
+        #expect(episodeStore.episode?.endDate == date("2026-03-16"))
+        #expect(episodeStore.episode?.closedReason == .userEnded)
+    }
+
+    @Test("월경 기록 삭제는 저장 없이 기존 범위만 삭제한다")
+    func deleteRemovesRecordWithoutSavingReplacement() async throws {
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: FakeCurrentMenstrualEpisodeStore(),
+            calendar: calendar
+        )
+
+        try await useCase.delete(record("2026-03-10", "2026-03-15"))
+
+        let deletedRange = try #require(menstrualRecordUseCase.deletedRanges.first)
+        #expect(deletedRange.startDate == date("2026-03-10"))
+        #expect(deletedRange.endDate == date("2026-03-15"))
+        #expect(menstrualRecordUseCase.savedRecords.isEmpty)
+    }
+
+    @Test("현재 episode와 같은 월경 기록을 삭제하면 episode를 정리한다")
+    func deleteMatchingCurrentEpisodeClearsEpisode() async throws {
+        let episodeStore = FakeCurrentMenstrualEpisodeStore(
+            episode: CurrentMenstrualEpisode(
+                startDate: date("2026-03-10"),
+                endDate: date("2026-03-15"),
+                closedReason: .userEnded
+            )
+        )
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            currentMenstrualEpisodeStore: episodeStore,
+            calendar: calendar
+        )
+
+        try await useCase.delete(record("2026-03-10", "2026-03-15"))
+
+        #expect(episodeStore.episode == nil)
+        #expect(episodeStore.clearCount == 1)
+    }
+
+    private func record(_ start: String, _ end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: date(start),
+            endDate: date(end)
+        )
+    }
+
+    private func date(_ value: String) -> Date {
+        RefactorTestCalendar.date(value, calendar: calendar)
+    }
+
+    private func dateTime(_ value: String) -> Date {
+        RefactorTestCalendar.dateTime(value, calendar: calendar)
+    }
+}
+
+@MainActor
+struct CalendarMenstrualRecordRowsTests {
+
+    private let calendar = RefactorTestCalendar.make()
+
+    @Test("월경 기록 row는 최신순으로 정렬하고 주기 길이는 다음 실제 시작일 기준으로 계산한다")
+    func rowsAreNewestFirstAndUseNextActualStartForCycleLength() {
+        let overview = MenstrualOverview(
+            actualRecords: [
+                record("2026-03-01", "2026-03-06"),
+                record("2026-03-29", "2026-04-03"),
+                record("2026-05-02", "2026-05-07")
+            ],
+            allRecords: [],
+            prediction: prediction(predictedCycleLength: 31)
+        )
+
+        let rows = CalendarViewModel.makeMenstrualRecordRows(
+            overview: overview,
+            calendar: calendar
+        )
+
+        #expect(rows.map(\.startDateText) == [
+            "2026.05.02",
+            "2026.03.29",
+            "2026.03.01"
+        ])
+        #expect(rows.map(\.cycleLengthText) == ["31 일", "34 일", "28 일"])
+        #expect(rows.map(\.periodLengthText) == ["6 일", "6 일", "6 일"])
+    }
+
+    @Test("최신 기록의 다음 시작일이 없으면 예측 주기 길이를 fallback으로 표시한다")
+    func latestRowUsesPredictedCycleLengthFallback() {
+        let overview = MenstrualOverview(
+            actualRecords: [
+                record("2026-03-01", "2026-03-06")
+            ],
+            allRecords: [],
+            prediction: prediction(predictedCycleLength: 30)
+        )
+
+        let rows = CalendarViewModel.makeMenstrualRecordRows(
+            overview: overview,
+            calendar: calendar
+        )
+
+        #expect(rows.first?.cycleLengthText == "30 일")
+        #expect(rows.first?.periodLengthText == "6 일")
+    }
+
+    private func record(_ start: String, _ end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: date(start),
+            endDate: date(end)
+        )
+    }
+
+    private func prediction(predictedCycleLength: Int?) -> MenstrualPredictionResult {
+        MenstrualPredictionResult(
+            menstrualPredictions: [],
+            predictedCycleLength: predictedCycleLength,
+            predictedPeriodLength: 6,
+            confidence: .medium,
+            usedRecordCount: 3,
+            detectedShift: false,
+            usedDefaultRule: false
+        )
+    }
+
+    private func date(_ value: String) -> Date {
+        RefactorTestCalendar.date(value, calendar: calendar)
+    }
+}
+
+@MainActor
 struct RefreshMenstrualCycleUseCaseTests {
 
     private let calendar = RefactorTestCalendar.make()
@@ -868,6 +1074,11 @@ private struct SavedMenstrualRecord {
     let deleteThrough: Date?
 }
 
+private struct DeletedMenstrualRecordRange {
+    let startDate: Date
+    let endDate: Date
+}
+
 private struct FetchMenstrualOverviewRequest {
     let activeMenstrualStartDate: Date?
     let userInput: MenstrualUserInput?
@@ -878,6 +1089,7 @@ private final class FakeMenstrualRecordUseCase: MenstrualRecordUseCase {
     var overviewResponses: [MenstrualOverview]
     private(set) var fetchRequests: [FetchMenstrualOverviewRequest] = []
     private(set) var savedRecords: [SavedMenstrualRecord] = []
+    private(set) var deletedRanges: [DeletedMenstrualRecordRange] = []
     private(set) var requestedAuthorizationCount = 0
 
     init(overviewResponses: [MenstrualOverview] = []) {
@@ -915,6 +1127,15 @@ private final class FakeMenstrualRecordUseCase: MenstrualRecordUseCase {
                 record: record,
                 deleteFrom: deleteFrom,
                 deleteThrough: deleteThrough
+            )
+        )
+    }
+
+    func deleteMenstrualRecord(from startDate: Date, to endDate: Date) async throws {
+        deletedRanges.append(
+            DeletedMenstrualRecordRange(
+                startDate: startDate,
+                endDate: endDate
             )
         )
     }

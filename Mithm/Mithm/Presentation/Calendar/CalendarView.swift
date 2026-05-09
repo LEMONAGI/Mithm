@@ -11,6 +11,7 @@ struct CalendarView: View {
     @EnvironmentObject private var calendarViewModel: CalendarViewModel
     @State private var displayedMonth: Date = Date()
     @State private var showMonthPicker = false
+    @State private var showMenstrualRecordSheet = false
 
     private let calendar = Calendar.current
     private let dayOfWeekSymbols = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
@@ -41,6 +42,11 @@ struct CalendarView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 26)
+        }
+        .sheet(isPresented: $showMenstrualRecordSheet) {
+            MenstrualRecordSheetView(viewModel: calendarViewModel)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -180,7 +186,7 @@ extension CalendarView {
 
     private var recordButton: some View {
         Button {
-            // TODO: Navigate to record list
+            showMenstrualRecordSheet = true
         } label: {
             Text("월경 기록 확인하기")
                 .font(.pretendardMedium(18))

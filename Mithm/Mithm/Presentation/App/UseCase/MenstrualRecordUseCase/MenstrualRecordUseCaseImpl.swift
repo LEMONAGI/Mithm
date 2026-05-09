@@ -85,6 +85,14 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
         try await healthKitRepository.updateMenstrualCycleRecord(record, deleteFrom: deleteFrom, deleteThrough: deleteThrough)
     }
 
+    func deleteMenstrualRecord(from startDate: Date, to endDate: Date) async throws {
+        try await healthKitRepository.checkWriteAuthorization(for: .menstrualCycle)
+        try await healthKitRepository.deleteMenstrualCycleRecords(
+            from: startDate,
+            to: endDate
+        )
+    }
+
     private func makePredictionSourceRecords(
         from actualRecords: [MenstrualRecord],
         activeMenstrualStartDate: Date?
