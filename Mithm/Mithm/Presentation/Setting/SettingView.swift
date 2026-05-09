@@ -10,7 +10,6 @@ import SwiftUI
 
 struct SettingView: View {
     @EnvironmentObject private var appState: AppState
-    @State private var isHealthSyncOn: Bool = false
     @State private var isCalendarExportOn: Bool = false
     
     var body: some View {
@@ -35,10 +34,12 @@ extension SettingView {
     @ViewBuilder
     private func settingMenuRow(for item: SettingMenuItem) -> some View {
         switch item {
-        case .healthSync:
-            SettingMenuRow(item: item, isOn: $isHealthSyncOn)
         case .calendarExport:
             SettingMenuRow(item: item, isOn: $isCalendarExportOn)
+        case .predictionMethod:
+            SettingMenuRow(item: item, isOn: .constant(false)) {
+                // TODO: Navigate to prediction method setting
+            }
         case .cycleSetting:
             SettingMenuRow(item: item, isOn: .constant(false)) {
                 // TODO: Navigate to cycle setting
