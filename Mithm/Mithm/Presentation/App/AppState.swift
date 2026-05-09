@@ -83,6 +83,10 @@ final class AppState: ObservableObject {
             Task {
                 try? await syncMenstrualCalendarUseCase.removeCalendar()
             }
+        } else {
+            Task {
+                try? await refreshMenstrualData()
+            }
         }
     }
 
