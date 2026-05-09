@@ -84,6 +84,17 @@ struct HomePhaseUseCaseImpl: HomePhaseUseCase {
         let nextOvulationRecord = ovulationWindowRecords
             .first(where: { startDay(of: $0) > today })
 
+        // 황체기 종료 경계 탐색: 실제 월경 기록이 없으면 예측도 포함한다.
+        // 예측 월경을 시작된 것으로 간주하지 않는 scoping 규칙과 독립적으로 동작한다.
+        let nextMenstrualOrPrediction: MenstrualRecord?
+        if let nextMenstrualRecord {
+            nextMenstrualOrPrediction = nextMenstrualRecord
+        } else {
+            nextMenstrualOrPrediction = menstrualOverview.allRecords
+                .filter { $0.type == .menstrualRecord || $0.type == .menstrualPrediction }
+                .first { startDay(of: $0) > today }
+        }
+
         // 5) 이전 월경과 다음 배란 사이 gap 안에 오늘이 있으면 난포기다.
         if let follicularWindow = makeFollicularWindow(
             after: previousMenstrualRecord,
@@ -95,7 +106,7 @@ struct HomePhaseUseCaseImpl: HomePhaseUseCase {
         // 6) 이전 배란과 다음 월경 사이 gap 안에 오늘이 있으면 황체기다.
         if let lutealWindow = makeLutealWindow(
             after: previousOvulationRecord,
-            before: nextMenstrualRecord
+            before: nextMenstrualOrPrediction
         ), lutealWindow.startDate <= today, today <= lutealWindow.endDate {
             return lutealWindow
         }
