@@ -23,18 +23,15 @@ struct HomeView: View {
                 homeViewModel.currentPhasePresentation.color
                     .ignoresSafeArea()
                 VStack {
-                    // Main image - fills available space
+                    headerSection
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 20)
+                        .padding(.top, 20)
                     Image(homeViewModel.currentPhasePresentation.mainImage)
                         .resizable()
                         .scaledToFit()
                         .frame(width: geometry.size.width)
-                        .overlay(alignment: .topLeading) {
-                            headerSection
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 20)
-                                .padding(.top, 14)
-                        }
-                        .padding(.top, 14)
+                        .offset(y: -34)
                     Spacer()
                 }
                 
@@ -42,7 +39,7 @@ struct HomeView: View {
                     Spacer()
                     bottomSection
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 54)
+                        .padding(.bottom, 30)
                 }
             }
         }
