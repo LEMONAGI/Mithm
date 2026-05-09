@@ -73,35 +73,33 @@ extension PhaseType {
         switch self {
         case .menstrual:
             return PhaseDetailContent(
-                subtitle: String(localized: "배란 직후 - 월경 시작"),
+                subtitle: String(localized: "월경 시작 - 월경 종료"),
                 bodySection: PhaseDetailContent.BodySection(
-                    description: String(localized: "자궁 내막이 탈락하면서 몸이 무거워지는 시기예요. 호르몬이 급격히 낮아지면서 다양한 신체 증상이 나타날 수 있어요."),
+                    description: String(localized: "아랫배나 허리가 묵직하게 당기고, 평소보다 괜히 더 피곤한 느낌이 들 수 있어요. 몸이 무겁고 뭔가 하기 싫어지는 건 의지 문제가 아니라, 지금 몸이 꽤 많은 에너지를 쓰고 있기 때문이에요."),
                     bullets: [
-                        String(localized: "복부와 허리에 통증이 느껴질 수 있어요"),
-                        String(localized: "몸이 피로하고 에너지가 낮아요"),
-                        String(localized: "두통이 동반되기도 해요"),
-                        String(localized: "소화가 느려지거나 설사·변비가 생길 수 있어요"),
-                        String(localized: "체온이 서서히 낮아지기 시작해요")
+                        String(localized: "복부·허리의 묵직한 통증"),
+                        String(localized: "평소보다 쉽게 피로해지는 느낌"),
+                        String(localized: "몸이 전반적으로 무겁게 느껴짐"),
+                        String(localized: "체온이 낮고 손발이 차가울 수 있음")
                     ]
                 ),
                 moodSection: PhaseDetailContent.BodySection(
-                    description: String(localized: "호르몬이 낮아지면서 감정이 가라앉는 느낌이 들 수 있어요. 내향적이 되고 조용히 쉬고 싶은 시기예요."),
+                    description: String(localized: "혼자 조용히 있고 싶거나, 별것 아닌 일에 예민하게 반응하게 되는 날이에요. 집중이 잘 안 되고, 감정이 쉽게 출렁이는 것도 자연스러운 반응이에요."),
                     bullets: [
-                        String(localized: "우울하거나 무기력한 기분이 들 수 있어요"),
-                        String(localized: "감정이 차분해지고 내향적이 돼요"),
-                        String(localized: "혼자만의 시간이 필요해질 수 있어요"),
-                        String(localized: "작은 자극에도 피로감이 크게 느껴져요")
+                        String(localized: "집중력이 평소보다 떨어질 수 있어요"),
+                        String(localized: "감정이 조금 더 예민하게 느껴져요"),
+                        String(localized: "혼자만의 시간이 더 필요하게 느껴질 수 있어요")
                     ]
                 ),
-                whyContent: String(localized: "월경은 에스트로겐과 프로게스테론이 모두 낮아지면서 시작해요. 자궁 내막이 탈락하는 과정에서 프로스타글란딘이 분비되어 경련과 통증을 유발할 수 있어요. 이 호르몬 저하는 세로토닌 수치에도 영향을 미쳐 기분 변화를 일으킬 수 있어요."),
+                whyContent: String(localized: "에스트로겐과 프로게스테론이 동시에 낮아지면서 자궁 내막이 탈락하고 월경이 시작됩니다. 이 호르몬들은 세로토닌(기분 안정), 도파민(동기·의욕)과도 연결되어 있어서, 수치가 낮아지면 기분이 가라앉거나 무기력함이 느껴질 수 있어요. 몸은 지금 새로운 주기를 준비하기 위해 꽤 많은 에너지를 쓰고 있는 중이에요."),
                 tipSection: PhaseDetailContent.BodySection(
-                    description: String(localized: "월경기는 몸이 가장 많은 에너지를 소비하는 시기예요. 무리하지 않고 충분한 휴식을 취하는 것이 중요해요."),
+                    description: String(localized: "지금은 몸이 스스로 리셋하는 시기예요. 억지로 평소 페이스를 유지하려 하기보다, 조금 느슨하게 가는 것이 오히려 다음 주기를 잘 시작하는 방법이에요."),
                     bullets: [
-                        String(localized: "충분한 수분과 철분이 풍부한 음식을 섭취하세요."),
-                        String(localized: "격렬한 운동보다 가벼운 스트레칭이나 요가를 추천해요."),
-                        String(localized: "따뜻한 찜질이 복통 완화에 효과적이에요."),
-                        String(localized: "카페인과 알코올 섭취를 줄이는 것이 도움이 돼요."),
-                        String(localized: "충분한 수면으로 몸이 회복할 시간을 주세요.")
+                        String(localized: "중요한 결정이나 무거운 대화는 가능하면 며칠 뒤로 미뤄보세요."),
+                        String(localized: "일정이 꽉 차 있다면 중간에 짧은 휴식을 의식적으로 끼워 넣어보세요."),
+                        String(localized: "격한 운동보다는 가벼운 산책이나 스트레칭이 오히려 통증 완화에 도움이 돼요."),
+                        String(localized: "따뜻한 음식, 충분한 수면, 핫팩 하나가 컨디션 차이를 만들어 줄 수 있어요."),
+                        String(localized: "감정이 예민한 날이라는 걸 스스로 알고 있으면, 그 감정에 덜 휘둘릴 수 있어요.")
                     ]
                 )
             )
@@ -109,67 +107,61 @@ extension PhaseType {
             return PhaseDetailContent(
                 subtitle: String(localized: "월경 끝난 직후 - 배란 직전"),
                 bodySection: PhaseDetailContent.BodySection(
-                    description: String(localized: "에스트로겐이 증가하면서 몸이 가벼워지고 에너지가 올라오는 시기예요. 피부가 맑아지고 전반적인 컨디션이 좋아지는 것을 느낄 수 있어요."),
+                    description: String(localized: "몸이 조금씩 가벼워지고, 피부가 맑아지는 느낌이 드는 시기예요. 월경이 끝나고 나서 \"오늘은 좀 살 것 같다\" 싶은 날들이 바로 난포기예요."),
                     bullets: [
-                        String(localized: "에너지가 점점 올라오는 것이 느껴져요"),
-                        String(localized: "피부 상태가 맑아지고 윤기가 생겨요"),
-                        String(localized: "체력이 좋아지고 활동하기 편해요"),
-                        String(localized: "수면이 안정되고 개운한 느낌이에요"),
-                        String(localized: "체온이 낮게 유지돼요")
+                        String(localized: "피로가 줄고 몸이 가벼워지는 느낌"),
+                        String(localized: "피부 컨디션이 좋아지기 시작함"),
+                        String(localized: "식욕이 비교적 안정적"),
+                        String(localized: "체력과 회복력이 올라가는 시기")
                     ]
                 ),
                 moodSection: PhaseDetailContent.BodySection(
-                    description: String(localized: "기분이 밝아지고 새로운 일에 도전하고 싶은 의욕이 생기는 시기예요. 집중력과 창의성이 올라와 생산적인 활동에 집중하기 좋아요."),
+                    description: String(localized: "머리가 맑고 뭔가 해보고 싶은 마음이 슬슬 생기는 시기예요. 새로운 걸 시작하거나 사람들을 만나는 게 부담스럽지 않고, 오히려 에너지가 느껴져요."),
                     bullets: [
-                        String(localized: "기분이 밝고 긍정적인 에너지가 높아요"),
-                        String(localized: "집중력이 올라오고 학습 능력이 높아져요"),
-                        String(localized: "새로운 것에 도전하고 싶은 의욕이 생겨요"),
-                        String(localized: "사회적 교류가 즐겁고 소통이 활발해져요")
+                        String(localized: "집중력과 기억력이 좋아지는 편이에요"),
+                        String(localized: "기분이 안정되고 긍정적인 감정이 올라와요"),
+                        String(localized: "도전적인 일에 의욕이 생기는 시기예요")
                     ]
                 ),
-                whyContent: String(localized: "뇌하수체에서 FSH(난포자극호르몬)가 분비되면서 난소의 난포가 성장하기 시작해요. 성장하는 난포에서 에스트로겐이 분비되면서 자궁 내막이 두꺼워지고 몸 전체가 활성화돼요. 에스트로겐은 세로토닌 분비를 촉진해 기분을 밝게 하고 집중력을 높여줘요."),
+                whyContent: String(localized: "뇌하수체에서 분비된 FSH(난포자극극호르몬)가 난소의 난포를 성장시키고, 성장하는 난포에서 에스트로겐이 점점 많이 분비되기 시작해요. 에스트로겐은 도파민, 세로토닌과 상호작용하면서 기분을 높이고 집중력·사고력을 향상시켜요. 뇌 기능이 실제로 활발해지는 시기라, \"오늘 머리가 잘 돌아가네\" 싶은 날이 많아요."),
                 tipSection: PhaseDetailContent.BodySection(
-                    description: String(localized: "난포기는 에너지가 올라오는 시기인 만큼 새로운 계획을 세우고 실행하기 좋아요."),
+                    description: String(localized: "몸과 뇌가 함께 깨어나는 시기예요. 미뤄뒀던 일을 꺼내기에 좋고, 새로운 루틴을 시작하기에도 가장 수월한 타이밍이에요."),
                     bullets: [
-                        String(localized: "새로운 프로젝트나 목표를 시작하기에 최적의 시기예요."),
-                        String(localized: "사교 활동이나 중요한 미팅을 이 시기에 배치해보세요."),
-                        String(localized: "유산소 운동이나 근력 운동 효과가 극대화되는 시기예요."),
-                        String(localized: "창의적인 작업이나 브레인스토밍을 시도해보세요."),
-                        String(localized: "새로운 식습관이나 루틴 변화를 시작하기 좋아요.")
+                        String(localized: "새로운 프로젝트나 공부를 시작하기 좋은 시기예요. 이 에너지가 있을 때 첫 발을 떼보세요."),
+                        String(localized: "어려운 개념 정리, 복잡한 기획, 논리적 사고가 필요한 작업을 이 시기에 몰아두면 효율이 달라요."),
+                        String(localized: "운동을 새로 시작하거나 강도를 높이고 싶다면 지금이 적기예요. 회복도 빠른 편이에요."),
+                        String(localized: "사람들을 만나거나 협업하는 일이 평소보다 자연스럽게 느껴질 거예요.")
                     ]
                 )
             )
         case .ovulation:
             return PhaseDetailContent(
-                subtitle: String(localized: "난포기 끝 - 배란 직후"),
+                subtitle: String(localized: "배란 전후"),
                 bodySection: PhaseDetailContent.BodySection(
-                    description: String(localized: "에스트로겐이 최고조에 달하고 배란이 일어나는 시기예요. 컨디션이 최고조에 달해 몸이 가장 활기차고 기민한 상태예요."),
+                    description: String(localized: "전반적으로 컨디션이 좋고, 몸이 잘 움직이는 느낌이에요. 일부는 아랫배 한쪽이 살짝 당기는 느낌을 경험하기도 하는데, 배란 통증이에요."),
                     bullets: [
-                        String(localized: "몸이 가장 가볍고 활기찬 느낌이에요"),
-                        String(localized: "체력이 최고조로 에너지가 넘쳐요"),
-                        String(localized: "피부가 가장 건강하고 빛나는 시기예요"),
-                        String(localized: "목소리가 맑아지는 경우도 있어요"),
-                        String(localized: "체온이 배란 직후 살짝 올라가요")
+                        String(localized: "체력과 지구력이 한 주기 중 가장 높은 편"),
+                        String(localized: "피부 광택이 좋고 전반적으로 컨디션이 좋음"),
+                        String(localized: "체온이 살짝 오르는 시기 (배란 후 더 오름)"),
+                        String(localized: "아랫배 한쪽이 잠깐 당기는 느낌이 들 수 있음")
                     ]
                 ),
                 moodSection: PhaseDetailContent.BodySection(
-                    description: String(localized: "자신감이 넘치고 사교적인 에너지가 최고조에 달하는 시기예요. 의사소통이 원활해지고 주변 사람들과 연결감을 강하게 느껴요."),
+                    description: String(localized: "외향적인 에너지가 올라오고, 사람들과 함께하는 게 즐겁게 느껴지는 시기예요. 자신감이 올라와 발표나 대화가 평소보다 자연스럽게 느껴질 수 있어요."),
                     bullets: [
-                        String(localized: "자신감이 높고 외향적인 에너지가 넘쳐요"),
-                        String(localized: "의사소통이 원활하고 설득력이 높아져요"),
-                        String(localized: "타인에 대한 공감 능력이 높아지는 시기예요"),
-                        String(localized: "전반적으로 기분이 좋고 낙관적인 상태예요")
+                        String(localized: "사교적이고 외향적인 에너지가 올라와요"),
+                        String(localized: "자신감과 표현력이 좋아지는 편이에요"),
+                        String(localized: "결단력이 있고 행동으로 옮기기 쉬운 시기예요")
                     ]
                 ),
-                whyContent: String(localized: "에스트로겐이 최고조에 달하면 뇌하수체에서 LH(황체형성호르몬)가 급증해요. 이 LH 급증이 배란을 유발하고 난포에서 성숙한 난자가 방출돼요. 에스트로겐, 테스토스테론이 함께 높아지면서 신체적·정신적 에너지가 최고조에 달해요."),
+                whyContent: String(localized: "에스트로겐이 최고조에 달하면 LH(황체형성호르몬)가 급격히 분비되면서 배란이 일어나요. 이 시기엔 테스토스테론도 소폭 상승해 활력과 자신감, 사교성이 높아지는 데 기여해요. 진화적으로 이 시기에 사회적 활동이 활발해지도록 설계되어 있다는 연구들도 있어요."),
                 tipSection: PhaseDetailContent.BodySection(
-                    description: String(localized: "배란기는 몸과 마음이 가장 활기찬 시기예요. 중요한 일에 에너지를 집중하세요."),
+                    description: String(localized: "몸과 마음이 가장 잘 맞아 돌아가는 시기예요. 중요한 일, 사람을 만나는 일, 목소리를 내야 하는 일들을 이 시기에 배치하면 훨씬 수월하게 느껴질 거예요."),
                     bullets: [
-                        String(localized: "중요한 발표, 면접, 협상 등을 이 시기에 배치해보세요."),
-                        String(localized: "고강도 운동이나 새로운 신체 도전을 시도하기 좋아요."),
-                        String(localized: "소중한 사람들과의 만남이나 데이트를 계획해보세요."),
-                        String(localized: "창의적 에너지를 활용해 프로젝트의 핵심 작업을 진행해보세요."),
-                        String(localized: "이 활기를 기록해두면 다음 주기에 참고가 돼요.")
+                        String(localized: "발표, 면접, 중요한 미팅처럼 인상을 남겨야 하는 자리에 잘 맞는 시기예요."),
+                        String(localized: "운동 강도를 높이거나 체력 테스트를 해보고 싶다면 지금이 가장 좋아요."),
+                        String(localized: "오래 미뤄온 어려운 대화, 협상, 부탁—지금 하면 생각보다 잘 풀릴 수 있어요."),
+                        String(localized: "에너지가 넘친다고 과하게 쓰기보다, 다음 황체기를 위해 조금 여유를 남겨두는 것도 좋아요.")
                     ]
                 )
             )
