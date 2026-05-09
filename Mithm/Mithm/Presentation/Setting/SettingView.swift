@@ -10,6 +10,7 @@ import SwiftUI
 
 struct SettingView: View {
     @EnvironmentObject private var settingViewModel: SettingViewModel
+    @Environment(\.openURL) private var openURL
     
     var body: some View {
         NavigationStack {
@@ -48,11 +49,11 @@ extension SettingView {
             }
         case .privacyPolicy:
             SettingMenuRow(item: item, isOn: .constant(false)) {
-                // TODO: Navigate to privacy policy
+                if let url = item.url { openURL(url) }
             }
         case .support:
             SettingMenuRow(item: item, isOn: .constant(false)) {
-                // TODO: Navigate to support
+                if let url = item.url { openURL(url) }
             }
         }
     }

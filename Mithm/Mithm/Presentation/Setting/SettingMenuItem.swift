@@ -40,6 +40,14 @@ enum SettingMenuItem: CaseIterable {
         case .predictionMethod, .cycleSetting, .privacyPolicy, .support: .chevron
         }
     }
+
+    var url: URL? {
+        switch self {
+        case .privacyPolicy: URL(string: "https://jinthelemon.notion.site/2cc90636549f80cea5ebfbdd29671611?source=copy_link")
+        case .support: URL(string: "https://jinthelemon.notion.site/2cc90636549f80999adace0a614b046d?source=copy_link")
+        default: nil
+        }
+    }
 }
 
 enum SettingMenuAccessoryType {
