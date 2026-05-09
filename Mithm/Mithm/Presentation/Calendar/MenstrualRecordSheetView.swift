@@ -8,7 +8,7 @@ import SwiftUI
 struct MenstrualRecordSheetView: View {
     @ObservedObject var viewModel: CalendarViewModel
     @State private var navigationPath: [MenstrualRecordRow] = []
-
+    
     var body: some View {
         NavigationStack(path: $navigationPath) {
             MenstrualRecordListView(viewModel: viewModel)
@@ -24,7 +24,7 @@ struct MenstrualRecordSheetView: View {
 
 private struct MenstrualRecordListView: View {
     @ObservedObject var viewModel: CalendarViewModel
-
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -57,7 +57,7 @@ private struct MenstrualRecordListView: View {
 
 private struct MenstrualRecordRowView: View {
     let row: MenstrualRecordRow
-
+    
     var body: some View {
         HStack(spacing: 12) {
             Text(row.startDateText)
@@ -65,15 +65,15 @@ private struct MenstrualRecordRowView: View {
                 .foregroundStyle(.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
-
+            
             Spacer(minLength: 12)
-
+            
             Text("\(row.cycleLengthText) · \(row.periodLengthText)")
                 .font(.pretendardRegular(18))
                 .foregroundStyle(.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
-
+            
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.textPrimary)
@@ -91,21 +91,21 @@ private struct MenstrualRecordRowView: View {
 private struct MenstrualRecordEditView: View {
     @ObservedObject var viewModel: CalendarViewModel
     let row: MenstrualRecordRow
-
+    
     @Environment(\.dismiss) private var dismiss
     @State private var startDate: Date
     @State private var endDate: Date
     @State private var showDeleteConfirmation = false
-
+    
     private let calendar = Calendar.current
-
+    
     private static let dateLabelFormatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")
         f.dateFormat = "yyyy. M. d."
         return f
     }()
-
+    
     init(
         viewModel: CalendarViewModel,
         row: MenstrualRecordRow
@@ -115,18 +115,18 @@ private struct MenstrualRecordEditView: View {
         _startDate = State(initialValue: row.record.startDate)
         _endDate = State(initialValue: row.record.endDate ?? row.record.startDate)
     }
-
+    
     var body: some View {
         ZStack {
             Color.gray50.ignoresSafeArea()
-
+            
             VStack {
                 dateForm
                     .padding(.top, 44)
                     .padding(.horizontal, 20)
-
+                
                 Spacer()
-
+                
                 deleteButton
             }
         }
@@ -174,7 +174,7 @@ private struct MenstrualRecordEditView: View {
             Text("삭제한 기록은 건강 앱에서도 지워집니다.")
         }
     }
-
+    
     private var dateForm: some View {
         VStack(spacing: 0) {
             dateRow(
@@ -187,7 +187,7 @@ private struct MenstrualRecordEditView: View {
                 ),
                 range: Date.distantPast...min(endDate, today)
             )
-
+            
             dateRow(
                 title: "월경 종료일",
                 selection: Binding(
@@ -210,44 +210,49 @@ private struct MenstrualRecordEditView: View {
                 .padding(.horizontal, 20)
         }
     }
-
+    
     @ViewBuilder
     private func dateRow(
-            title: String,
-            selection: Binding<Date>,
-            range: ClosedRange<Date>
-        ) -> some View {
-            HStack {
-                Text(title)
+        title: String,
+        selection: Binding<Date>,
+        range: ClosedRange<Date>
+    ) -> some View {
+        HStack {
+            Text(title)
+                .font(.pretendardRegular(18))
+                .foregroundStyle(.textPrimary)
+            
+            Spacer()
+            
+            ZStack {
+                // 1. 애플 기본 DatePicker(.compact) 스타일을 완벽하게 흉내 낸 가짜 UI
+                Text(Self.dateLabelFormatter.string(from: selection.wrappedValue))
                     .font(.pretendardRegular(18))
                     .foregroundStyle(.textPrimary)
-
-                Spacer()
-
-                ZStack {
-                    Text(Self.dateLabelFormatter.string(from: selection.wrappedValue))
-                        .font(.pretendardRegular(17))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color(UIColor.secondarySystemFill))
-                        .cornerRadius(26)
-                        .allowsHitTesting(false)
-                    DatePicker(
-                        "",
-                        selection: selection,
-                        in: range,
-                        displayedComponents: [.date]
-                    )
-                    .labelsHidden()
-                    .tint(.primaryOrange)
-                    .colorMultiply(.clear)
-                }
+                    .monospacedDigit()
+                    .frame(minWidth: 105, alignment: .center)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(UIColor.secondarySystemFill))
+                    .cornerRadius(26)
+                    .allowsHitTesting(false)
+                
+                DatePicker(
+                    "",
+                    selection: selection,
+                    in: range,
+                    displayedComponents: [.date]
+                )
+                .labelsHidden()
+                .tint(.primaryOrange)
+                .colorMultiply(.clear)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 52)
-            .padding(.horizontal, 16)
         }
-
+        .frame(maxWidth: .infinity)
+        .frame(height: 52)
+        .padding(.horizontal, 16)
+    }
+    
     private var deleteButton: some View {
         Button {
             showDeleteConfirmation = true
@@ -260,13 +265,13 @@ private struct MenstrualRecordEditView: View {
         .buttonStyle(.glass)
         .disabled(viewModel.isEditingMenstrualRecord)
     }
-
+    
     private var isChanged: Bool {
         let originalStart = calendar.startOfDay(for: row.record.startDate)
         let originalEnd   = calendar.startOfDay(for: row.record.endDate ?? row.record.startDate)
         return startDate != originalStart || endDate != originalEnd
     }
-
+    
     private var today: Date {
         calendar.startOfDay(for: Date())
     }
