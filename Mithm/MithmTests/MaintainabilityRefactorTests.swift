@@ -698,7 +698,9 @@ struct AppStateRefreshTests {
         let appState = AppState(
             menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
             refreshMenstrualCycleUseCase: refreshUseCase,
-            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase()
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
 
         await appState.refreshOnForeground()
@@ -721,7 +723,9 @@ struct AppStateRefreshTests {
         let appState = AppState(
             menstrualRecordUseCase: menstrualRecordUseCase,
             refreshMenstrualCycleUseCase: refreshUseCase,
-            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(settings: settings)
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(settings: settings),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
 
         await appState.performInitialLoad()
@@ -864,7 +868,9 @@ struct HomeViewModelEndMenstruationTests {
         let appState = AppState(
             menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
             refreshMenstrualCycleUseCase: refreshUseCase,
-            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase()
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
         appState.currentMenstrualStatus = CurrentMenstrualStatus(
             isActive: true,
@@ -1147,6 +1153,8 @@ private final class FakeSyncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCa
     func execute(records: [MenstrualRecord], isEnabled: Bool) async throws {
         calls.append((records: records, isEnabled: isEnabled))
     }
+
+    func removeCalendar() async throws { }
 }
 
 private final class FakeRecordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase {
@@ -1226,6 +1234,19 @@ private struct FakeLoadUserSettingsUseCase: LoadUserSettingsUseCase {
     func execute() -> UserSettingState {
         settings
     }
+}
+
+private final class FakeUserSettingUseCase: UserSettingUseCase {
+    private(set) var savedCalendarExportEnabled: [Bool] = []
+
+    func loadMenstrualUserInput() -> MenstrualUserInput? { nil }
+    func loadCalendarExportEnabled() -> Bool { false }
+    func loadUserInputMode() -> UserInputMode? { nil }
+    func saveMenstrualUserInput(_ input: MenstrualUserInput) { }
+    func saveCalendarExportEnabled(_ enabled: Bool) {
+        savedCalendarExportEnabled.append(enabled)
+    }
+    func saveUserInputMode(_ mode: UserInputMode) { }
 }
 
 private final class FakeCurrentMenstrualEpisodeStore: CurrentMenstrualEpisodeStore {
