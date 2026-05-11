@@ -96,6 +96,7 @@ private struct MenstrualRecordEditView: View {
     @State private var startDate: Date
     @State private var endDate: Date
     @State private var showDeleteConfirmation = false
+    @State private var showNotEditableAlert = false
     
     private let calendar = Calendar.current
     
@@ -135,6 +136,10 @@ private struct MenstrualRecordEditView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
+                    guard row.record.isEditable else {
+                        showNotEditableAlert = true
+                        return
+                    }
                     Task {
                         let didUpdate = await viewModel.updateMenstrualRecord(
                             row,
@@ -172,6 +177,11 @@ private struct MenstrualRecordEditView: View {
             }
         } message: {
             Text("삭제한 기록은 건강 앱에서도 지워집니다.")
+        }
+        .alert("수정할 수 없는 기록이에요", isPresented: $showNotEditableAlert) {
+            Button("확인", role: .cancel) { }
+        } message: {
+            Text("미리듬 앱에서 생성하지 않은 월경 기록은 수정할 수 없어요.\n건강 앱에서 직접 수정해 주세요.")
         }
     }
     
@@ -255,6 +265,10 @@ private struct MenstrualRecordEditView: View {
     
     private var deleteButton: some View {
         Button {
+            guard row.record.isEditable else {
+                showNotEditableAlert = true
+                return
+            }
             showDeleteConfirmation = true
         } label: {
             Text("삭제하기")

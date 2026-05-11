@@ -12,6 +12,14 @@ struct MenstrualRecord: Identifiable, Hashable {
     let type: MenstrualRecordType
     let startDate: Date
     let endDate: Date?
+    let isEditable: Bool
+
+    init(type: MenstrualRecordType, startDate: Date, endDate: Date?, isEditable: Bool = true) {
+        self.type = type
+        self.startDate = startDate
+        self.endDate = endDate
+        self.isEditable = isEditable
+    }
 }
 
 extension MenstrualRecord {
