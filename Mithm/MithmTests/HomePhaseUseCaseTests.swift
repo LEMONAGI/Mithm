@@ -314,6 +314,29 @@ struct HomePhaseUseCaseTests {
         #expect(window.endDate == date("2026-04-06"))
     }
 
+    @Test("월경 예정일이 지났고 기록하지 않았으면 다음 사이클 예측이 아닌 오늘까지 황체기를 연장한다")
+    func lutealExtendsToTodayWhenPredictedPeriodIsOverdueAndNotRecorded() {
+        let useCase = HomePhaseUseCaseImpl(calendar: calendar)
+        let overview = MenstrualOverview(
+            allRecords: [
+                record(.menstrualRecord, "2026-04-01", "2026-04-05"),
+                record(.ovulationFertileWindowPrediction, "2026-04-08", "2026-04-13"),
+                record(.menstrualPrediction, "2026-04-26", "2026-04-30"),
+                record(.menstrualPrediction, "2026-05-24", "2026-05-28")
+            ]
+        )
+
+        let window = useCase.execute(
+            menstrualOverview: overview,
+            activeMenstrualStartDate: nil,
+            today: date("2026-05-11")
+        )
+
+        #expect(window.phase == .luteal)
+        #expect(window.startDate == date("2026-04-14"))
+        #expect(window.endDate == date("2026-05-11"))
+    }
+
     @Test("이전 배란기도 없으면 기본값으로 오늘 하루 황체기를 반환한다")
     func fallsBackToTodayLutealWindow() {
         let useCase = HomePhaseUseCaseImpl(calendar: calendar)

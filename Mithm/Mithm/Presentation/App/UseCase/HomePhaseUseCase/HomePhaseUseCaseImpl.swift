@@ -86,13 +86,17 @@ struct HomePhaseUseCaseImpl: HomePhaseUseCase {
 
         // 황체기 종료 경계 탐색: 실제 월경 기록이 없으면 예측도 포함한다.
         // 예측 월경을 시작된 것으로 간주하지 않는 scoping 규칙과 독립적으로 동작한다.
+        // today 기준으로 탐색하면 이미 지난(overdue) 예측을 건너뛰어 다음 사이클 예측을
+        // 잘못 참조하므로, 배란 종료 이후의 첫 월경 예측을 경계로 사용한다.
         let nextMenstrualOrPrediction: MenstrualRecord?
         if let nextMenstrualRecord {
             nextMenstrualOrPrediction = nextMenstrualRecord
-        } else {
+        } else if let previousOvulationRecord {
             nextMenstrualOrPrediction = menstrualOverview.allRecords
                 .filter { $0.type == .menstrualRecord || $0.type == .menstrualPrediction }
-                .first { startDay(of: $0) > today }
+                .first { startDay(of: $0) > endDay(of: previousOvulationRecord) }
+        } else {
+            nextMenstrualOrPrediction = nil
         }
 
         // 5) 이전 월경과 다음 배란 사이 gap 안에 오늘이 있으면 난포기다.
