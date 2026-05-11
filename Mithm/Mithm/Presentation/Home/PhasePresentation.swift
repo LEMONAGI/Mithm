@@ -136,7 +136,7 @@ extension PhaseType {
             )
         case .ovulation:
             return PhaseDetailContent(
-                subtitle: String(localized: "배란 전후"),
+                subtitle: String(localized: "배란일 전 - 배란 직후"),
                 bodySection: PhaseDetailContent.BodySection(
                     description: String(localized: "전반적으로 컨디션이 좋고, 몸이 잘 움직이는 느낌이에요. 일부는 아랫배 한쪽이 살짝 당기는 느낌을 경험하기도 하는데, 배란 통증이에요."),
                     bullets: [

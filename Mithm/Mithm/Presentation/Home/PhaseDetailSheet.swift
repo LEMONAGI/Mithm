@@ -18,8 +18,13 @@ struct PhaseDetailSheet: View {
                 headerSection
                     .padding(.horizontal, 28)
                     .padding(.top, 44)
-                    .padding(.bottom, 60)
-
+                    .padding(.bottom, phase == .ovulation ? 4 : 60)
+                
+                if phase == .ovulation {
+                    ovulationWarningBanner
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
+                }
                 contentSection
                     .padding(.horizontal, 20)
                     .padding(.bottom, 48)
@@ -33,6 +38,17 @@ struct PhaseDetailSheet: View {
 // MARK: - Subviews
 
 private extension PhaseDetailSheet {
+
+    var ovulationWarningBanner: some View {
+        HStack(alignment: .top, spacing: 4) {
+            Image(systemName: "exclamationmark.circle.fill")
+                .foregroundStyle(.accent)
+                .font(.system(size: 15))
+            Text("미리듬은 배란기와 가임기를 동일한 시기로 안내합니다. 실제 가임 시기는 개인에 따라 달라질 수 있으므로, 이를 피임의 수단으로 사용하지 마십시오.")
+                .font(.pretendardSemiBold(10))
+                .foregroundStyle(.gray350)
+        }
+    }
 
     var headerSection: some View {
         HStack(alignment: .center, spacing: 0) {
