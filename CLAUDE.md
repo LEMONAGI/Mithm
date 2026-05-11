@@ -1,92 +1,81 @@
-# Mithm — Claude Code / AI 에이전트 작업 지침
+# Mithm AI 작업 지침
 
-> 이 파일은 **map** 역할을 한다. 작업 시 해당 영역의 `CLAUDE.md`(Claude Code) 또는 `AGENTS.md`(Codex/Cursor/Antigravity)를 먼저 읽고 진행한다.
->
-> root에 모든 가이드를 몰아넣지 않고 영역별로 분리한 이유는 토큰 효율 + 컨텍스트 정확도다.
-> 작업 영역만 정확히 참조하면 다른 영역 가이드가 컨텍스트를 오염시키지 않는다.
+> 이 파일은 루트 진입 문서다. 자세한 규칙은 `docs/agent/`와 각 영역의 `AGENTS.md` 또는 `CLAUDE.md`에서 필요한 것만 읽는다.
 
 ## 프로젝트
 
-**Mithm(미듬)** — 월경 주기 기록을 넘어 몸의 변화(월경기·난포기·배란기·황체기)를 인식하고 일정을 조율하도록 돕는 iOS 앱.  
-SwiftUI + HealthKit + EventKit. 외부 의존성 없음. 단일 타겟.
+**Mithm(미듬)** — 월경 주기 기록을 넘어 몸의 변화(월경기, 난포기, 배란기, 황체기)를 인식하고 일정을 조율하도록 돕는 iOS 앱.
 
-- Xcode 프로젝트: `Mithm/Mithm.xcodeproj`
-- 아키텍처: Clean Architecture + MVVM. 의존성 방향: **Presentation → Domain ← Data ← Core**
+- SwiftUI + HealthKit + EventKit
+- 외부 의존성 없음
+- 단일 Xcode 프로젝트: `Mithm/Mithm.xcodeproj`
+- 아키텍처: Clean Architecture + MVVM
 
-## 프로젝트 구조
+## 필수 시작 순서
 
-```
-Mithm/
-├── Mithm.xcodeproj
-├── Mithm/                      # 앱 소스
-│   ├── Core/                   # HealthKit/EventKit 네이티브 래퍼
-│   ├── Data/                   # Repository 구현체 + Mapper
-│   ├── Domain/                 # UseCase / State / Model / 예측엔진
-│   ├── Presentation/           # SwiftUI View + ViewModel + AppDIContainer
-│   ├── Resource/               # 폰트, 색상, 로컬라이징 (Presentation과 함께 작업)
-│   └── Utility/                # FormatterUtility 등 (Presentation과 함께 작업)
-└── MithmTests/                 # Swift Testing 단위 테스트
-```
+1. 이 루트 문서를 읽는다.
+2. 작업 유형에 맞는 `docs/agent/` 문서를 읽는다.
+3. 수정 대상 영역의 `AGENTS.md` 또는 `CLAUDE.md`를 읽는다.
+4. 관련 코드와 기존 테스트를 먼저 탐색한다.
+5. 코드 변경 전 테스트 또는 검증 기준을 먼저 작성한다.
+6. 최소 구현 후 테스트, 빌드, 또는 수동 체크로 검증한다.
 
-## 빌드 / 테스트
+## 공통 문서 지도
 
-시뮬레이터 이름은 로컬 설치 상태에 따라 다르므로 `iPhone 16`을 가정하지 않는다. 실행 전에 설치된 iPhone 시뮬레이터를 확인하고 그 이름을 destination에 사용한다.
-
-```bash
-# 설치된 iPhone 시뮬레이터 확인
-xcrun simctl list devices available | rg "iPhone"
-
-# 빌드
-xcodebuild build \
-  -project Mithm/Mithm.xcodeproj -scheme Mithm \
-  -destination 'platform=iOS Simulator,name=<설치된 iPhone 시뮬레이터 이름>'
-
-# 전체 테스트
-xcodebuild test \
-  -project Mithm/Mithm.xcodeproj -scheme Mithm \
-  -destination 'platform=iOS Simulator,name=<설치된 iPhone 시뮬레이터 이름>'
-```
-
-XcodeBuildMCP 툴이 사용 가능하면 셸 명령보다 우선 사용한다. MCP에서는 `test_sim`/`build_run_sim` 호출 전에 항상 기본값을 확정한다.
-
-1. `session_show_defaults`로 현재 기본값을 확인한다.
-2. `list_sims(enabled: true)`로 설치된 iPhone 시뮬레이터 이름을 확인한다.
-3. 기본값이 비어 있거나 현재 프로젝트와 다르면 `session_set_defaults`로 `projectPath: Mithm/Mithm.xcodeproj`, `scheme: Mithm`, `simulatorName: <설치된 iPhone 시뮬레이터 이름>`, `simulatorPlatform: iOS Simulator`를 설정한다.
-4. 이후 `build_run_sim` 또는 `test_sim`을 실행한다. `extraArgs`는 `-only-testing` 같은 추가 옵션에만 사용한다.
+- 구조와 시작 위치: `docs/agent/architecture.md`
+- 설계 결정 기록: `docs/agent/decisions.md`
+- HealthKit/EventKit/예측/refresh 핵심 흐름: `docs/agent/critical-flows.md`
+- 작업 절차, TDD, 검증 원칙: `docs/agent/working-rules.md`
+- 큰 작업 분해와 step 카드: `docs/agent/task-harness.md`
+- 제품 맥락, 한국어 톤, UX 원칙: `docs/agent/product-context.md`
 
 ## 영역별 가이드
 
-작업 영역에 해당하는 가이드를 먼저 읽고 진행한다.
+각 영역에는 `AGENTS.md`와 `CLAUDE.md`가 같은 내용으로 존재한다. 작업 영역만 골라 읽는다.
 
-- **Domain** — 비즈니스 로직 (UseCase, 예측엔진, 상태) → [`Mithm/Mithm/Domain/CLAUDE.md`](Mithm/Mithm/Domain/CLAUDE.md)
-- **Data** — Repository 구현체 + HealthKit/EventKit Mapper → [`Mithm/Mithm/Data/CLAUDE.md`](Mithm/Mithm/Data/CLAUDE.md)
-- **Core** — HealthKit/EventKit 네이티브 API 래퍼 → [`Mithm/Mithm/Core/CLAUDE.md`](Mithm/Mithm/Core/CLAUDE.md)
-- **Presentation** — SwiftUI View/ViewModel/DI + Resource/Utility → [`Mithm/Mithm/Presentation/CLAUDE.md`](Mithm/Mithm/Presentation/CLAUDE.md)
-- **MithmTests** — 단위 테스트 (예측엔진, Phase 판정, UseCase) → [`Mithm/MithmTests/CLAUDE.md`](Mithm/MithmTests/CLAUDE.md)
+- Domain: `Mithm/Mithm/Domain/`
+- Data: `Mithm/Mithm/Data/`
+- Core: `Mithm/Mithm/Core/`
+- Presentation: `Mithm/Mithm/Presentation/`
+- Tests: `Mithm/MithmTests/`
 
-## 영역 가이드의 구조
+## 절대 규칙
 
-각 영역의 가이드 파일은 다음 7섹션으로 구성된다:
+- 의존성 방향은 `Presentation -> Domain <- Data <- Core`를 유지한다.
+- Domain은 Data/Core/Presentation을 import하지 않는다.
+- Core는 Domain/Data/Presentation을 import하지 않는다.
+- HealthKit이 월경 기록의 단일 진실 공급원이다.
+- UserDefaults는 월경 기록 저장소가 아니다.
+- 외부 라이브러리, DI 프레임워크, DB 프레임워크를 추가하지 않는다.
+- 사용자에게 보이는 문자열과 문서는 한국어로 작성한다.
 
-1. **WHAT** — 이 모듈이 무엇을 하는가
-2. **CONTENTS** — 디렉토리 맵 + 기술 스택
-3. **HOW** — 일반적인 수정은 어떻게 하는가
-4. **HOW NOT** — 시스템을 깨뜨리는 비명백한 함정
-5. **WHERE** — 다른 모듈과의 의존성
-6. **WHY** — 코드에 안 적힌 배경 지식
-7. **LEARNED CAUTIONS** — `learn` 스킬로 누적
+## TDD 원칙
 
-## 코드 컨벤션
+코드 변경은 TDD-first로 진행한다.
 
-- **언어**: 사용자에게 보이는 문자열·주석·문서는 한국어. 식별자는 영어.
-- **커밋**: `[Feat]`, `[Fix]`, `[Refactor]`, `[Merge]` prefix + PR 번호 `#19` 형식.
-- **Demo/ 폴더**: Core/HealthKit/Demo/, Core/EventKit/Demo/ 등 — 개발/디버깅용, 본 앱 흐름 미포함.
+- 테스트 가능한 로직은 실패하는 Swift Testing 테스트를 먼저 작성한다.
+- 실기기 의존 흐름은 구현 전에 검증 가능한 절차와 기대 결과를 먼저 작성한다.
+- 순수 UI 스타일 변경은 화면 확인 기준을 먼저 정한다.
+- 문서 전용 변경은 문서 동일성, 링크, 경로 검증을 먼저 정한다.
 
-## 주의사항 학습 (learn 스킬)
+## 검증 원칙
 
-작업 중 실수가 발견되면 해당 영역 가이드 파일의 "⚠️ LEARNED CAUTIONS" 섹션에 누적한다.
+- Domain 로직: 관련 단위 테스트 실행
+- Data Mapper/Repository 계약: 가능한 단위 테스트와 필요한 빌드 실행
+- Presentation 일반 변경: 빌드와 화면 확인
+- HealthKit/EventKit 권한 및 실제 시스템 반영: 실기기 체크리스트 병행
+- 문서 변경: `AGENTS.md` / `CLAUDE.md` 동일성, 링크, 경로 확인
 
-- Claude Code/Cursor/Antigravity: `/learn <메모>` (인자 없이도 호출 가능)
-- Codex: `$learn <메모>`
+시뮬레이터 이름을 가정하지 않는다. 빌드/테스트 전에 설치된 iPhone 시뮬레이터를 확인한다.
 
-스킬 위치: `.claude/skills/learn/SKILL.md` (Claude Code), `.agents/skills/learn/SKILL.md` (기타)
+```bash
+xcrun simctl list devices available | rg "iPhone"
+```
+
+자세한 빌드/테스트 명령은 `docs/agent/working-rules.md`를 따른다.
+
+## 문서 동기화
+
+- 루트 `AGENTS.md`와 `CLAUDE.md`는 반드시 동일하게 유지한다.
+- 영역별 `AGENTS.md`와 `CLAUDE.md`도 반드시 동일하게 유지한다.
+- 세부 규칙은 루트에 길게 추가하지 말고 `docs/agent/` 또는 해당 영역 문서에 추가한다.
