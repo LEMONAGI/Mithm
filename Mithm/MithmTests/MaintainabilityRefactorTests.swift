@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HealthKit
 import Testing
 @testable import Mithm
 
@@ -711,6 +712,101 @@ struct AppStateRefreshTests {
         #expect(appState.currentMenstrualStatus == expectedStatus)
     }
 
+    @Test("foreground refresh는 보호된 HealthKit 데이터 일시 오류를 알럿으로 저장하지 않는다")
+    func foregroundRefreshSuppressesProtectedDataError() async {
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
+            error: HealthKitError.protectedDataUnavailable
+        )
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase(),
+            foregroundRefreshRetryDelayNanoseconds: 0,
+            foregroundRefreshMaxRetryCount: 0
+        )
+
+        await appState.refreshOnForeground()
+
+        #expect(refreshUseCase.calls.count == 1)
+        #expect(appState.menstrualRecordError == nil)
+    }
+
+    @Test("foreground refresh는 보호된 HealthKit 데이터 일시 오류 후 조용히 재시도해 성공 상태를 반영한다")
+    func foregroundRefreshRetriesProtectedDataErrorAndAppliesSuccess() async {
+        let overview = MenstrualOverview(
+            actualRecords: [record("2026-02-01", "2026-02-05")],
+            allRecords: [record("2026-02-01", "2026-02-05")],
+            prediction: nil
+        )
+        let expectedStatus = CurrentMenstrualStatus.inactive(
+            latestStartDate: date("2026-02-01"),
+            expectedEndDate: date("2026-02-05")
+        )
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
+            snapshot: MenstrualCycleSnapshot(
+                overview: overview,
+                currentStatus: expectedStatus,
+                didAutoClose: false
+            ),
+            errors: [HealthKitError.protectedDataUnavailable]
+        )
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase(),
+            foregroundRefreshRetryDelayNanoseconds: 0,
+            foregroundRefreshMaxRetryCount: 1
+        )
+
+        await appState.refreshOnForeground()
+
+        #expect(refreshUseCase.calls.count == 2)
+        #expect(appState.menstrualRecordError == nil)
+        #expect(appState.menstrualOverview.actualRecords == overview.actualRecords)
+        #expect(appState.currentMenstrualStatus == expectedStatus)
+    }
+
+    @Test("foreground refresh는 보호된 HealthKit 데이터 일시 오류가 반복되면 기존 화면 상태를 유지한다")
+    func foregroundRefreshKeepsExistingStateWhenProtectedDataErrorPersists() async {
+        let initialOverview = MenstrualOverview(
+            actualRecords: [record("2026-03-01", "2026-03-05")],
+            allRecords: [record("2026-03-01", "2026-03-05")],
+            prediction: nil
+        )
+        let initialStatus = CurrentMenstrualStatus.inactive(
+            latestStartDate: date("2026-03-01"),
+            expectedEndDate: date("2026-03-05")
+        )
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
+            errors: [
+                HealthKitError.protectedDataUnavailable,
+                HealthKitError.protectedDataUnavailable
+            ]
+        )
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase(),
+            foregroundRefreshRetryDelayNanoseconds: 0,
+            foregroundRefreshMaxRetryCount: 1
+        )
+        appState.menstrualOverview = initialOverview
+        appState.currentMenstrualStatus = initialStatus
+
+        await appState.refreshOnForeground()
+
+        #expect(refreshUseCase.calls.count == 2)
+        #expect(appState.menstrualRecordError == nil)
+        #expect(appState.menstrualOverview.actualRecords == initialOverview.actualRecords)
+        #expect(appState.currentMenstrualStatus == initialStatus)
+    }
+
     @Test("initial load는 설정을 불러오고 최초 1회만 자동 종료 refresh를 요청한다")
     func initialLoadRequestsAutoCloseOnlyOnce() async {
         let settings = UserSettingState(
@@ -739,6 +835,27 @@ struct AppStateRefreshTests {
         #expect(appState.userSetting.userInputMode == .blendUserInput)
     }
 
+    @Test("foreground refresh는 일반 오류를 기존처럼 알럿 상태에 저장한다")
+    func foregroundRefreshStoresNonTransientError() async {
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
+            error: FakeRefreshError()
+        )
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase(),
+            foregroundRefreshRetryDelayNanoseconds: 0,
+            foregroundRefreshMaxRetryCount: 1
+        )
+
+        await appState.refreshOnForeground()
+
+        #expect(refreshUseCase.calls.count == 1)
+        #expect(appState.menstrualRecordError != nil)
+    }
+
     private func record(_ start: String, _ end: String) -> MenstrualRecord {
         MenstrualRecord(
             type: .menstrualRecord,
@@ -752,6 +869,34 @@ struct AppStateRefreshTests {
             value,
             calendar: RefactorTestCalendar.make()
         )
+    }
+}
+
+struct HealthKitRepositoryImplErrorMappingTests {
+
+    @Test("HealthKit 보호 데이터 접근 실패는 일시 오류로 매핑한다")
+    func mapsDatabaseInaccessibleErrorToProtectedDataUnavailable() async {
+        let dataStore = FakeHealthKitDataStore(
+            readCategoryError: NSError(
+                domain: HKError.errorDomain,
+                code: HKError.Code.errorDatabaseInaccessible.rawValue
+            )
+        )
+        let repository = HealthKitRepositoryImpl(dataStore: dataStore)
+
+        var didCatchProtectedDataError = false
+        do {
+            _ = try await repository.readMenstrualCycleRecords(
+                from: Date(),
+                to: Date()
+            )
+        } catch HealthKitError.protectedDataUnavailable {
+            didCatchProtectedDataError = true
+        } catch {
+            didCatchProtectedDataError = false
+        }
+
+        #expect(didCatchProtectedDataError)
     }
 }
 
@@ -1183,7 +1328,7 @@ private struct RefreshMenstrualCycleCall {
 private final class FakeRefreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCase {
     private(set) var calls: [RefreshMenstrualCycleCall] = []
     var snapshot: MenstrualCycleSnapshot
-    var error: Error?
+    var errors: [Error]
     var delayNanoseconds: UInt64
 
     init(
@@ -1193,10 +1338,11 @@ private final class FakeRefreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCa
             didAutoClose: false
         ),
         error: Error? = nil,
+        errors: [Error] = [],
         delayNanoseconds: UInt64 = 0
     ) {
         self.snapshot = snapshot
-        self.error = error
+        self.errors = error.map { [$0] } ?? errors
         self.delayNanoseconds = delayNanoseconds
     }
 
@@ -1215,11 +1361,62 @@ private final class FakeRefreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCa
                 referenceDate: referenceDate
             )
         )
-        if let error {
+        if !errors.isEmpty {
+            let error = errors.removeFirst()
             throw error
         }
         return snapshot
     }
+}
+
+private final class FakeHealthKitDataStore: HealthKitDataStore {
+    let readCategoryError: Error?
+
+    init(readCategoryError: Error?) {
+        self.readCategoryError = readCategoryError
+    }
+
+    func isHealthDataAvailable() -> Bool {
+        true
+    }
+
+    func requestAuthorization(
+        writeTypes: Set<HKSampleType>,
+        readTypes: Set<HKObjectType>
+    ) async throws {}
+
+    func checkWriteAuthorization(
+        for type: HKObjectType
+    ) -> HKAuthorizationStatus {
+        .sharingAuthorized
+    }
+
+    func saveSamples(samples: [HKObject]) async throws {}
+
+    func readCategorySamples(
+        type: HKCategoryType,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [HKCategorySample] {
+        if let readCategoryError {
+            throw readCategoryError
+        }
+        return []
+    }
+
+    func readQuantitySamples(
+        type: HKQuantityType,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [HKQuantitySample] {
+        []
+    }
+
+    func deleteSamples(
+        type: HKObjectType,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws {}
 }
 
 private struct FakeRefreshError: Error { }

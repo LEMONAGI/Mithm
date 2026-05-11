@@ -87,6 +87,9 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
         } catch let error as HealthKitError {
             throw error
         } catch {
+            if isHealthKitDatabaseInaccessible(error) {
+                throw HealthKitError.protectedDataUnavailable
+            }
             logger.error("월경 기록 읽기 실패: \(error.localizedDescription)")
             throw HealthKitError.readFailed
         }
@@ -106,6 +109,9 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
         } catch let error as HealthKitError {
             throw error
         } catch {
+            if isHealthKitDatabaseInaccessible(error) {
+                throw HealthKitError.protectedDataUnavailable
+            }
             logger.error("손목 온도 읽기 실패: \(error.localizedDescription)")
             throw HealthKitError.readFailed
         }
@@ -160,5 +166,16 @@ final class HealthKitRepositoryImpl: HealthKitRepository {
             logger.error("월경 기록 삭제 실패: \(error.localizedDescription)")
             throw HealthKitError.deleteFailed
         }
+    }
+
+    private func isHealthKitDatabaseInaccessible(_ error: Error) -> Bool {
+        if let healthKitError = error as? HKError,
+           healthKitError.code == .errorDatabaseInaccessible {
+            return true
+        }
+
+        let nsError = error as NSError
+        return nsError.domain == HKError.errorDomain
+            && nsError.code == HKError.Code.errorDatabaseInaccessible.rawValue
     }
 }

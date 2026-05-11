@@ -24,6 +24,8 @@ final class AppState: ObservableObject {
     private let loadUserSettingsUseCase: LoadUserSettingsUseCase
     private let userSettingUseCase: UserSettingUseCase
     private let syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase
+    private let foregroundRefreshRetryDelayNanoseconds: UInt64
+    private let foregroundRefreshMaxRetryCount: Int
     private var hasPerformedLaunchAutoCloseCheck = false
 
     // MARK: - Init
@@ -33,13 +35,17 @@ final class AppState: ObservableObject {
         refreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCase,
         loadUserSettingsUseCase: LoadUserSettingsUseCase,
         userSettingUseCase: UserSettingUseCase,
-        syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase
+        syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase,
+        foregroundRefreshRetryDelayNanoseconds: UInt64 = 500_000_000,
+        foregroundRefreshMaxRetryCount: Int = 2
     ) {
         self.menstrualRecordUseCase = menstrualRecordUseCase
         self.refreshMenstrualCycleUseCase = refreshMenstrualCycleUseCase
         self.loadUserSettingsUseCase = loadUserSettingsUseCase
         self.userSettingUseCase = userSettingUseCase
         self.syncMenstrualCalendarUseCase = syncMenstrualCalendarUseCase
+        self.foregroundRefreshRetryDelayNanoseconds = foregroundRefreshRetryDelayNanoseconds
+        self.foregroundRefreshMaxRetryCount = foregroundRefreshMaxRetryCount
     }
 
     // MARK: - Public Actions
@@ -59,9 +65,32 @@ final class AppState: ObservableObject {
 
     /// scenePhase가 active로 전환될 때 호출
     func refreshOnForeground() async {
+        await refreshOnForeground(
+            remainingRetryCount: foregroundRefreshMaxRetryCount
+        )
+    }
+
+    private func refreshOnForeground(remainingRetryCount: Int) async {
         do {
             try await refreshMenstrualData()
         } catch {
+            if isTransientProtectedDataError(error) {
+                guard remainingRetryCount > 0 else {
+                    return
+                }
+                if foregroundRefreshRetryDelayNanoseconds > 0 {
+                    try? await Task.sleep(
+                        nanoseconds: foregroundRefreshRetryDelayNanoseconds
+                    )
+                }
+                guard !Task.isCancelled else {
+                    return
+                }
+                await refreshOnForeground(
+                    remainingRetryCount: remainingRetryCount - 1
+                )
+                return
+            }
             menstrualRecordError = error
         }
     }
@@ -101,6 +130,16 @@ final class AppState: ObservableObject {
             apply(error.snapshot)
             throw error.underlyingError
         }
+    }
+
+    private func isTransientProtectedDataError(_ error: Error) -> Bool {
+        if let healthKitError = error as? HealthKitError {
+            return healthKitError.isTransientProtectedDataError
+        }
+        if let refreshError = error as? MenstrualCycleRefreshError {
+            return isTransientProtectedDataError(refreshError.underlyingError)
+        }
+        return false
     }
 
     private func apply(_ snapshot: MenstrualCycleSnapshot) {
