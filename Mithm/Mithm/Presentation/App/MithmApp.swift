@@ -13,6 +13,7 @@ struct MithmApp: App {
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var calendarViewModel: CalendarViewModel
     @StateObject private var settingViewModel: SettingViewModel
+    @StateObject private var cycleSettingViewModel: CycleSettingViewModel
 
     init() {
         let graph = AppDIContainer.makeAppDependencyGraph()
@@ -21,6 +22,7 @@ struct MithmApp: App {
         _homeViewModel = StateObject(wrappedValue: graph.homeViewModel)
         _calendarViewModel = StateObject(wrappedValue: graph.calendarViewModel)
         _settingViewModel = StateObject(wrappedValue: graph.settingViewModel)
+        _cycleSettingViewModel = StateObject(wrappedValue: graph.cycleSettingViewModel)
     }
 
     var body: some Scene {
@@ -30,6 +32,7 @@ struct MithmApp: App {
                 .environmentObject(homeViewModel)
                 .environmentObject(calendarViewModel)
                 .environmentObject(settingViewModel)
+                .environmentObject(cycleSettingViewModel)
         }
     }
 }

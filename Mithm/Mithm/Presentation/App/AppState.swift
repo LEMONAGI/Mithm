@@ -104,6 +104,22 @@ final class AppState: ObservableObject {
         userSetting = loadUserSettingsUseCase.execute()
     }
 
+    func saveMenstrualUserInput(_ input: MenstrualUserInput) {
+        userSettingUseCase.saveMenstrualUserInput(input)
+        userSetting.menstrualUserInput = input
+        Task {
+            try? await refreshMenstrualData()
+        }
+    }
+
+    func saveUserInputMode(_ mode: UserInputMode) {
+        userSettingUseCase.saveUserInputMode(mode)
+        userSetting.userInputMode = mode
+        Task {
+            try? await refreshMenstrualData()
+        }
+    }
+
     func saveCalendarExportEnabled(_ enabled: Bool) {
         userSettingUseCase.saveCalendarExportEnabled(enabled)
         userSetting.calendarExportEnabled = enabled

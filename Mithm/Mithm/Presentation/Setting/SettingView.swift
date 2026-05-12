@@ -11,7 +11,9 @@ import SwiftUI
 struct SettingView: View {
     @EnvironmentObject private var settingViewModel: SettingViewModel
     @Environment(\.openURL) private var openURL
-    
+    @State private var showPredictionMethodSetting = false
+    @State private var showCycleSetting = false
+
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
@@ -26,6 +28,15 @@ struct SettingView: View {
             }
             .padding(.top, 26)
             .padding(.horizontal, 20)
+            .navigationDestination(isPresented: $showPredictionMethodSetting) {
+                PredictionMethodSettingView()
+                    .environmentObject(settingViewModel)
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+            .navigationDestination(isPresented: $showCycleSetting) {
+                CycleSettingView()
+                    .navigationBarTitleDisplayMode(.inline)
+            }
         }
     }
 }
@@ -41,11 +52,11 @@ extension SettingView {
             ))
         case .predictionMethod:
             SettingMenuRow(item: item, isOn: .constant(false)) {
-                // TODO: Navigate to prediction method setting
+                showPredictionMethodSetting = true
             }
         case .cycleSetting:
             SettingMenuRow(item: item, isOn: .constant(false)) {
-                // TODO: Navigate to cycle setting
+                showCycleSetting = true
             }
         case .privacyPolicy:
             SettingMenuRow(item: item, isOn: .constant(false)) {

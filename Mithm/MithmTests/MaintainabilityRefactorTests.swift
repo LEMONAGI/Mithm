@@ -872,6 +872,97 @@ struct AppStateRefreshTests {
     }
 }
 
+@MainActor
+struct SettingViewModelPredictionMethodDraftTests {
+
+    @Test("예측 방법 draft 변경은 저장과 refresh를 실행하지 않는다")
+    func changingPredictionMethodDraftDoesNotPersistOrRefresh() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = makeAppState(
+            settings: UserSettingState(userInputMode: .blendUserInput),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+        let viewModel = SettingViewModel(appState: appState)
+
+        viewModel.resetPredictionMethodDraft()
+        viewModel.setPredictionMethodDraft(.onlyUserInput)
+        await Task.yield()
+
+        #expect(viewModel.predictionMethodDraft == .onlyUserInput)
+        #expect(appState.userSetting.userInputMode == .blendUserInput)
+        #expect(userSettingUseCase.savedUserInputModes.isEmpty)
+        #expect(refreshUseCase.calls.isEmpty)
+    }
+
+    @Test("예측 방법 draft 저장은 한 번만 저장하고 refresh를 요청한다")
+    func savingPredictionMethodDraftPersistsAndRefreshesOnce() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = makeAppState(
+            settings: UserSettingState(userInputMode: .blendUserInput),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+        let viewModel = SettingViewModel(appState: appState)
+
+        viewModel.resetPredictionMethodDraft()
+        viewModel.setPredictionMethodDraft(.notBlendUserInput)
+        viewModel.savePredictionMethodDraft()
+        await waitForRefreshCalls(refreshUseCase, count: 1)
+
+        #expect(userSettingUseCase.savedUserInputModes == [.notBlendUserInput])
+        #expect(appState.userSetting.userInputMode == .notBlendUserInput)
+        #expect(refreshUseCase.calls.count == 1)
+        #expect(refreshUseCase.calls.first?.userSetting.userInputMode == .notBlendUserInput)
+    }
+
+    @Test("예측 방법 draft가 실제 값과 같으면 저장과 refresh를 생략한다")
+    func savingUnchangedPredictionMethodDraftSkipsPersistAndRefresh() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = makeAppState(
+            settings: UserSettingState(userInputMode: .notBlendUserInput),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+        let viewModel = SettingViewModel(appState: appState)
+
+        viewModel.resetPredictionMethodDraft()
+        viewModel.savePredictionMethodDraft()
+        await Task.yield()
+
+        #expect(userSettingUseCase.savedUserInputModes.isEmpty)
+        #expect(refreshUseCase.calls.isEmpty)
+    }
+
+    private func makeAppState(
+        settings: UserSettingState,
+        userSettingUseCase: FakeUserSettingUseCase,
+        refreshUseCase: FakeRefreshMenstrualCycleUseCase
+    ) -> AppState {
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(settings: settings),
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
+        )
+        appState.loadUserSettings()
+        return appState
+    }
+
+    private func waitForRefreshCalls(
+        _ refreshUseCase: FakeRefreshMenstrualCycleUseCase,
+        count: Int
+    ) async {
+        for _ in 0..<10 where refreshUseCase.calls.count < count {
+            await Task.yield()
+        }
+    }
+}
+
 struct HealthKitRepositoryImplErrorMappingTests {
 
     @Test("HealthKit 보호 데이터 접근 실패는 일시 오류로 매핑한다")
@@ -1435,6 +1526,7 @@ private struct FakeLoadUserSettingsUseCase: LoadUserSettingsUseCase {
 
 private final class FakeUserSettingUseCase: UserSettingUseCase {
     private(set) var savedCalendarExportEnabled: [Bool] = []
+    private(set) var savedUserInputModes: [UserInputMode] = []
 
     func loadMenstrualUserInput() -> MenstrualUserInput? { nil }
     func loadCalendarExportEnabled() -> Bool { false }
@@ -1443,7 +1535,9 @@ private final class FakeUserSettingUseCase: UserSettingUseCase {
     func saveCalendarExportEnabled(_ enabled: Bool) {
         savedCalendarExportEnabled.append(enabled)
     }
-    func saveUserInputMode(_ mode: UserInputMode) { }
+    func saveUserInputMode(_ mode: UserInputMode) {
+        savedUserInputModes.append(mode)
+    }
 }
 
 private final class FakeCurrentMenstrualEpisodeStore: CurrentMenstrualEpisodeStore {

@@ -12,6 +12,7 @@ struct AppDependencyGraph {
     let homeViewModel: HomeViewModel
     let calendarViewModel: CalendarViewModel
     let settingViewModel: SettingViewModel
+    let cycleSettingViewModel: CycleSettingViewModel
 }
 
 struct AppDIContainer {
@@ -82,12 +83,14 @@ struct AppDIContainer {
         )
 
         let settingViewModel = SettingViewModel(appState: appState)
+        let cycleSettingViewModel = CycleSettingViewModel(appState: appState)
 
         return AppDependencyGraph(
             appState: appState,
             homeViewModel: homeViewModel,
             calendarViewModel: calendarViewModel,
-            settingViewModel: settingViewModel
+            settingViewModel: settingViewModel,
+            cycleSettingViewModel: cycleSettingViewModel
         )
     }
 
