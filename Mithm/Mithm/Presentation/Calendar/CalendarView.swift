@@ -45,7 +45,6 @@ struct CalendarView: View {
         }
         .sheet(isPresented: $showMenstrualRecordSheet) {
             MenstrualRecordSheetView(viewModel: calendarViewModel)
-                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
     }

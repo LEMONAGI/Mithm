@@ -17,6 +17,7 @@ struct MenstrualRecordSheetView: View {
                         viewModel: viewModel,
                         row: row
                     )
+                    .navigationBarTitleDisplayMode(.inline)
                 }
         }
     }
@@ -132,10 +133,9 @@ private struct MenstrualRecordEditView: View {
             }
         }
         .navigationTitle("월경 기록 수정")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
+            ToolbarItem(placement: .confirmationAction) {
+                Button(role: .confirm) {
                     guard row.record.isEditable else {
                         showNotEditableAlert = true
                         return
@@ -150,16 +150,10 @@ private struct MenstrualRecordEditView: View {
                             dismiss()
                         }
                     }
-                } label: {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
                 }
-                .buttonStyle(.glassProminent)
                 .disabled(!isChanged)
             }
         }
-        .tint(.accentColor)
         .onChange(of: startDate) {
             if startDate > endDate {
                 endDate = startDate
