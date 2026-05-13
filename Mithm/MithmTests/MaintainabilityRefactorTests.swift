@@ -963,6 +963,116 @@ struct SettingViewModelPredictionMethodDraftTests {
     }
 }
 
+@MainActor
+struct CycleSettingViewModelTests {
+
+    @Test("월경 주기와 길이 draft가 현재 값과 같으면 저장할 수 없다")
+    func resetDraftCannotSave() {
+        let viewModel = makeViewModel(
+            settings: UserSettingState(
+                menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6)
+            )
+        )
+
+        viewModel.reset()
+
+        #expect(viewModel.cycleLength == 31)
+        #expect(viewModel.periodLength == 6)
+        #expect(!viewModel.canSave)
+    }
+
+    @Test("월경 주기 또는 길이 중 하나라도 바뀌면 저장할 수 있다")
+    func changingEitherCycleOrPeriodLengthCanSave() {
+        let viewModel = makeViewModel(
+            settings: UserSettingState(
+                menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6)
+            )
+        )
+
+        viewModel.reset()
+        viewModel.cycleLength = 32
+        #expect(viewModel.canSave)
+
+        viewModel.cycleLength = 31
+        #expect(!viewModel.canSave)
+
+        viewModel.periodLength = 7
+        #expect(viewModel.canSave)
+
+        viewModel.periodLength = 6
+        #expect(!viewModel.canSave)
+    }
+
+    @Test("월경 주기와 길이가 바뀌지 않았으면 저장과 refresh를 생략한다")
+    func savingUnchangedDraftSkipsPersistAndRefresh() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let viewModel = makeViewModel(
+            settings: UserSettingState(
+                menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6)
+            ),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+
+        viewModel.reset()
+        viewModel.save()
+        await Task.yield()
+
+        #expect(userSettingUseCase.savedMenstrualUserInputs.isEmpty)
+        #expect(refreshUseCase.calls.isEmpty)
+    }
+
+    @Test("월경 주기와 길이 저장 후 현재 값이 새 기준이 된다")
+    func savingChangedDraftUpdatesOriginalValues() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let viewModel = makeViewModel(
+            settings: UserSettingState(
+                menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6)
+            ),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+
+        viewModel.reset()
+        viewModel.cycleLength = 32
+        viewModel.save()
+        await waitForRefreshCalls(refreshUseCase, count: 1)
+
+        #expect(!viewModel.canSave)
+        #expect(userSettingUseCase.savedMenstrualUserInputs.count == 1)
+        #expect(userSettingUseCase.savedMenstrualUserInputs.first?.cycleLength == 32)
+        #expect(userSettingUseCase.savedMenstrualUserInputs.first?.periodLength == 6)
+        #expect(refreshUseCase.calls.count == 1)
+    }
+
+    private func makeViewModel(
+        settings: UserSettingState,
+        userSettingUseCase: FakeUserSettingUseCase = FakeUserSettingUseCase(),
+        refreshUseCase: FakeRefreshMenstrualCycleUseCase = FakeRefreshMenstrualCycleUseCase()
+    ) -> CycleSettingViewModel {
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(settings: settings),
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
+        )
+        appState.loadUserSettings()
+        return CycleSettingViewModel(appState: appState)
+    }
+
+    private func waitForRefreshCalls(
+        _ refreshUseCase: FakeRefreshMenstrualCycleUseCase,
+        count: Int
+    ) async {
+        for _ in 0..<10 where refreshUseCase.calls.count < count {
+            await Task.yield()
+        }
+    }
+}
+
 struct HealthKitRepositoryImplErrorMappingTests {
 
     @Test("HealthKit 보호 데이터 접근 실패는 일시 오류로 매핑한다")
@@ -1525,13 +1635,16 @@ private struct FakeLoadUserSettingsUseCase: LoadUserSettingsUseCase {
 }
 
 private final class FakeUserSettingUseCase: UserSettingUseCase {
+    private(set) var savedMenstrualUserInputs: [MenstrualUserInput] = []
     private(set) var savedCalendarExportEnabled: [Bool] = []
     private(set) var savedUserInputModes: [UserInputMode] = []
 
     func loadMenstrualUserInput() -> MenstrualUserInput? { nil }
     func loadCalendarExportEnabled() -> Bool { false }
     func loadUserInputMode() -> UserInputMode? { nil }
-    func saveMenstrualUserInput(_ input: MenstrualUserInput) { }
+    func saveMenstrualUserInput(_ input: MenstrualUserInput) {
+        savedMenstrualUserInputs.append(input)
+    }
     func saveCalendarExportEnabled(_ enabled: Bool) {
         savedCalendarExportEnabled.append(enabled)
     }

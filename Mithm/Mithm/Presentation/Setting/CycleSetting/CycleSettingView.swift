@@ -84,6 +84,7 @@ struct CycleSettingView: View {
                     viewModel.save()
                     dismiss()
                 }
+                .disabled(!viewModel.canSave)
             }
         }
         .onAppear {
