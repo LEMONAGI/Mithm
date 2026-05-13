@@ -74,14 +74,13 @@ private struct PredictionMethodSlider: View {
     var body: some View {
         VStack(spacing: 20) {
             HStack(spacing: 0) {
-                ForEach(UserInputMode.predictionMethodOptions, id: \.self) { mode in
-                    Text(mode.displayTitle)
-                        .font(.pretendardSemiBold(12))
-                        .foregroundStyle(.textPrimary)
-                        .frame(maxWidth: .infinity)
-                        .lineLimit(1)
-                }
+                predictionMethodLabel(for: .notBlendUserInput)
+                Spacer(minLength: 24)
+                predictionMethodLabel(for: .blendUserInput)
+                Spacer(minLength: 24)
+                predictionMethodLabel(for: .onlyUserInput)
             }
+            .padding(.horizontal, 16)
 
             GeometryReader { geometry in
                 let thumbInset = thumbWidth / 2
@@ -123,6 +122,13 @@ private struct PredictionMethodSlider: View {
         .background(Color.primaryWhite)
         .clipShape(RoundedRectangle(cornerRadius: 26))
         .sensoryFeedback(.selection, trigger: hapticTrigger)
+    }
+
+    private func predictionMethodLabel(for mode: UserInputMode) -> some View {
+        Text(mode.displayTitle)
+            .font(.pretendardBold(12))
+            .foregroundStyle(.textPrimary)
+            .lineLimit(1)
     }
 
     private func updateSelection(locationX: CGFloat, width: CGFloat) {
