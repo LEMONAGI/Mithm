@@ -98,8 +98,17 @@ private struct MenstrualRecordEditView: View {
     @State private var endDate: Date
     @State private var showDeleteConfirmation = false
     @State private var showNotEditableAlert = false
+    @State private var expandedField: Field?
     
     private let calendar = Calendar.current
+    private static let inlineDatePickerHeight: CGFloat = 360
+    private static let inlineDatePickerDividerHeight: CGFloat = 1
+    private static let inlineDatePickerExpandedHeight =
+        inlineDatePickerHeight + inlineDatePickerDividerHeight
+
+    private enum Field {
+        case startDate, endDate
+    }
     
     private static let dateLabelFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -126,10 +135,7 @@ private struct MenstrualRecordEditView: View {
                 dateForm
                     .padding(.top, 44)
                     .padding(.horizontal, 20)
-                
                 Spacer()
-                
-                deleteButton
             }
         }
         .navigationTitle("월경 기록 수정")
@@ -152,6 +158,21 @@ private struct MenstrualRecordEditView: View {
                     }
                 }
                 .disabled(!isChanged)
+            }
+            ToolbarItem(placement: .bottomBar) {
+                Button(role: .destructive) {
+                    guard row.record.isEditable else {
+                        showNotEditableAlert = true
+                        return
+                    }
+                    showDeleteConfirmation = true
+                } label: {
+                    Text("삭제하기")
+                        .font(.pretendardRegular(17))
+                        .foregroundStyle(.red)
+                        .padding(6)
+                }
+                .disabled(viewModel.isEditingMenstrualRecord)
             }
         }
         .onChange(of: startDate) {
@@ -183,6 +204,15 @@ private struct MenstrualRecordEditView: View {
         VStack(spacing: 0) {
             dateRow(
                 title: "월경 시작일",
+                date: startDate,
+                isExpanded: expandedField == .startDate
+            ) {
+                withAnimation(.easeInOut(duration: 0.20)) {
+                    expandedField = expandedField == .startDate ? nil : .startDate
+                }
+            }
+            collapsibleInlineDatePicker(
+                field: .startDate,
                 selection: Binding(
                     get: { startDate },
                     set: { newValue in
@@ -191,9 +221,19 @@ private struct MenstrualRecordEditView: View {
                 ),
                 range: Date.distantPast...min(endDate, today)
             )
-            
+            Divider()
+                .padding(.horizontal, 20)
             dateRow(
                 title: "월경 종료일",
+                date: endDate,
+                isExpanded: expandedField == .endDate
+            ) {
+                withAnimation(.easeInOut(duration: 0.20)) {
+                    expandedField = expandedField == .endDate ? nil : .endDate
+                }
+            }
+            collapsibleInlineDatePicker(
+                field: .endDate,
                 selection: Binding(
                     get: { endDate },
                     set: { newValue in
@@ -203,23 +243,20 @@ private struct MenstrualRecordEditView: View {
                 range: startDate...today
             )
         }
-        .frame(height: 104)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 26)
                 .fill(Color.white)
         )
-        .overlay(alignment: .center) {
-            Divider()
-                .padding(.horizontal, 20)
-        }
+        .clipShape(RoundedRectangle(cornerRadius: 26))
     }
     
     @ViewBuilder
     private func dateRow(
         title: String,
-        selection: Binding<Date>,
-        range: ClosedRange<Date>
+        date: Date,
+        isExpanded: Bool,
+        onTap: @escaping () -> Void
     ) -> some View {
         HStack {
             Text(title)
@@ -228,50 +265,69 @@ private struct MenstrualRecordEditView: View {
             
             Spacer()
             
-            ZStack {
-                // 1. 애플 기본 DatePicker(.compact) 스타일을 완벽하게 흉내 낸 가짜 UI
-                Text(Self.dateLabelFormatter.string(from: selection.wrappedValue))
-                    .font(.pretendardRegular(18))
-                    .foregroundStyle(.textPrimary)
-                    .monospacedDigit()
-                    .frame(minWidth: 105, alignment: .center)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color(UIColor.secondarySystemFill))
-                    .cornerRadius(26)
-                    .allowsHitTesting(false)
-                
-                DatePicker(
-                    "",
-                    selection: selection,
-                    in: range,
-                    displayedComponents: [.date]
-                )
-                .labelsHidden()
-                .tint(.primaryOrange)
-                .colorMultiply(.clear)
-            }
+            Text(Self.dateLabelFormatter.string(from: date))
+                .font(.pretendardRegular(18))
+                .foregroundStyle(isExpanded ? Color.accentColor : Color(.textPrimary))
+                .monospacedDigit()
+                .frame(minWidth: 105, alignment: .center)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(UIColor.secondarySystemFill))
+                .cornerRadius(26)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 52)
         .padding(.horizontal, 16)
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
     }
-    
-    private var deleteButton: some View {
-        Button {
-            guard row.record.isEditable else {
-                showNotEditableAlert = true
-                return
-            }
-            showDeleteConfirmation = true
-        } label: {
-            Text("삭제하기")
-                .font(.pretendardRegular(17))
-                .foregroundStyle(.red)
-                .padding(6)
+
+    @ViewBuilder
+    private func collapsibleInlineDatePicker(
+        field: Field,
+        selection: Binding<Date>,
+        range: ClosedRange<Date>
+    ) -> some View {
+        let isExpanded = expandedField == field
+
+        VStack(spacing: 0) {
+            Divider()
+                .padding(.horizontal, 20)
+
+            inlineDatePicker(selection: selection, range: range)
+                .transaction { transaction in
+                    transaction.disablesAnimations = true
+                    transaction.animation = nil
+                }
+                .frame(height: Self.inlineDatePickerHeight, alignment: .top)
         }
-        .buttonStyle(.glass)
-        .disabled(viewModel.isEditingMenstrualRecord)
+        .frame(
+            height: isExpanded ? Self.inlineDatePickerExpandedHeight : 0,
+            alignment: .top
+        )
+        .opacity(isExpanded ? 1 : 0)
+        .clipped()
+        .allowsHitTesting(isExpanded)
+        .accessibilityHidden(!isExpanded)
+    }
+
+    @ViewBuilder
+    private func inlineDatePicker(
+        selection: Binding<Date>,
+        range: ClosedRange<Date>
+    ) -> some View {
+        DatePicker(
+            "",
+            selection: selection,
+            in: range,
+            displayedComponents: [.date]
+        )
+        .datePickerStyle(.graphical)
+        .labelsHidden()
+        .tint(.accentColor)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(height: Self.inlineDatePickerHeight, alignment: .top)
+        .clipped()
     }
     
     private var isChanged: Bool {
