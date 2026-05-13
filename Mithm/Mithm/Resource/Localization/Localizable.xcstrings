@@ -615,6 +615,9 @@
         }
       }
     },
+    "미리듬" : {
+
+    },
     "미리듬 앱에서 생성하지 않은 월경 기록은 수정할 수 없어요.\n건강 앱에서 직접 수정해 주세요." : {
 
     },
@@ -1130,17 +1133,6 @@
         }
       }
     },
-    "일" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일"
-          }
-        }
-      }
-    },
     "이전 월경 종료를 자동으로 기록했습니다!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1148,6 +1140,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 월경 종료를 자동으로 기록했습니다!"
+          }
+        }
+      }
+    },
+    "일" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일"
           }
         }
       }
@@ -1358,20 +1361,6 @@
     "해당 기간 삭제" : {
 
     },
-    "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"
-          }
-        }
-      }
-    },
-    "혼자 있고 싶거나, 쉬고 싶은 마음이 강해져요" : {
-
-    },
     "혼자 조용히 있고 싶거나, 별것 아닌 일에 예민하게 반응하게 되는 날이에요. 집중이 잘 안 되고, 감정이 쉽게 출렁이는 것도 자연스러운 반응이에요." : {
 
     },
@@ -1388,6 +1377,20 @@
           }
         }
       }
+    },
+    "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"
+          }
+        }
+      }
+    },
+    "혼자 있고 싶거나, 쉬고 싶은 마음이 강해져요" : {
+
     },
     "확인" : {
       "extractionState" : "manual",
