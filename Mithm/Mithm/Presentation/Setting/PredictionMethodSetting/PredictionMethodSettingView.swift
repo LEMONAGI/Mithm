@@ -53,6 +53,7 @@ struct PredictionMethodSettingView: View {
                     settingViewModel.savePredictionMethodDraft()
                     dismiss()
                 }
+                .disabled(!settingViewModel.canSavePredictionMethodDraft)
             }
         }
         .onAppear {
@@ -64,6 +65,7 @@ struct PredictionMethodSettingView: View {
 private struct PredictionMethodSlider: View {
 
     @Binding var selection: UserInputMode
+    @State private var hapticTrigger = 0
 
     private let trackHeight: CGFloat = 5
     private let thumbWidth: CGFloat = 38
@@ -118,13 +120,21 @@ private struct PredictionMethodSlider: View {
         .padding(.bottom, 22)
         .background(Color.primaryWhite)
         .clipShape(RoundedRectangle(cornerRadius: 22))
+        .sensoryFeedback(.selection, trigger: hapticTrigger)
     }
 
     private func updateSelection(locationX: CGFloat, width: CGFloat) {
         let availableWidth = max(width - thumbWidth, 1)
         let clampedX = min(max(locationX - thumbWidth / 2, 0), availableWidth)
         let index = Int((clampedX / availableWidth * 2).rounded())
-        selection = UserInputMode.from(sliderIndex: Double(index))
+        let newSelection = UserInputMode.from(sliderIndex: Double(index))
+
+        guard selection != newSelection else {
+            return
+        }
+
+        selection = newSelection
+        hapticTrigger += 1
     }
 }
 

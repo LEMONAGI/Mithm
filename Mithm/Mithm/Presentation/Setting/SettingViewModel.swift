@@ -14,6 +14,10 @@ final class SettingViewModel: ObservableObject {
     @Published private(set) var predictionMethodDraft: UserInputMode
     @Published private(set) var menstrualUserInput: MenstrualUserInput?
 
+    var canSavePredictionMethodDraft: Bool {
+        predictionMethodDraft != userInputMode
+    }
+
     private let appState: AppState
     private var cancellables = Set<AnyCancellable>()
 

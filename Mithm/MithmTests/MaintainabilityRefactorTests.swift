@@ -887,10 +887,13 @@ struct SettingViewModelPredictionMethodDraftTests {
         let viewModel = SettingViewModel(appState: appState)
 
         viewModel.resetPredictionMethodDraft()
+        #expect(!viewModel.canSavePredictionMethodDraft)
+
         viewModel.setPredictionMethodDraft(.onlyUserInput)
         await Task.yield()
 
         #expect(viewModel.predictionMethodDraft == .onlyUserInput)
+        #expect(viewModel.canSavePredictionMethodDraft)
         #expect(appState.userSetting.userInputMode == .blendUserInput)
         #expect(userSettingUseCase.savedUserInputModes.isEmpty)
         #expect(refreshUseCase.calls.isEmpty)
@@ -912,6 +915,7 @@ struct SettingViewModelPredictionMethodDraftTests {
         viewModel.savePredictionMethodDraft()
         await waitForRefreshCalls(refreshUseCase, count: 1)
 
+        #expect(!viewModel.canSavePredictionMethodDraft)
         #expect(userSettingUseCase.savedUserInputModes == [.notBlendUserInput])
         #expect(appState.userSetting.userInputMode == .notBlendUserInput)
         #expect(refreshUseCase.calls.count == 1)
@@ -930,6 +934,8 @@ struct SettingViewModelPredictionMethodDraftTests {
         let viewModel = SettingViewModel(appState: appState)
 
         viewModel.resetPredictionMethodDraft()
+        #expect(!viewModel.canSavePredictionMethodDraft)
+
         viewModel.savePredictionMethodDraft()
         await Task.yield()
 
