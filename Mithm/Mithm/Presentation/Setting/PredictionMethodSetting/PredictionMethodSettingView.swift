@@ -46,7 +46,7 @@ struct PredictionMethodSettingView: View {
             Spacer()
         }
         .background(Color.secondaryPink.ignoresSafeArea())
-        .navigationTitle("예측 방법")
+        .navigationTitle("월경 주기 예측 방법 변경")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button(role: .confirm) {
@@ -67,12 +67,12 @@ private struct PredictionMethodSlider: View {
     @Binding var selection: UserInputMode
     @State private var hapticTrigger = 0
 
-    private let trackHeight: CGFloat = 5
+    private let trackHeight: CGFloat = 6
     private let thumbWidth: CGFloat = 38
-    private let thumbHeight: CGFloat = 30
+    private let thumbHeight: CGFloat = 24
 
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 20) {
             HStack(spacing: 0) {
                 ForEach(UserInputMode.predictionMethodOptions, id: \.self) { mode in
                     Text(mode.displayTitle)
@@ -80,24 +80,26 @@ private struct PredictionMethodSlider: View {
                         .foregroundStyle(.textPrimary)
                         .frame(maxWidth: .infinity)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
                 }
             }
 
             GeometryReader { geometry in
-                let availableWidth = max(geometry.size.width - thumbWidth, 0)
-                let xOffset = CGFloat(selection.sliderIndex) / 2 * availableWidth
+                let thumbInset = thumbWidth / 2
+                let travelWidth = max(geometry.size.width - thumbWidth * 2, 0)
+                let selectionRatio = CGFloat(selection.sliderIndex) / 2
+                let xOffset = thumbInset + selectionRatio * travelWidth
 
                 ZStack(alignment: .leading) {
                     Capsule()
                         .fill(Color.primaryOrange)
                         .frame(height: trackHeight)
-                        .padding(.horizontal, thumbWidth / 2)
+                        .padding(.horizontal, thumbInset)
 
                     Capsule()
                         .fill(Color.primaryWhite)
                         .frame(width: thumbWidth, height: thumbHeight)
-                        .shadow(color: .primaryBlack.opacity(0.15), radius: 6, x: 0, y: 2)
+                        .shadow(color: .primaryBlack.opacity(0.12), radius: 12, x: 0, y: 6)
+                        .shadow(color: .primaryBlack.opacity(0.12), radius: 4, x: 0, y: 0.5)
                         .offset(x: xOffset)
                         .animation(.easeInOut(duration: 0.18), value: selection)
                 }
@@ -116,17 +118,21 @@ private struct PredictionMethodSlider: View {
             .frame(height: thumbHeight)
         }
         .padding(.horizontal, 1)
-        .padding(.top, 17)
-        .padding(.bottom, 22)
+        .padding(.top, 16)
+        .padding(.bottom, 23)
         .background(Color.primaryWhite)
-        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .clipShape(RoundedRectangle(cornerRadius: 26))
         .sensoryFeedback(.selection, trigger: hapticTrigger)
     }
 
     private func updateSelection(locationX: CGFloat, width: CGFloat) {
-        let availableWidth = max(width - thumbWidth, 1)
-        let clampedX = min(max(locationX - thumbWidth / 2, 0), availableWidth)
-        let index = Int((clampedX / availableWidth * 2).rounded())
+        let thumbInset = thumbWidth / 2
+        let travelWidth = max(width - thumbWidth * 2, 1)
+        let minOffset = thumbInset
+        let maxOffset = thumbInset + travelWidth
+        let proposedOffset = locationX - thumbInset
+        let clampedOffset = min(max(proposedOffset, minOffset), maxOffset)
+        let index = Int(((clampedOffset - minOffset) / travelWidth * 2).rounded())
         let newSelection = UserInputMode.from(sliderIndex: Double(index))
 
         guard selection != newSelection else {

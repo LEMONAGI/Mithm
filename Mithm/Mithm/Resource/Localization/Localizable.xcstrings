@@ -890,9 +890,6 @@
     "예민해지거나 이유 없이 우울한 기분이 드는 날이 생길 수 있어요. 집중이 잘 안 되거나 작은 일에 감정이 크게 반응하는 것도 이 시기엔 자연스러운 일이에요." : {
 
     },
-    "예측 방법" : {
-
-    },
     "예측된 월경 예정일을 바탕으로 계산한 배란기(가임기)입니다." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1122,13 +1119,13 @@
         }
       }
     },
-    "이전 월경 종료를 자동으로 기록했습니다!" : {
+    "이번 월경을 기록하였습니다" : {
       "extractionState" : "manual",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "이전 월경 종료를 자동으로 기록했습니다!"
+            "value" : "이번 월경을 기록하였습니다"
           }
         }
       }
@@ -1144,13 +1141,13 @@
         }
       }
     },
-    "이번 월경을 기록하였습니다" : {
+    "이전 월경 종료를 자동으로 기록했습니다!" : {
       "extractionState" : "manual",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "이번 월경을 기록하였습니다"
+            "value" : "이전 월경 종료를 자동으로 기록했습니다!"
           }
         }
       }
