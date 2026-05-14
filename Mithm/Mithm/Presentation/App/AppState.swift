@@ -53,8 +53,21 @@ final class AppState: ObservableObject {
     /// 앱 최초 실행 시 호출
     func performInitialLoad() async {
         loadUserSettings()
+        guard userSetting.hasCompletedOnboarding else {
+            return
+        }
+        await runInitialHealthKitLoad()
+    }
+
+    func completeOnboarding() async {
+        userSettingUseCase.saveHasCompletedOnboarding(true)
+        userSetting.hasCompletedOnboarding = true
+        await runInitialHealthKitLoad()
+    }
+
+    private func runInitialHealthKitLoad() async {
         do {
-            try await menstrualRecordUseCase.requestHealthKitAuthorization()
+            try await menstrualRecordUseCase.requestConfirmedHealthKitAuthorization()
             let shouldRunAutoClose = !hasPerformedLaunchAutoCloseCheck
             hasPerformedLaunchAutoCloseCheck = true
             try await refreshMenstrualData(runAutoClose: shouldRunAutoClose)

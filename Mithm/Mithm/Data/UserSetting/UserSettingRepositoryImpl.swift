@@ -14,6 +14,7 @@ final class UserSettingRepositoryImpl: UserSettingRepository {
         static let periodLength = "userSetting.periodLength"
         static let calendarExportEnabled = "userSetting.calendarExportEnabled"
         static let userInputMode = "userSetting.userInputMode"
+        static let hasCompletedOnboarding = "userSetting.hasCompletedOnboarding"
     }
 
     private let defaults: UserDefaults
@@ -74,6 +75,16 @@ final class UserSettingRepositoryImpl: UserSettingRepository {
             return nil
         }
         return UserInputMode(rawValue: rawValue)
+    }
+
+    // MARK: - 온보딩 완료
+
+    func saveHasCompletedOnboarding(_ completed: Bool) {
+        defaults.set(completed, forKey: Key.hasCompletedOnboarding)
+    }
+
+    func loadHasCompletedOnboarding() -> Bool {
+        defaults.bool(forKey: Key.hasCompletedOnboarding)
     }
 }
 

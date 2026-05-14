@@ -33,6 +33,11 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
         )
     }
 
+    func requestConfirmedHealthKitAuthorization() async throws {
+        try await requestHealthKitAuthorization()
+        try await healthKitRepository.checkWriteAuthorization(for: .menstrualCycle)
+    }
+
     func fetchMenstrualOverview(
         activeMenstrualStartDate: Date? = nil,
         userInput: MenstrualUserInput? = nil,

@@ -32,7 +32,7 @@ struct ContentView: View {
             await hideLaunchSplash()
         }
         .onChange(of: scenePhase) {
-            if scenePhase == .active {
+            if scenePhase == .active && appState.userSetting.hasCompletedOnboarding {
                 Task {
                     await appState.refreshOnForeground()
                 }
@@ -69,21 +69,27 @@ struct ContentView: View {
     }
 
     private var mainContent: some View {
-        TabView(selection: $selectedTab) {
-            Tab(value: 0) {
-                HomeView()
-            } label: {
-                Label("홈", systemImage: "house")
-            }
-            Tab(value: 1) {
-                CalendarView()
-            } label: {
-                Label("달력", systemImage: "calendar")
-            }
-            Tab(value: 2) {
-                SettingView()
-            } label: {
-                Label("설정", systemImage: "gearshape")
+        Group {
+            if appState.userSetting.hasCompletedOnboarding {
+                TabView(selection: $selectedTab) {
+                    Tab(value: 0) {
+                        HomeView()
+                    } label: {
+                        Label("홈", systemImage: "house")
+                    }
+                    Tab(value: 1) {
+                        CalendarView()
+                    } label: {
+                        Label("달력", systemImage: "calendar")
+                    }
+                    Tab(value: 2) {
+                        SettingView()
+                    } label: {
+                        Label("설정", systemImage: "gearshape")
+                    }
+                }
+            } else {
+                OnboardingView()
             }
         }
     }
@@ -104,11 +110,12 @@ struct ContentView: View {
 }
 
 #Preview {
-    let appState = AppDIContainer.makeAppState()
+    let graph = AppDIContainer.makeAppDependencyGraph()
     ContentView()
-        .environmentObject(appState)
-        .environmentObject(AppDIContainer.makeHomeViewModel(appState: appState))
-        .environmentObject(AppDIContainer.makeCalendarViewModel(appState: appState))
-        .environmentObject(SettingViewModel(appState: appState))
-        .environmentObject(CycleSettingViewModel(appState: appState))
+        .environmentObject(graph.appState)
+        .environmentObject(graph.homeViewModel)
+        .environmentObject(graph.calendarViewModel)
+        .environmentObject(graph.settingViewModel)
+        .environmentObject(graph.cycleSettingViewModel)
+        .environmentObject(graph.onboardingViewModel)
 }

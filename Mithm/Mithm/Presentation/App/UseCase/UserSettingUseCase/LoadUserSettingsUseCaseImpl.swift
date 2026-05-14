@@ -15,7 +15,8 @@ struct LoadUserSettingsUseCaseImpl: LoadUserSettingsUseCase {
         UserSettingState(
             menstrualUserInput: userSettingUseCase.loadMenstrualUserInput(),
             calendarExportEnabled: userSettingUseCase.loadCalendarExportEnabled(),
-            userInputMode: userSettingUseCase.loadUserInputMode()
+            userInputMode: userSettingUseCase.loadUserInputMode(),
+            hasCompletedOnboarding: userSettingUseCase.loadHasCompletedOnboarding()
         )
     }
 }

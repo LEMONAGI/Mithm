@@ -18,7 +18,7 @@ struct PhaseDetailSheet: View {
                 headerSection
                     .padding(.horizontal, 28)
                     .padding(.top, 44)
-                    .padding(.bottom, phase == .ovulation ? 4 : 60)
+                    .padding(.bottom, phase == .ovulation ? 4 : 44)
                 
                 if phase == .ovulation {
                     ovulationWarningBanner
@@ -111,13 +111,13 @@ private extension PhaseDetailSheet {
                         Text(bullet)
                             .font(.pretendardRegular(14))
                             .foregroundStyle(.primaryBlack)
-                            .lineSpacing(2)
+                            .lineSpacing(4)
                     }
                 }
             }
         }
         .padding(.vertical, 20)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 30)
@@ -151,7 +151,7 @@ private extension PhaseDetailSheet {
                 }
             } label: {
                 HStack(spacing: 8) {
-                    Text("👉 왜 이런 변화가 생길까요?")
+                    Text("\n👉 왜 이런 변화가 생길까요?\n")
                         .font(.pretendardBold(14))
                         .foregroundStyle(.primaryBlack)
                     Spacer()
@@ -171,7 +171,7 @@ private extension PhaseDetailSheet {
             }
         }
         .padding(.vertical, 20)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 30)

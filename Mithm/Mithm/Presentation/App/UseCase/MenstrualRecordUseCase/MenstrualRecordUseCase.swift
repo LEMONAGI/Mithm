@@ -9,6 +9,7 @@ import Foundation
 
 protocol MenstrualRecordUseCase {
     func requestHealthKitAuthorization() async throws
+    func requestConfirmedHealthKitAuthorization() async throws
     func fetchMenstrualOverview(
         activeMenstrualStartDate: Date?,
         userInput: MenstrualUserInput?,

@@ -29,6 +29,10 @@ struct UserSettingUseCaseImpl: UserSettingUseCase {
         userSettingRepository.loadUserInputMode()
     }
 
+    func loadHasCompletedOnboarding() -> Bool {
+        userSettingRepository.loadHasCompletedOnboarding()
+    }
+
     // MARK: - Save
 
     func saveMenstrualUserInput(_ input: MenstrualUserInput) {
@@ -41,5 +45,9 @@ struct UserSettingUseCaseImpl: UserSettingUseCase {
 
     func saveUserInputMode(_ mode: UserInputMode) {
         userSettingRepository.saveUserInputMode(mode)
+    }
+
+    func saveHasCompletedOnboarding(_ completed: Bool) {
+        userSettingRepository.saveHasCompletedOnboarding(completed)
     }
 }

@@ -812,7 +812,8 @@ struct AppStateRefreshTests {
         let settings = UserSettingState(
             menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6),
             calendarExportEnabled: true,
-            userInputMode: .blendUserInput
+            userInputMode: .blendUserInput,
+            hasCompletedOnboarding: true
         )
         let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
         let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
@@ -833,6 +834,49 @@ struct AppStateRefreshTests {
         #expect(appState.userSetting.menstrualUserInput?.cycleLength == 31)
         #expect(appState.userSetting.menstrualUserInput?.periodLength == 6)
         #expect(appState.userSetting.userInputMode == .blendUserInput)
+        #expect(appState.userSetting.hasCompletedOnboarding)
+    }
+
+    @Test("initial load는 온보딩 미완료 상태에서 HealthKit 권한 요청과 refresh를 건너뛴다")
+    func initialLoadSkipsHealthKitWorkWhenOnboardingIncomplete() async {
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = AppState(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(
+                settings: UserSettingState(hasCompletedOnboarding: false)
+            ),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
+        )
+
+        await appState.performInitialLoad()
+
+        #expect(menstrualRecordUseCase.requestedAuthorizationCount == 0)
+        #expect(refreshUseCase.calls.isEmpty)
+        #expect(!appState.userSetting.hasCompletedOnboarding)
+    }
+
+    @Test("온보딩 완료는 저장 후 최초 자동 종료 refresh를 실행한다")
+    func completingOnboardingPersistsAndRunsInitialRefresh() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = AppState(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
+        )
+
+        await appState.completeOnboarding()
+
+        #expect(userSettingUseCase.savedHasCompletedOnboarding == [true])
+        #expect(appState.userSetting.hasCompletedOnboarding)
+        #expect(menstrualRecordUseCase.requestedAuthorizationCount == 1)
+        #expect(refreshUseCase.calls.map(\.runAutoClose) == [true])
     }
 
     @Test("foreground refresh는 일반 오류를 기존처럼 알럿 상태에 저장한다")
@@ -868,6 +912,73 @@ struct AppStateRefreshTests {
         RefactorTestCalendar.date(
             value,
             calendar: RefactorTestCalendar.make()
+        )
+    }
+}
+
+@MainActor
+struct OnboardingViewModelTests {
+
+    @Test("1단계 권한 요청 성공 시 2단계로 이동한다")
+    func healthAuthorizationSuccessAdvancesToSecondStep() async {
+        let viewModel = OnboardingViewModel(
+            appState: makeAppState(),
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase()
+        )
+
+        await viewModel.requestHealthAuthorization()
+
+        #expect(viewModel.currentStep == .step2)
+        #expect(!viewModel.isRequestingAuthorization)
+        #expect(viewModel.permissionAlert == nil)
+    }
+
+    @Test("권한 요청 실패 시 1단계를 유지하고 알럿 상태를 설정한다")
+    func healthAuthorizationFailureKeepsFirstStepAndShowsAlert() async {
+        let viewModel = OnboardingViewModel(
+            appState: makeAppState(),
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(
+                authorizationError: HealthKitError.authorizationDenied
+            )
+        )
+
+        await viewModel.requestHealthAuthorization()
+
+        #expect(viewModel.currentStep == .step1)
+        #expect(!viewModel.isRequestingAuthorization)
+        #expect(viewModel.permissionAlert != nil)
+        #expect(viewModel.permissionAlert?.title == "건강 앱 권한이 필요해요")
+    }
+
+    @Test("5단계 완료 시 온보딩 완료를 저장하고 앱 상태를 갱신한다")
+    func finishingLastStepCompletesOnboarding() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let appState = makeAppState(userSettingUseCase: userSettingUseCase)
+        let viewModel = OnboardingViewModel(
+            appState: appState,
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase()
+        )
+
+        viewModel.advance()
+        viewModel.advance()
+        viewModel.advance()
+        viewModel.advance()
+        await viewModel.finish()
+
+        #expect(viewModel.currentStep == .step5)
+        #expect(appState.userSetting.hasCompletedOnboarding)
+        #expect(userSettingUseCase.savedHasCompletedOnboarding == [true])
+    }
+
+    private func makeAppState(
+        userSettingUseCase: FakeUserSettingUseCase = FakeUserSettingUseCase()
+    ) -> AppState {
+        AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: FakeRefreshMenstrualCycleUseCase(),
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
     }
 }
@@ -1445,17 +1556,29 @@ private struct FetchMenstrualOverviewRequest {
 
 private final class FakeMenstrualRecordUseCase: MenstrualRecordUseCase {
     var overviewResponses: [MenstrualOverview]
+    var authorizationError: Error?
     private(set) var fetchRequests: [FetchMenstrualOverviewRequest] = []
     private(set) var savedRecords: [SavedMenstrualRecord] = []
     private(set) var deletedRanges: [DeletedMenstrualRecordRange] = []
     private(set) var requestedAuthorizationCount = 0
 
-    init(overviewResponses: [MenstrualOverview] = []) {
+    init(
+        overviewResponses: [MenstrualOverview] = [],
+        authorizationError: Error? = nil
+    ) {
         self.overviewResponses = overviewResponses
+        self.authorizationError = authorizationError
     }
 
     func requestHealthKitAuthorization() async throws {
         requestedAuthorizationCount += 1
+        if let authorizationError {
+            throw authorizationError
+        }
+    }
+
+    func requestConfirmedHealthKitAuthorization() async throws {
+        try await requestHealthKitAuthorization()
     }
 
     func fetchMenstrualOverview(
@@ -1644,10 +1767,12 @@ private final class FakeUserSettingUseCase: UserSettingUseCase {
     private(set) var savedMenstrualUserInputs: [MenstrualUserInput] = []
     private(set) var savedCalendarExportEnabled: [Bool] = []
     private(set) var savedUserInputModes: [UserInputMode] = []
+    private(set) var savedHasCompletedOnboarding: [Bool] = []
 
     func loadMenstrualUserInput() -> MenstrualUserInput? { nil }
     func loadCalendarExportEnabled() -> Bool { false }
     func loadUserInputMode() -> UserInputMode? { nil }
+    func loadHasCompletedOnboarding() -> Bool { false }
     func saveMenstrualUserInput(_ input: MenstrualUserInput) {
         savedMenstrualUserInputs.append(input)
     }
@@ -1656,6 +1781,9 @@ private final class FakeUserSettingUseCase: UserSettingUseCase {
     }
     func saveUserInputMode(_ mode: UserInputMode) {
         savedUserInputModes.append(mode)
+    }
+    func saveHasCompletedOnboarding(_ completed: Bool) {
+        savedHasCompletedOnboarding.append(completed)
     }
 }
 
