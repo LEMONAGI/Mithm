@@ -35,15 +35,16 @@ struct CycleSettingView: View {
                 Spacer().frame(height: 40)
 
                 VStack(spacing: 0) {
-                    InputRow(
+                    CycleInputRow(
                         label: "월경 주기",
                         value: viewModel.cycleLength,
-                        isExpanded: expandedField == .cycleLength
-                    ) {
-                        withAnimation(.easeInOut(duration: 0.20)) {
-                            expandedField = expandedField == .cycleLength ? nil : .cycleLength
+                        isExpanded: expandedField == .cycleLength,
+                        onTap: {
+                            withAnimation(.easeInOut(duration: 0.20)) {
+                                expandedField = expandedField == .cycleLength ? nil : .cycleLength
+                            }
                         }
-                    }
+                    )
                     if expandedField == .cycleLength {
                         Divider()
                             .padding(.horizontal, 20)
@@ -53,15 +54,16 @@ struct CycleSettingView: View {
                     }
                     Divider()
                         .padding(.horizontal, 20)
-                    InputRow(
+                    CycleInputRow(
                         label: "월경 길이",
                         value: viewModel.periodLength,
-                        isExpanded: expandedField == .periodLength
-                    ) {
-                        withAnimation(.easeInOut(duration: 0.20)) {
-                            expandedField = expandedField == .periodLength ? nil : .periodLength
+                        isExpanded: expandedField == .periodLength,
+                        onTap: {
+                            withAnimation(.easeInOut(duration: 0.20)) {
+                                expandedField = expandedField == .periodLength ? nil : .periodLength
+                            }
                         }
-                    }
+                    )
                     if expandedField == .periodLength {
                         Divider()
                             .padding(.horizontal, 20)
@@ -105,38 +107,6 @@ struct CycleSettingView: View {
     }
 }
 
-private struct InputRow: View {
-
-    let label: String
-    let value: Int
-    let isExpanded: Bool
-    let onTap: () -> Void
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(label)
-                .font(.pretendardRegular(17))
-                .foregroundStyle(.textPrimary)
-            Spacer()
-            Text("\(value)")
-                .font(.pretendardRegular(17))
-                .foregroundStyle(isExpanded ? Color.accentColor : Color(.textPrimary))
-                .frame(width: 50)
-                .lineLimit(1)
-                .padding(.horizontal, 4)
-                .padding(.vertical, 6)
-                .background(Color(UIColor.secondarySystemFill))
-                .cornerRadius(30)
-            Text("일")
-                .font(.pretendardRegular(17))
-                .foregroundStyle(.textPrimary)
-        }
-        .frame(height: 50)
-        .padding(.horizontal, 30)
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
-    }
-}
 
 #Preview {
     let graph = AppDIContainer.makeAppDependencyGraph()
