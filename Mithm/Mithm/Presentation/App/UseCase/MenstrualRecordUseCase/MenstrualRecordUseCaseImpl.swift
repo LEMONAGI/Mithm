@@ -29,7 +29,7 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
     func requestHealthKitAuthorization() async throws {
         try await healthKitRepository.requestAuthorization(
             writeTypes: [.menstrualCycle],
-            readTypes: [.menstrualCycle, .wristTemperature]
+            readTypes: [.menstrualCycle]
         )
     }
 
