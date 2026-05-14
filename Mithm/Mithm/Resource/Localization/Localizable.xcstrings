@@ -71,6 +71,17 @@
         }
       }
     },
+    "calendar.record.status.ongoing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "진행중"
+          }
+        }
+      }
+    },
     "calendar.stats.cycle_length" : {
       "extractionState" : "manual",
       "localizations" : {

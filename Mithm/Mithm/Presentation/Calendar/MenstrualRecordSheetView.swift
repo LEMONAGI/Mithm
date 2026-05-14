@@ -69,11 +69,18 @@ private struct MenstrualRecordRowView: View {
             
             Spacer(minLength: 12)
             
-            Text("\(row.cycleLengthText) · \(row.periodLengthText)")
-                .font(.pretendardRegular(18))
-                .foregroundStyle(.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
+            if row.isOngoing {
+                Text(String(localized: "calendar.record.status.ongoing"))
+                    .font(.pretendardRegular(18))
+                    .foregroundStyle(Color.accentColor)
+                    .lineLimit(1)
+            } else {
+                Text("\(row.cycleLengthText) · \(row.periodLengthText)")
+                    .font(.pretendardRegular(18))
+                    .foregroundStyle(.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
             
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
@@ -98,24 +105,8 @@ private struct MenstrualRecordEditView: View {
     @State private var endDate: Date
     @State private var showDeleteConfirmation = false
     @State private var showNotEditableAlert = false
-    @State private var expandedField: Field?
-    
-    private let calendar = Calendar.current
-    private static let inlineDatePickerHeight: CGFloat = 360
-    private static let inlineDatePickerDividerHeight: CGFloat = 1
-    private static let inlineDatePickerExpandedHeight =
-        inlineDatePickerHeight + inlineDatePickerDividerHeight
 
-    private enum Field {
-        case startDate, endDate
-    }
-    
-    private static let dateLabelFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "ko_KR")
-        f.dateFormat = "yyyy. M. d."
-        return f
-    }()
+    private let calendar = Calendar.current
     
     init(
         viewModel: CalendarViewModel,
@@ -204,15 +195,6 @@ private struct MenstrualRecordEditView: View {
         VStack(spacing: 0) {
             dateRow(
                 title: "월경 시작일",
-                date: startDate,
-                isExpanded: expandedField == .startDate
-            ) {
-                withAnimation(.easeInOut(duration: 0.20)) {
-                    expandedField = expandedField == .startDate ? nil : .startDate
-                }
-            }
-            collapsibleInlineDatePicker(
-                field: .startDate,
                 selection: Binding(
                     get: { startDate },
                     set: { newValue in
@@ -222,18 +204,9 @@ private struct MenstrualRecordEditView: View {
                 range: Date.distantPast...min(endDate, today)
             )
             Divider()
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
             dateRow(
                 title: "월경 종료일",
-                date: endDate,
-                isExpanded: expandedField == .endDate
-            ) {
-                withAnimation(.easeInOut(duration: 0.20)) {
-                    expandedField = expandedField == .endDate ? nil : .endDate
-                }
-            }
-            collapsibleInlineDatePicker(
-                field: .endDate,
                 selection: Binding(
                     get: { endDate },
                     set: { newValue in
@@ -243,6 +216,7 @@ private struct MenstrualRecordEditView: View {
                 range: startDate...today
             )
         }
+        .frame(height: 104)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 26)
@@ -250,84 +224,25 @@ private struct MenstrualRecordEditView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 26))
     }
-    
+
     @ViewBuilder
     private func dateRow(
         title: String,
-        date: Date,
-        isExpanded: Bool,
-        onTap: @escaping () -> Void
-    ) -> some View {
-        HStack {
-            Text(title)
-                .font(.pretendardRegular(18))
-                .foregroundStyle(.textPrimary)
-            
-            Spacer()
-            
-            Text(Self.dateLabelFormatter.string(from: date))
-                .font(.pretendardRegular(18))
-                .foregroundStyle(isExpanded ? Color.accentColor : Color(.textPrimary))
-                .monospacedDigit()
-                .frame(minWidth: 105, alignment: .center)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color(UIColor.secondarySystemFill))
-                .cornerRadius(26)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 52)
-        .padding(.horizontal, 16)
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
-    }
-
-    @ViewBuilder
-    private func collapsibleInlineDatePicker(
-        field: Field,
-        selection: Binding<Date>,
-        range: ClosedRange<Date>
-    ) -> some View {
-        let isExpanded = expandedField == field
-
-        VStack(spacing: 0) {
-            Divider()
-                .padding(.horizontal, 20)
-
-            inlineDatePicker(selection: selection, range: range)
-                .transaction { transaction in
-                    transaction.disablesAnimations = true
-                    transaction.animation = nil
-                }
-                .frame(height: Self.inlineDatePickerHeight, alignment: .top)
-        }
-        .frame(
-            height: isExpanded ? Self.inlineDatePickerExpandedHeight : 0,
-            alignment: .top
-        )
-        .opacity(isExpanded ? 1 : 0)
-        .clipped()
-        .allowsHitTesting(isExpanded)
-        .accessibilityHidden(!isExpanded)
-    }
-
-    @ViewBuilder
-    private func inlineDatePicker(
         selection: Binding<Date>,
         range: ClosedRange<Date>
     ) -> some View {
         DatePicker(
-            "",
+            title,
             selection: selection,
             in: range,
             displayedComponents: [.date]
         )
-        .datePickerStyle(.graphical)
-        .labelsHidden()
+        .font(.pretendardRegular(18))
+        .datePickerStyle(.compact)
         .tint(.accentColor)
+        .frame(height: 52)
+        .padding(.horizontal, 16)
         .fixedSize(horizontal: false, vertical: true)
-        .frame(height: Self.inlineDatePickerHeight, alignment: .top)
-        .clipped()
     }
     
     private var isChanged: Bool {
