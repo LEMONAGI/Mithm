@@ -45,7 +45,7 @@ struct PredictionMethodSettingView: View {
 
             Spacer()
         }
-        .background(Color.secondaryPink.ignoresSafeArea())
+        .background(Color.secondaryPurple.ignoresSafeArea())
         .navigationTitle("월경 주기 예측 방법 변경")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
