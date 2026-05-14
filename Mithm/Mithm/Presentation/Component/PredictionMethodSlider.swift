@@ -102,17 +102,17 @@ extension UserInputMode {
 
     var displayTitle: String {
         switch self {
-        case .onlyUserInput: "직접 입력값"
-        case .blendUserInput: "둘 다 사용"
-        case .notBlendUserInput: "기록 데이터"
+        case .onlyUserInput: String(localized: "직접 입력값")
+        case .blendUserInput: String(localized: "둘 다 사용")
+        case .notBlendUserInput: String(localized: "기록 데이터")
         }
     }
 
     var displayDescription: String {
         switch self {
-        case .onlyUserInput: "직접 입력한 주기와 기간만 사용해 예측해요."
-        case .blendUserInput: "기록 데이터와 직접 입력값을 함께 반영해 예측해요."
-        case .notBlendUserInput: "기록 데이터를 바탕으로 주기를 예측해요."
+        case .onlyUserInput: String(localized: "직접 입력한 주기와 기간만 사용해 예측해요.")
+        case .blendUserInput: String(localized: "기록 데이터와 직접 입력값을 함께 반영해 예측해요.")
+        case .notBlendUserInput: String(localized: "기록 데이터를 바탕으로 주기를 예측해요.")
         }
     }
 

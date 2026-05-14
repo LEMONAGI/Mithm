@@ -7,7 +7,7 @@ import SwiftUI
 
 struct CycleInputRow: View {
 
-    let label: String
+    let label: LocalizedStringKey
     let value: Int
     let isExpanded: Bool
     let onTap: () -> Void

@@ -8,10 +8,10 @@ import SwiftUI
 struct OnboardingStepContainer<Content: View>: View {
 
     let step: OnboardingViewModel.Step
-    let title: String
-    let description: String
-    let buttonTitle: String
-    var secondaryButtonTitle: String? = nil
+    let title: LocalizedStringKey
+    let description: LocalizedStringKey
+    let buttonTitle: LocalizedStringKey
+    var secondaryButtonTitle: LocalizedStringKey? = nil
     let isButtonEnabled: Bool
     let isLoading: Bool
     let onTapButton: () -> Void
