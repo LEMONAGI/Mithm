@@ -30,21 +30,6 @@ final class OnboardingViewModel: ObservableObject {
             case .step5: Color(.secondaryBlue)
             }
         }
-
-        var placeholderTitle: String {
-            switch self {
-            case .step1:
-                return ""
-            case .step2:
-                return "두 번째 온보딩"
-            case .step3:
-                return "세 번째 온보딩"
-            case .step4:
-                return "네 번째 온보딩"
-            case .step5:
-                return "마지막 온보딩"
-            }
-        }
     }
 
     struct PermissionAlert: Identifiable, Equatable {
@@ -57,15 +42,31 @@ final class OnboardingViewModel: ObservableObject {
     @Published var isRequestingAuthorization = false
     @Published var permissionAlert: PermissionAlert?
 
+    // Step 2 - 마지막 월경 날짜
+    @Published var lastPeriodDate: Date? = nil
+
+    // Step 3 - 평소 월경 주기
+    @Published var averageCycleLength: Int = 28
+    let cycleLengthRange = 21...45
+
+    // Step 4 - 캘린더 권한
+    @Published var isRequestingCalendarAuthorization = false
+
+    // Step 5 - 완료 처리
+    @Published var isFinishing = false
+
     private let appState: AppState
     private let menstrualRecordUseCase: MenstrualRecordUseCase
+    private let syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase
 
     init(
         appState: AppState,
-        menstrualRecordUseCase: MenstrualRecordUseCase
+        menstrualRecordUseCase: MenstrualRecordUseCase,
+        syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase
     ) {
         self.appState = appState
         self.menstrualRecordUseCase = menstrualRecordUseCase
+        self.syncMenstrualCalendarUseCase = syncMenstrualCalendarUseCase
     }
 
     func requestHealthAuthorization() async {
@@ -89,6 +90,14 @@ final class OnboardingViewModel: ObservableObject {
         }
     }
 
+    func requestCalendarAuthorization() async {
+        guard !isRequestingCalendarAuthorization else { return }
+        isRequestingCalendarAuthorization = true
+        defer { isRequestingCalendarAuthorization = false }
+        // TODO: 실제 EventKit 권한 요청 구현
+        advance()
+    }
+
     func advance() {
         let current = navigationPath.last ?? .step1
         guard let nextStep = Step(rawValue: current.rawValue + 1) else {
@@ -98,6 +107,9 @@ final class OnboardingViewModel: ObservableObject {
     }
 
     func finish() async {
+        guard !isFinishing else { return }
+        isFinishing = true
+        defer { isFinishing = false }
         guard let current = navigationPath.last, current.isLast else {
             return
         }

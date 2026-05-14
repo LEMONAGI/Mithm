@@ -87,7 +87,8 @@ struct AppDIContainer {
         let cycleSettingViewModel = CycleSettingViewModel(appState: appState)
         let onboardingViewModel = OnboardingViewModel(
             appState: appState,
-            menstrualRecordUseCase: menstrualRecordUseCase
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            syncMenstrualCalendarUseCase: syncMenstrualCalendarUseCase
         )
 
         return AppDependencyGraph(
