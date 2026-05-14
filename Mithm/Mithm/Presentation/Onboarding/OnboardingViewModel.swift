@@ -42,15 +42,18 @@ final class OnboardingViewModel: ObservableObject {
     @Published var isRequestingAuthorization = false
     @Published var permissionAlert: PermissionAlert?
 
-    // Step 2 - 마지막 월경 날짜
-    @Published var lastPeriodDate: Date? = nil
+    // Step 2 - 마지막 월경 시작일/종료일
+    @Published var lastPeriodStartDate: Date = Calendar.current.startOfDay(for: Date())
+    @Published var lastPeriodEndDate: Date = Calendar.current.startOfDay(for: Date())
 
-    // Step 3 - 평소 월경 주기
+    // Step 3 - 평소 월경 주기·길이
     @Published var averageCycleLength: Int = 28
+    @Published var averagePeriodLength: Int = 5
     let cycleLengthRange = 21...45
+    let periodLengthRange = 1...10
 
-    // Step 4 - 캘린더 권한
-    @Published var isRequestingCalendarAuthorization = false
+    // Step 4 - 월경 주기 예측 방법
+    @Published var selectedPredictionMethod: UserInputMode = .notBlendUserInput
 
     // Step 5 - 완료 처리
     @Published var isFinishing = false
@@ -90,12 +93,24 @@ final class OnboardingViewModel: ObservableObject {
         }
     }
 
+    func resetToDefaultCycleInput() {
+        averageCycleLength = 28
+        averagePeriodLength = 5
+    }
+
     func requestCalendarAuthorization() async {
-        guard !isRequestingCalendarAuthorization else { return }
-        isRequestingCalendarAuthorization = true
-        defer { isRequestingCalendarAuthorization = false }
-        // TODO: 실제 EventKit 권한 요청 구현
-        advance()
+        guard !isFinishing else { return }
+        isFinishing = true
+        defer { isFinishing = false }
+        do {
+            try await saveAllData(calendarExportEnabled: true)
+            await appState.completeOnboarding()
+        } catch {
+            permissionAlert = PermissionAlert(
+                title: String(localized: "저장에 실패했어요"),
+                message: String(localized: "건강 앱 권한을 확인하거나 잠시 후 다시 시도해 주세요.")
+            )
+        }
     }
 
     func advance() {
@@ -108,11 +123,30 @@ final class OnboardingViewModel: ObservableObject {
 
     func finish() async {
         guard !isFinishing else { return }
+        guard let current = navigationPath.last, current.isLast else { return }
         isFinishing = true
         defer { isFinishing = false }
-        guard let current = navigationPath.last, current.isLast else {
-            return
+        do {
+            try await saveAllData(calendarExportEnabled: false)
+            await appState.completeOnboarding()
+        } catch {
+            permissionAlert = PermissionAlert(
+                title: String(localized: "저장에 실패했어요"),
+                message: String(localized: "건강 앱 권한을 확인하거나 잠시 후 다시 시도해 주세요.")
+            )
         }
-        await appState.completeOnboarding()
     }
+
+    private func saveAllData(calendarExportEnabled: Bool) async throws {
+        let record = MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: lastPeriodStartDate,
+            endDate: lastPeriodEndDate
+        )
+        try await menstrualRecordUseCase.saveMenstrualRecored(record, deleteFrom: nil, deleteThrough: nil)
+        appState.saveMenstrualUserInput(MenstrualUserInput(cycleLength: averageCycleLength, periodLength: averagePeriodLength))
+        appState.saveUserInputMode(selectedPredictionMethod)
+        appState.saveCalendarExportEnabled(calendarExportEnabled)
+    }
+
 }
