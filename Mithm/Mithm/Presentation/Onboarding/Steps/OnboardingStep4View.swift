@@ -12,16 +12,28 @@ struct OnboardingStep4View: View {
     var body: some View {
         OnboardingStepContainer(
             step: .step4,
-            title: "캘린더에\n기록을 남겨도 될까요?",
-            description: "월경 예정일을 캘린더에\n자동으로 추가해 드려요.",
-            buttonTitle: "캘린더 연동하기",
-            isButtonEnabled: !viewModel.isRequestingCalendarAuthorization,
-            isLoading: viewModel.isRequestingCalendarAuthorization,
+            title: "앞으로의 예측을\n당신에게 맞게 조율할게요",
+            description: "월경 주기 예측 방법을 선택할 수 있어요.",
+            buttonTitle: "다음으로",
+            isButtonEnabled: true,
+            isLoading: false,
             onTapButton: {
-                Task { await viewModel.requestCalendarAuthorization() }
+                viewModel.advance()
             }
         ) {
-            // TODO: 캘린더 연동 설명 영역 구현
+            Spacer().frame(height: 40)
+            
+            PredictionMethodSlider(selection: $viewModel.selectedPredictionMethod)
+                .padding(.horizontal, 20)
+
+            Spacer().frame(height: 40)
+
+            Text(viewModel.selectedPredictionMethod.displayDescription)
+                .font(.pretendardLight(12))
+                .foregroundStyle(.textPrimary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+                .animation(.easeInOut(duration: 0.1), value: viewModel.selectedPredictionMethod)
         }
     }
 }
