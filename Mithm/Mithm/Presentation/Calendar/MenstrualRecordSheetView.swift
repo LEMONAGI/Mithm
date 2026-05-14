@@ -69,18 +69,11 @@ private struct MenstrualRecordRowView: View {
             
             Spacer(minLength: 12)
             
-            if row.isOngoing {
-                Text(String(localized: "calendar.record.status.ongoing"))
-                    .font(.pretendardRegular(18))
-                    .foregroundStyle(Color.accentColor)
-                    .lineLimit(1)
-            } else {
-                Text("\(row.cycleLengthText) · \(row.periodLengthText)")
-                    .font(.pretendardRegular(18))
-                    .foregroundStyle(.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-            }
+            Text("\(row.cycleLengthText) · \(row.periodLengthText)")
+                .font(.pretendardRegular(18))
+                .foregroundStyle(.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
             
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
@@ -105,7 +98,7 @@ private struct MenstrualRecordEditView: View {
     @State private var endDate: Date
     @State private var showDeleteConfirmation = false
     @State private var showNotEditableAlert = false
-
+    
     private let calendar = Calendar.current
     
     init(
@@ -224,25 +217,25 @@ private struct MenstrualRecordEditView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 26))
     }
-
+    
     @ViewBuilder
     private func dateRow(
-        title: String,
+        title: LocalizedStringKey,
         selection: Binding<Date>,
         range: ClosedRange<Date>
     ) -> some View {
-        DatePicker(
-            title,
-            selection: selection,
-            in: range,
-            displayedComponents: [.date]
-        )
-        .font(.pretendardRegular(18))
-        .datePickerStyle(.compact)
-        .tint(.accentColor)
+        HStack {
+            Text(title)
+                .font(.pretendardRegular(18))
+                .foregroundStyle(.textPrimary)
+            
+            Spacer()
+            
+            // 기존에 있던 .fixedSize() 수식어는 이제 제거해도 안전합니다.
+            UIKitDatePicker(date: selection, range: range)
+        }
         .frame(height: 52)
         .padding(.horizontal, 16)
-        .fixedSize(horizontal: false, vertical: true)
     }
     
     private var isChanged: Bool {

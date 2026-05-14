@@ -128,7 +128,7 @@ final class CalendarViewModel: ObservableObject {
             let cycleLength = cycleLength(
                 from: record,
                 to: nextRecord,
-                fallback: overview.prediction?.predictedCycleLength,
+                fallback: nil,
                 calendar: calendar
             )
             let periodLength = record.dayCount(calendar: calendar)
@@ -138,7 +138,6 @@ final class CalendarViewModel: ObservableObject {
                 startDateText: dateFormatter.string(from: record.startDate),
                 cycleLengthText: dayText(cycleLength),
                 periodLengthText: dayText(periodLength),
-                isOngoing: nextRecord == nil,
                 calendar: calendar
             )
         }
@@ -174,17 +173,14 @@ struct MenstrualRecordRow: Identifiable, Hashable {
     let startDateText: String
     let cycleLengthText: String
     let periodLengthText: String
-    let isOngoing: Bool
 
     init(
         record: MenstrualRecord,
         startDateText: String,
         cycleLengthText: String,
         periodLengthText: String,
-        isOngoing: Bool,
         calendar: Calendar = .current
     ) {
-        self.isOngoing = isOngoing
         self.record = record
         self.startDateText = startDateText
         self.cycleLengthText = cycleLengthText
