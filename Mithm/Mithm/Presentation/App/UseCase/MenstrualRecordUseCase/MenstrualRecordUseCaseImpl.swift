@@ -29,8 +29,13 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
     func requestHealthKitAuthorization() async throws {
         try await healthKitRepository.requestAuthorization(
             writeTypes: [.menstrualCycle],
-            readTypes: [.menstrualCycle, .wristTemperature]
+            readTypes: [.menstrualCycle]
         )
+    }
+
+    func requestConfirmedHealthKitAuthorization() async throws {
+        try await requestHealthKitAuthorization()
+        try await healthKitRepository.checkWriteAuthorization(for: .menstrualCycle)
     }
 
     func fetchMenstrualOverview(
@@ -83,6 +88,14 @@ struct MenstrualRecordUseCaseImpl: MenstrualRecordUseCase {
     func saveMenstrualRecored(_ record: MenstrualRecord, deleteFrom: Date? = nil, deleteThrough: Date? = nil) async throws {
         try await healthKitRepository.checkWriteAuthorization(for: .menstrualCycle)
         try await healthKitRepository.updateMenstrualCycleRecord(record, deleteFrom: deleteFrom, deleteThrough: deleteThrough)
+    }
+
+    func deleteMenstrualRecord(from startDate: Date, to endDate: Date) async throws {
+        try await healthKitRepository.checkWriteAuthorization(for: .menstrualCycle)
+        try await healthKitRepository.deleteMenstrualCycleRecords(
+            from: startDate,
+            to: endDate
+        )
     }
 
     private func makePredictionSourceRecords(

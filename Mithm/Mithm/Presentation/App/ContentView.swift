@@ -11,32 +11,28 @@ struct ContentView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: Int = 0
+    @State private var isShowingLaunchSplash = true
     @State private var showErrorAlert = false
     @State private var showAutoCloseAlert = false
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            Tab(value: 0) {
-                HomeView()
-            } label: {
-                Label("홈", systemImage: "house")
-            }
-            Tab(value: 1) {
-                CalendarView()
-            } label: {
-                Label("달력", systemImage: "calendar")
-            }
-            Tab(value: 2) {
-                SettingView()
-            } label: {
-                Label("설정", systemImage: "gearshape")
+        ZStack {
+            mainContent
+
+            if isShowingLaunchSplash {
+                LaunchSplashView()
+                    .transition(.opacity)
+                    .zIndex(1)
             }
         }
         .task {
             await appState.performInitialLoad()
         }
+        .task {
+            await hideLaunchSplash()
+        }
         .onChange(of: scenePhase) {
-            if scenePhase == .active {
+            if scenePhase == .active && appState.userSetting.hasCompletedOnboarding {
                 Task {
                     await appState.refreshOnForeground()
                 }
@@ -71,12 +67,55 @@ struct ContentView: View {
             Text(appState.menstrualRecordError?.alertMessage ?? "")
         }
     }
+
+    private var mainContent: some View {
+        Group {
+            if appState.userSetting.hasCompletedOnboarding {
+                TabView(selection: $selectedTab) {
+                    Tab(value: 0) {
+                        HomeView()
+                    } label: {
+                        Label("홈", systemImage: "house")
+                    }
+                    Tab(value: 1) {
+                        CalendarView()
+                    } label: {
+                        Label("달력", systemImage: "calendar")
+                    }
+                    Tab(value: 2) {
+                        SettingView()
+                    } label: {
+                        Label("설정", systemImage: "gearshape")
+                    }
+                }
+            } else {
+                OnboardingView()
+            }
+        }
+    }
+
+    private func hideLaunchSplash() async {
+        do {
+            try await Task.sleep(nanoseconds: 1500_000_000)
+        } catch {
+            return
+        }
+
+        await MainActor.run {
+            withAnimation(.easeOut(duration: 0.18)) {
+                isShowingLaunchSplash = false
+            }
+        }
+    }
 }
 
 #Preview {
-    let appState = AppDIContainer.makeAppState()
+    let graph = AppDIContainer.makeAppDependencyGraph()
     ContentView()
-        .environmentObject(appState)
-        .environmentObject(AppDIContainer.makeHomeViewModel(appState: appState))
-        .environmentObject(AppDIContainer.makeCalendarViewModel(appState: appState))
+        .environmentObject(graph.appState)
+        .environmentObject(graph.homeViewModel)
+        .environmentObject(graph.calendarViewModel)
+        .environmentObject(graph.settingViewModel)
+        .environmentObject(graph.cycleSettingViewModel)
+        .environmentObject(graph.onboardingViewModel)
 }

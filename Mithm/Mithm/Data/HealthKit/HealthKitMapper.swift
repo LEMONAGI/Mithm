@@ -134,58 +134,78 @@ enum HealthKitMapper {
     
     /// 여러 날에 걸쳐 있는 menstrualFlow 샘플들을 "연속된 날짜"를 기준으로 하나의 월경 기록으로 묶는다.
     /// 샘플이 여러 날에 걸쳐 있는 경우(startDate~endDate) 날짜 단위로 펼쳐서 처리한다.
-    static func menstrualCycleRecords(from samples: [HKCategorySample]) -> [MenstrualRecord] {
+    /// `appBundleIdentifier`는 테스트 주입용 파라미터로, 기본값은 현재 앱 번들 ID다.
+    static func menstrualCycleRecords(
+        from samples: [HKCategorySample],
+        appBundleIdentifier: String = Bundle.main.bundleIdentifier ?? ""
+    ) -> [MenstrualRecord] {
         guard !samples.isEmpty else { return [] }
-        
-        var daySet = Set<Date>()
+
+        // 날짜별로 해당 날짜를 커버하는 샘플들을 수집한다.
+        // 동일 그룹의 isEditable 판정에 사용된다.
+        var dayToSamples: [Date: [HKCategorySample]] = [:]
         for sample in samples {
             let start = calendar.startOfDay(for: sample.startDate)
             let end = calendar.startOfDay(for: sample.endDate)
             var current = start
             while current <= end {
-                daySet.insert(current)
+                dayToSamples[current, default: []].append(sample)
                 guard let next = calendar.date(byAdding: .day, value: 1, to: current) else { break }
                 current = next
             }
         }
-        let days = daySet.sorted()
-        
+        let days = dayToSamples.keys.sorted()
+
         var records: [MenstrualRecord] = []
         var currentStart = days[0]
         var currentEnd = days[0]
-        
+
+        func commitRecord() {
+            // 그룹 내 모든 날짜의 샘플이 우리 앱 출처일 때만 편집 가능하다.
+            var isEditable = true
+            var day = currentStart
+            while day <= currentEnd {
+                if let groupSamples = dayToSamples[day] {
+                    if groupSamples.contains(where: {
+                        $0.sourceRevision.source.bundleIdentifier != appBundleIdentifier
+                    }) {
+                        isEditable = false
+                        break
+                    }
+                }
+                guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
+                day = next
+            }
+            records.append(
+                MenstrualRecord(
+                    type: .menstrualRecord,
+                    startDate: currentStart,
+                    endDate: currentEnd,
+                    isEditable: isEditable
+                )
+            )
+        }
+
         for day in days.dropFirst() {
             // 하루씩 연속되는 경우 같은 에피소드로 묶기
-            
+
             // currentEnd에 하루를 더한 날짜가, day 값과 동일하면 연속되는 경우이므로 currentEnd를 업데이트 하고 넘어감.
             if let next = calendar.date(byAdding: .day, value: 1, to: currentEnd),
                calendar.isDate(next, inSameDayAs: day) {
                 currentEnd = day
             } else {
                 // 끊기는 지점에서 하나의 기록 확정
-                records.append(
-                    MenstrualRecord(
-                        type: .menstrualRecord,
-                        startDate: currentStart,
-                        endDate: currentEnd
-                    )
-                )
+                commitRecord()
                 // 새로운 기록 시작을 위한 세팅
                 currentStart = day
                 currentEnd = day
             }
         }
-        
+
         // HealthKit 샘플은 항상 실제 기록된 날짜 범위로 읽고,
         // 현재 월경 여부는 별도 상태 계산 로직에서 판단한다.
-        records.append(
-            MenstrualRecord(
-                type: .menstrualRecord,
-                startDate: currentStart,
-                endDate: currentEnd
-            )
-        )
-        
+        commitRecord()
+
         return records
     }
 

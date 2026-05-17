@@ -67,7 +67,7 @@ actor EventKitDataStoreImpl: EventKitDataStore {
         let calendar = EKCalendar(for: .event, eventStore: eventStore)
         calendar.title = uniqueTitle
         calendar.source = source
-        calendar.cgColor = UIColor.blue.cgColor
+        calendar.cgColor = UIColor.accent.cgColor
         
         try eventStore.saveCalendar(calendar, commit: true)
         UserDefaults.standard.set(calendar.calendarIdentifier, forKey: calendarIdKey)
@@ -102,6 +102,15 @@ actor EventKitDataStoreImpl: EventKitDataStore {
         throw EKError(.calendarHasNoSource)
     }
     
+    func deleteCalendarIfExists() throws {
+        guard let id = UserDefaults.standard.string(forKey: calendarIdKey),
+              let calendar = eventStore.calendar(withIdentifier: id) else {
+            return
+        }
+        try eventStore.removeCalendar(calendar, commit: true)
+        UserDefaults.standard.removeObject(forKey: calendarIdKey)
+    }
+
     private func makeUniqueCalendarTitle(base: String) -> String {
         let existingTitles = eventStore.calendars(for: .event).map(\.title)
         

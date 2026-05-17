@@ -11,6 +11,7 @@ struct CalendarView: View {
     @EnvironmentObject private var calendarViewModel: CalendarViewModel
     @State private var displayedMonth: Date = Date()
     @State private var showMonthPicker = false
+    @State private var showMenstrualRecordSheet = false
 
     private let calendar = Calendar.current
     private let dayOfWeekSymbols = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
@@ -41,6 +42,10 @@ struct CalendarView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 26)
+        }
+        .sheet(isPresented: $showMenstrualRecordSheet) {
+            MenstrualRecordSheetView(viewModel: calendarViewModel)
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -91,7 +96,7 @@ extension CalendarView {
         }
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGray6))
+                .fill(Color.gray50)
         )
     }
 
@@ -102,10 +107,10 @@ extension CalendarView {
             } label: {
                 HStack(spacing: 4) {
                     Text(monthYearString)
-                        .font(.pretendardBold(20))
+                        .font(.pretendardSemiBold(17))
                         .foregroundStyle(.textPrimary)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.textPrimary)
                 }
             }
@@ -119,12 +124,12 @@ extension CalendarView {
             HStack(spacing: 20) {
                 Button { moveMonth(by: -1) } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 20, weight: .medium))
                         .foregroundStyle(.textPrimary)
                 }
                 Button { moveMonth(by: 1) } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 20, weight: .medium))
                         .foregroundStyle(.textPrimary)
                 }
             }
@@ -135,8 +140,8 @@ extension CalendarView {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 0) {
             ForEach(dayOfWeekSymbols, id: \.self) { symbol in
                 Text(LocalizedStringKey(symbol))
-                    .font(.pretendardMedium(12))
-                    .foregroundStyle(Color(.systemGray2))
+                    .font(.pretendardSemiBold(13))
+                    .foregroundStyle(.textTertiary)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -155,29 +160,24 @@ extension CalendarView {
 
     private var statsView: some View {
         VStack(spacing: 8) {
-            statRow(title: "현재 월경 기간", value: calendarViewModel.predictedPeriodLength, unit: "일")
-            statRow(title: "현재 월경 주기", value: calendarViewModel.predictedCycleLength, unit: "일")
+            statRow(title: "calendar.stats.period_length", value: calendarViewModel.predictedPeriodLength)
+            statRow(title: "calendar.stats.cycle_length", value: calendarViewModel.predictedCycleLength)
         }
     }
 
-    private func statRow(title: LocalizedStringKey, value: Int?, unit: LocalizedStringKey) -> some View {
+    private func statRow(title: LocalizedStringKey, value: Int?) -> some View {
         HStack {
             Text(title)
-                .font(.pretendardMedium(16))
+                .font(.pretendardMedium(18))
                 .foregroundStyle(.textPrimary)
             Spacer()
             if let value {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("\(value)")
-                        .font(.pretendardBold(28))
-                        .foregroundStyle(.textPrimary)
-                    Text(unit)
-                        .font(.pretendardBold(16))
-                        .foregroundStyle(.textPrimary)
-                }
+                Text(String(format: String(localized: "calendar.stats.day_value.format"), value))
+                    .font(.pretendardBold(24))
+                    .foregroundStyle(.textPrimary)
             } else {
                 Text("-")
-                    .font(.pretendardBold(28))
+                    .font(.pretendardBold(24))
                     .foregroundStyle(.textPrimary)
             }
         }
@@ -185,16 +185,21 @@ extension CalendarView {
 
     private var recordButton: some View {
         Button {
-            // TODO: Navigate to record list
+            showMenstrualRecordSheet = true
         } label: {
             Text("월경 기록 확인하기")
-                .font(.pretendardSemiBold(16))
+                .font(.pretendardMedium(18))
                 .foregroundStyle(.textPrimary)
                 .frame(maxWidth: .infinity)
-                .frame(height: 56)
+                .frame(height: 58)
                 .background(
-                    RoundedRectangle(cornerRadius: 28)
-                        .fill(Color(.systemGray6))
+                    RoundedRectangle(cornerRadius: 30)
+                        .fill(Color.white)
+                        .shadow(color: .buttonshadow, radius: 1, x: 0, y: 2)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 30)
+                        .stroke(Color.gray100, lineWidth: 1)
                 )
         }
     }
@@ -252,7 +257,7 @@ extension CalendarView {
         let dayNumber = calendar.component(.day, from: day.date)
 
         if day.isCurrentMonth {
-            let style = dayStyle(for: day.kind)
+            let style = dayStyle(for: day)
             Text("\(dayNumber)")
                 .font(style.font)
                 .foregroundStyle(style.textColor)
@@ -263,8 +268,8 @@ extension CalendarView {
                 )
         } else {
             Text("\(dayNumber)")
-                .font(.pretendardRegular(16))
-                .foregroundStyle(Color(.systemGray3))
+                .font(.pretendardRegular(20))
+                .foregroundStyle(.textQuaternary)
                 .frame(width: 40, height: 40)
         }
     }
@@ -275,37 +280,37 @@ extension CalendarView {
         let font: Font
     }
 
-    private func dayStyle(for kind: CycleDayKind) -> DayCellStyle {
-        switch kind {
-        case .menstrual:
+    private func dayStyle(for day: CycleCalendarDay) -> DayCellStyle {
+        switch day.kind {
+        case .menstrualRecord:
+            return DayCellStyle(
+                textColor: day.isToday ? .primaryOrange : .primaryWhite,
+                backgroundColor: day.isToday ? .primaryBrown : .primaryOrange,
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
+            )
+        case .menstrualPrediction:
             return DayCellStyle(
                 textColor: .primaryOrange,
-                backgroundColor: Color.primaryOrange.opacity(0.15),
-                font: .pretendardSemiBold(16)
+                backgroundColor: day.isToday ? .primaryBrown : Color.primaryOrange.opacity(0.15),
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
             )
         case .ovulationDay:
             return DayCellStyle(
-                textColor: .white,
-                backgroundColor: .accentTeal,
-                font: .pretendardBold(16)
+                textColor: .accentTeal,
+                backgroundColor: day.isToday ? .primaryBrown : .accentTeal.opacity(0.15),
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
             )
         case .fertileWindow:
             return DayCellStyle(
                 textColor: .accentTeal,
-                backgroundColor: .clear,
-                font: .pretendardSemiBold(16)
-            )
-        case .today:
-            return DayCellStyle(
-                textColor: .textPrimary,
-                backgroundColor: Color.accentTeal.opacity(0.12),
-                font: .pretendardSemiBold(16)
+                backgroundColor: day.isToday ? .primaryBrown : .clear,
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
             )
         case .none:
             return DayCellStyle(
-                textColor: .textPrimary,
-                backgroundColor: .clear,
-                font: .pretendardRegular(16)
+                textColor: day.isToday ? .primaryWhite : .textPrimary,
+                backgroundColor: day.isToday ? .primaryBrown : .clear,
+                font: day.isToday ? .pretendardBold(20) : .pretendardRegular(20)
             )
         }
     }

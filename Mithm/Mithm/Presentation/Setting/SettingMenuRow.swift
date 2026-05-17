@@ -18,13 +18,13 @@ struct SettingMenuRow: View {
             Image(item.imageName)
                 .resizable()
                 .scaledToFit()
+                .frame(width: 62, height: 62)
                 .padding(11)
-                .frame(width: 84, height: 84)
 
             Spacer().frame(width: 3)
 
             Text(item.title)
-                .font(.heading6)
+                .font(.pretendardSemiBold(18))
                 .foregroundStyle(.textPrimary)
 
             Spacer()
@@ -46,8 +46,8 @@ struct SettingMenuRow: View {
         .frame(height: 84)
         .background(
             RoundedRectangle(cornerRadius: 30)
-                .fill(Color(.systemGray6))
-                .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 2)
+                .fill(Color.gray50)
+                .shadow(color: .buttonshadow, radius: 1, x: 0, y: 2)
         )
         .contentShape(RoundedRectangle(cornerRadius: 30))
         .onTapGesture {

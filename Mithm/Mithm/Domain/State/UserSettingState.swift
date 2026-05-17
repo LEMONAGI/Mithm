@@ -12,15 +12,18 @@ struct UserSettingState {
     var menstrualUserInput: MenstrualUserInput?
     var calendarExportEnabled: Bool
     var userInputMode: UserInputMode?
+    var hasCompletedOnboarding: Bool
 
     init(
         menstrualUserInput: MenstrualUserInput? = nil,
         calendarExportEnabled: Bool = false,
-        userInputMode: UserInputMode? = nil
+        userInputMode: UserInputMode? = nil,
+        hasCompletedOnboarding: Bool = false
     ) {
         self.menstrualUserInput = menstrualUserInput
         self.calendarExportEnabled = calendarExportEnabled
         self.userInputMode = userInputMode
+        self.hasCompletedOnboarding = hasCompletedOnboarding
     }
 }
 

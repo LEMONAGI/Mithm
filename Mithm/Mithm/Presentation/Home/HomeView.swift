@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @State private var showDatePicker = false
+    @State private var showPhaseDetail = false
     @State private var menstrualEndCompletionAlertKind: HomeViewModel.EndMenstruationAlertKind?
     @State private var isPickingEndDate = false
     @State private var selectedDate = Date()
@@ -23,18 +24,15 @@ struct HomeView: View {
                 homeViewModel.currentPhasePresentation.color
                     .ignoresSafeArea()
                 VStack {
-                    // Main image - fills available space
+                    headerSection
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 20)
+                        .padding(.top, 20)
                     Image(homeViewModel.currentPhasePresentation.mainImage)
                         .resizable()
                         .scaledToFit()
                         .frame(width: geometry.size.width)
-                        .overlay(alignment: .topLeading) {
-                            headerSection
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 20)
-                                .padding(.top, 14)
-                        }
-                        .padding(.top, 14)
+                        .offset(y: -34)
                     Spacer()
                 }
                 
@@ -42,7 +40,7 @@ struct HomeView: View {
                     Spacer()
                     bottomSection
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 54)
+                        .padding(.bottom, 30)
                 }
             }
         }
@@ -50,6 +48,10 @@ struct HomeView: View {
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
                 .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showPhaseDetail) {
+            PhaseDetailSheet(phase: homeViewModel.currentPhase)
+                .presentationDragIndicator(.visible)
         }
         .alert(
             menstrualEndCompletionAlertTitle,
@@ -99,10 +101,14 @@ private extension HomeView {
                 Text(homeViewModel.currentPhasePresentation.name)
                     .font(.highlight1)
                     .foregroundStyle(.primaryBlack)
-                Image(systemName: "info.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(.gray)
-                    .offset(y: -12)
+                Button {
+                    showPhaseDetail = true
+                } label: {
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(homeViewModel.currentPhase == .ovulation ? .accent : .gray)
+                }
+                .offset(y: -12)
             }
             .padding(.bottom, 10)
             

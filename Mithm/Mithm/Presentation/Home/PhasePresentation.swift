@@ -8,8 +8,23 @@ import SwiftUI
 struct PhasePresentation {
     let name: String
     let color: Color
+    let tertiaryColor: Color
     let description: String
     let mainImage: ImageResource
+    let detailImage: ImageResource
+}
+
+struct PhaseDetailContent {
+    struct BodySection {
+        let description: String
+        let bullets: [String]
+    }
+
+    let subtitle: String
+    let bodySection: BodySection
+    let moodSection: BodySection
+    let whyContent: String
+    let tipSection: BodySection
 }
 
 extension PhaseType {
@@ -19,29 +34,170 @@ extension PhaseType {
             return PhasePresentation(
                 name: String(localized: "월경기"),
                 color: .primaryYellow,
+                tertiaryColor: .tertiaryYellow,
                 description: String(localized: "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"),
-                mainImage: .mainMenstrual
+                mainImage: .mainMenstrual,
+                detailImage: .mainDetailMenstrual
             )
         case .follicular:
             return PhasePresentation(
                 name: String(localized: "난포기"),
                 color: .primaryBlue,
+                tertiaryColor: .tertiaryBlue,
                 description: String(localized: "에스트로겐이 증가하며 에너지와 집중이 올라요\n전반적인 리듬이 부드럽게 올라와요"),
-                mainImage: .mainFollicular
+                mainImage: .mainFollicular,
+                detailImage: .mainDetailFollicular
             )
         case .ovulation:
             return PhasePresentation(
                 name: String(localized: "배란기"),
                 color: .primaryTeal,
+                tertiaryColor: .tertiaryTeal,
                 description: String(localized: "에스트로겐이 최고조로 컨디션이 안정돼요\n몸의 리듬이 안정적으로 맞물려요"),
-                mainImage: .mainOvulatory
+                mainImage: .mainOvulatory,
+                detailImage: .mainDetailOvulatory
             )
         case .luteal:
             return PhasePresentation(
                 name: String(localized: "황체기"),
                 color: .primaryPurple,
+                tertiaryColor: .tertiaryPurple,
                 description: String(localized: "프로게스테론이 높아지며 몸이 회복을 준비해요\n리듬이 정리되며 몸이 쉬어갈 준비를 해요"),
-                mainImage: .mainLuteal
+                mainImage: .mainLuteal,
+                detailImage: .mainDetailLuteal
+            )
+        }
+    }
+
+    var detailContent: PhaseDetailContent {
+        switch self {
+        case .menstrual:
+            return PhaseDetailContent(
+                subtitle: String(localized: "월경 시작 - 월경 종료"),
+                bodySection: PhaseDetailContent.BodySection(
+                    description: String(localized: "아랫배나 허리가 묵직하게 당기고, 평소보다 괜히 더 피곤한 느낌이 들 수 있어요. 몸이 무겁고 뭔가 하기 싫어지는 건 의지 문제가 아니라, 지금 몸이 꽤 많은 에너지를 쓰고 있기 때문이에요."),
+                    bullets: [
+                        String(localized: "복부·허리의 묵직한 통증"),
+                        String(localized: "평소보다 쉽게 피로해지는 느낌"),
+                        String(localized: "몸이 전반적으로 무겁게 느껴짐"),
+                        String(localized: "체온이 낮고 손발이 차가울 수 있음")
+                    ]
+                ),
+                moodSection: PhaseDetailContent.BodySection(
+                    description: String(localized: "혼자 조용히 있고 싶거나, 별것 아닌 일에 예민하게 반응하게 되는 날이에요. 집중이 잘 안 되고, 감정이 쉽게 출렁이는 것도 자연스러운 반응이에요."),
+                    bullets: [
+                        String(localized: "집중력이 평소보다 떨어질 수 있어요"),
+                        String(localized: "감정이 조금 더 예민하게 느껴져요"),
+                        String(localized: "혼자만의 시간이 더 필요하게 느껴질 수 있어요")
+                    ]
+                ),
+                whyContent: String(localized: "에스트로겐과 프로게스테론이 동시에 낮아지면서 자궁 내막이 탈락하고 월경이 시작됩니다. 이 호르몬들은 세로토닌(기분 안정), 도파민(동기·의욕)과도 연결되어 있어서, 수치가 낮아지면 기분이 가라앉거나 무기력함이 느껴질 수 있어요. 몸은 지금 새로운 주기를 준비하기 위해 꽤 많은 에너지를 쓰고 있는 중이에요."),
+                tipSection: PhaseDetailContent.BodySection(
+                    description: String(localized: "지금은 몸이 스스로 리셋하는 시기예요. 억지로 평소 페이스를 유지하려 하기보다, 조금 느슨하게 가는 것이 오히려 다음 주기를 잘 시작하는 방법이에요."),
+                    bullets: [
+                        String(localized: "중요한 결정이나 무거운 대화는 가능하면 며칠 뒤로 미뤄보세요."),
+                        String(localized: "일정이 꽉 차 있다면 중간에 짧은 휴식을 의식적으로 끼워 넣어보세요."),
+                        String(localized: "격한 운동보다는 가벼운 산책이나 스트레칭이 오히려 통증 완화에 도움이 돼요."),
+                        String(localized: "따뜻한 음식, 충분한 수면, 핫팩 하나가 컨디션 차이를 만들어 줄 수 있어요."),
+                        String(localized: "감정이 예민한 날이라는 걸 스스로 알고 있으면, 그 감정에 덜 휘둘릴 수 있어요.")
+                    ]
+                )
+            )
+        case .follicular:
+            return PhaseDetailContent(
+                subtitle: String(localized: "월경 끝난 직후 - 배란 직전"),
+                bodySection: PhaseDetailContent.BodySection(
+                    description: String(localized: "몸이 조금씩 가벼워지고, 피부가 맑아지는 느낌이 드는 시기예요. 월경이 끝나고 나서 \"오늘은 좀 살 것 같다\" 싶은 날들이 바로 난포기예요."),
+                    bullets: [
+                        String(localized: "피로가 줄고 몸이 가벼워지는 느낌"),
+                        String(localized: "피부 컨디션이 좋아지기 시작함"),
+                        String(localized: "식욕이 비교적 안정적"),
+                        String(localized: "체력과 회복력이 올라가는 시기")
+                    ]
+                ),
+                moodSection: PhaseDetailContent.BodySection(
+                    description: String(localized: "머리가 맑고 뭔가 해보고 싶은 마음이 슬슬 생기는 시기예요. 새로운 걸 시작하거나 사람들을 만나는 게 부담스럽지 않고, 오히려 에너지가 느껴져요."),
+                    bullets: [
+                        String(localized: "집중력과 기억력이 좋아지는 편이에요"),
+                        String(localized: "기분이 안정되고 긍정적인 감정이 올라와요"),
+                        String(localized: "도전적인 일에 의욕이 생기는 시기예요")
+                    ]
+                ),
+                whyContent: String(localized: "뇌하수체에서 분비된 FSH(난포자극극호르몬)가 난소의 난포를 성장시키고, 성장하는 난포에서 에스트로겐이 점점 많이 분비되기 시작해요. 에스트로겐은 도파민, 세로토닌과 상호작용하면서 기분을 높이고 집중력·사고력을 향상시켜요. 뇌 기능이 실제로 활발해지는 시기라, \"오늘 머리가 잘 돌아가네\" 싶은 날이 많아요."),
+                tipSection: PhaseDetailContent.BodySection(
+                    description: String(localized: "몸과 뇌가 함께 깨어나는 시기예요. 미뤄뒀던 일을 꺼내기에 좋고, 새로운 루틴을 시작하기에도 가장 수월한 타이밍이에요."),
+                    bullets: [
+                        String(localized: "새로운 프로젝트나 공부를 시작하기 좋은 시기예요. 이 에너지가 있을 때 첫 발을 떼보세요."),
+                        String(localized: "어려운 개념 정리, 복잡한 기획, 논리적 사고가 필요한 작업을 이 시기에 몰아두면 효율이 달라요."),
+                        String(localized: "운동을 새로 시작하거나 강도를 높이고 싶다면 지금이 적기예요. 회복도 빠른 편이에요."),
+                        String(localized: "사람들을 만나거나 협업하는 일이 평소보다 자연스럽게 느껴질 거예요.")
+                    ]
+                )
+            )
+        case .ovulation:
+            return PhaseDetailContent(
+                subtitle: String(localized: "배란일 전 - 배란 직후"),
+                bodySection: PhaseDetailContent.BodySection(
+                    description: String(localized: "전반적으로 컨디션이 좋고, 몸이 잘 움직이는 느낌이에요. 일부는 아랫배 한쪽이 살짝 당기는 느낌을 경험하기도 하는데, 배란 통증이에요."),
+                    bullets: [
+                        String(localized: "체력과 지구력이 한 주기 중 가장 높은 편"),
+                        String(localized: "피부 광택이 좋고 전반적으로 컨디션이 좋음"),
+                        String(localized: "체온이 살짝 오르는 시기 (배란 후 더 오름)"),
+                        String(localized: "아랫배 한쪽이 잠깐 당기는 느낌이 들 수 있음")
+                    ]
+                ),
+                moodSection: PhaseDetailContent.BodySection(
+                    description: String(localized: "외향적인 에너지가 올라오고, 사람들과 함께하는 게 즐겁게 느껴지는 시기예요. 자신감이 올라와 발표나 대화가 평소보다 자연스럽게 느껴질 수 있어요."),
+                    bullets: [
+                        String(localized: "사교적이고 외향적인 에너지가 올라와요"),
+                        String(localized: "자신감과 표현력이 좋아지는 편이에요"),
+                        String(localized: "결단력이 있고 행동으로 옮기기 쉬운 시기예요")
+                    ]
+                ),
+                whyContent: String(localized: "에스트로겐이 최고조에 달하면 LH(황체형성호르몬)가 급격히 분비되면서 배란이 일어나요. 이 시기엔 테스토스테론도 소폭 상승해 활력과 자신감, 사교성이 높아지는 데 기여해요. 진화적으로 이 시기에 사회적 활동이 활발해지도록 설계되어 있다는 연구들도 있어요."),
+                tipSection: PhaseDetailContent.BodySection(
+                    description: String(localized: "몸과 마음이 가장 잘 맞아 돌아가는 시기예요. 중요한 일, 사람을 만나는 일, 목소리를 내야 하는 일들을 이 시기에 배치하면 훨씬 수월하게 느껴질 거예요."),
+                    bullets: [
+                        String(localized: "발표, 면접, 중요한 미팅처럼 인상을 남겨야 하는 자리에 잘 맞는 시기예요."),
+                        String(localized: "운동 강도를 높이거나 체력 테스트를 해보고 싶다면 지금이 가장 좋아요."),
+                        String(localized: "오래 미뤄온 어려운 대화, 협상, 부탁—지금 하면 생각보다 잘 풀릴 수 있어요."),
+                        String(localized: "에너지가 넘친다고 과하게 쓰기보다, 다음 황체기를 위해 조금 여유를 남겨두는 것도 좋아요.")
+                    ]
+                )
+            )
+        case .luteal:
+            return PhaseDetailContent(
+                subtitle: String(localized: "배란 직후 - 월경 시작 직전"),
+                bodySection: PhaseDetailContent.BodySection(
+                    description: String(localized: "몸이 조금씩 무거워지고, 붓거나 예민해지는 느낌이 드는 시기예요. 배란 이후 시간이 지날수록 증상이 강해지는 경우가 많고, 이건 매우 흔한 일이에요."),
+                    bullets: [
+                        String(localized: "몸이 붓고 무거운 느낌"),
+                        String(localized: "가슴이 예민하거나 팽팽한 느낌"),
+                        String(localized: "식욕이 늘거나 특정 음식이 당김"),
+                        String(localized: "피부가 조금 거칠어질 수 있음"),
+                        String(localized: "체온이 전 주기보다 높은 편")
+                    ]
+                ),
+                moodSection: PhaseDetailContent.BodySection(
+                    description: String(localized: "예민해지거나 이유 없이 우울한 기분이 드는 날이 생길 수 있어요. 집중이 잘 안 되거나 작은 일에 감정이 크게 반응하는 것도 이 시기엔 자연스러운 일이에요."),
+                    bullets: [
+                        String(localized: "감정 기복이 생기고 예민해지기 쉬워요"),
+                        String(localized: "집중력이 흐트러지거나 멍해지는 느낌이 들 수 있어요"),
+                        String(localized: "혼자 있고 싶거나, 쉬고 싶은 마음이 강해져요"),
+                        String(localized: "불안하거나 이유 없이 울고 싶은 날이 있을 수 있어요")
+                    ]
+                ),
+                whyContent: String(localized: "배란 후 황체에서 프로게스테론이 분비되기 시작해요. 프로게스테론은 자궁 내막을 안정시키는 역할을 하지만, 동시에 세로토닌 수치를 낮추고 GABA 수용체에 영향을 미쳐 기분 변화·불안·피로감을 유발할 수 있어요. 월경이 가까워질수록 에스트로겐과 프로게스테론이 모두 떨어지면서 PMS 증상이 나타나기 쉬운 구간이 돼요."),
+                tipSection: PhaseDetailContent.BodySection(
+                    description: String(localized: "황체기 후반은 몸이 스스로 속도를 줄이려는 시기예요. 이 신호를 무시하고 무리하기보다, 조금 다른 방식으로 생산성을 유지하는 전략이 더 잘 맞아요."),
+                    bullets: [
+                        String(localized: "새로운 걸 시작하기보다 이미 진행 중인 일을 마무리하는 데 집중해보세요."),
+                        String(localized: "감정이 예민한 날엔 중요한 결정이나 감정이 오가는 대화를 미루는 것도 현명한 선택이에요."),
+                        String(localized: "단것이 당기는 건 혈당 변동 때문이에요. 초콜릿 한 조각 정도는 괜찮지만, 폭식보다는 마그네슘·철분이 든 음식이 도움이 돼요."),
+                        String(localized: "격한 운동보다 요가, 필라테스, 가벼운 걷기처럼 몸을 이완하는 활동이 증상 완화에 효과적이에요."),
+                        String(localized: "\"내가 예민한 게 아니라 지금 호르몬이 이런 시기\"라는 걸 기억하는 것만으로도 감정을 다루는 데 도움이 돼요.")
+                    ]
+                )
             )
         }
     }

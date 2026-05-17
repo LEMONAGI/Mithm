@@ -33,4 +33,12 @@ protocol UserSettingRepository {
 
     /// 월경 주기 예측 엔진의 UserInputMode를 불러온다. 저장된 값이 없으면 nil을 반환한다.
     func loadUserInputMode() -> UserInputMode?
+
+    // MARK: - 온보딩 완료
+
+    /// 온보딩 완료 여부를 저장한다.
+    func saveHasCompletedOnboarding(_ completed: Bool)
+
+    /// 온보딩 완료 여부를 불러온다. 저장된 값이 없으면 false를 반환한다.
+    func loadHasCompletedOnboarding() -> Bool
 }

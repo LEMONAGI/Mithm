@@ -11,6 +11,9 @@ struct AppDependencyGraph {
     let appState: AppState
     let homeViewModel: HomeViewModel
     let calendarViewModel: CalendarViewModel
+    let settingViewModel: SettingViewModel
+    let cycleSettingViewModel: CycleSettingViewModel
+    let onboardingViewModel: OnboardingViewModel
 }
 
 struct AppDIContainer {
@@ -53,11 +56,18 @@ struct AppDIContainer {
         )
         let homePhaseUseCase = HomePhaseUseCaseImpl()
         let cycleCalendarUseCase = CycleCalendarUseCaseImpl(calendar: calendar)
+        let menstrualRecordEditingUseCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: currentMenstrualEpisodeStore,
+            calendar: calendar
+        )
 
         let appState = AppState(
             menstrualRecordUseCase: menstrualRecordUseCase,
             refreshMenstrualCycleUseCase: refreshMenstrualCycleUseCase,
-            loadUserSettingsUseCase: loadUserSettingsUseCase
+            loadUserSettingsUseCase: loadUserSettingsUseCase,
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: syncMenstrualCalendarUseCase
         )
 
         let homeViewModel = HomeViewModel(
@@ -68,13 +78,26 @@ struct AppDIContainer {
         )
         let calendarViewModel = CalendarViewModel(
             appState: appState,
-            cycleCalendarUseCase: cycleCalendarUseCase
+            cycleCalendarUseCase: cycleCalendarUseCase,
+            menstrualRecordEditingUseCase: menstrualRecordEditingUseCase,
+            calendar: calendar
+        )
+
+        let settingViewModel = SettingViewModel(appState: appState)
+        let cycleSettingViewModel = CycleSettingViewModel(appState: appState)
+        let onboardingViewModel = OnboardingViewModel(
+            appState: appState,
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            syncMenstrualCalendarUseCase: syncMenstrualCalendarUseCase
         )
 
         return AppDependencyGraph(
             appState: appState,
             homeViewModel: homeViewModel,
-            calendarViewModel: calendarViewModel
+            calendarViewModel: calendarViewModel,
+            settingViewModel: settingViewModel,
+            cycleSettingViewModel: cycleSettingViewModel,
+            onboardingViewModel: onboardingViewModel
         )
     }
 
@@ -106,9 +129,26 @@ struct AppDIContainer {
     }
 
     static func makeCalendarViewModel(appState: AppState) -> CalendarViewModel {
-        CalendarViewModel(
+        let calendar = Calendar.current
+        let healthKitRepository = HealthKitRepositoryImpl(
+            dataStore: HealthKitDataStoreImpl()
+        )
+        let menstrualRecordUseCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: healthKitRepository,
+            calendar: calendar
+        )
+        let currentMenstrualEpisodeStore = UserDefaultsCurrentMenstrualEpisodeStore()
+        let menstrualRecordEditingUseCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: currentMenstrualEpisodeStore,
+            calendar: calendar
+        )
+
+        return CalendarViewModel(
             appState: appState,
-            cycleCalendarUseCase: CycleCalendarUseCaseImpl()
+            cycleCalendarUseCase: CycleCalendarUseCaseImpl(calendar: calendar),
+            menstrualRecordEditingUseCase: menstrualRecordEditingUseCase,
+            calendar: calendar
         )
     }
 }

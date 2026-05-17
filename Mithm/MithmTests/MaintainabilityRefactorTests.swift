@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HealthKit
 import Testing
 @testable import Mithm
 
@@ -134,6 +135,212 @@ struct RecordCurrentMenstrualPeriodUseCaseTests {
 
     private func date(_ value: String) -> Date {
         RefactorTestCalendar.dateTime(value, calendar: calendar)
+    }
+}
+
+@MainActor
+struct MenstrualRecordEditingUseCaseTests {
+
+    private let calendar = RefactorTestCalendar.make()
+
+    @Test("월경 기록 수정은 기존 범위를 삭제하고 새 범위를 저장한다")
+    func updateDeletesOriginalRangeAndSavesUpdatedRecord() async throws {
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let episodeStore = FakeCurrentMenstrualEpisodeStore()
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: episodeStore,
+            calendar: calendar
+        )
+        let originalRecord = record("2026-03-10", "2026-03-15")
+
+        try await useCase.update(
+            originalRecord: originalRecord,
+            startDate: dateTime("2026-03-11 14:30"),
+            endDate: dateTime("2026-03-16 09:00")
+        )
+
+        let savedRecord = try #require(menstrualRecordUseCase.savedRecords.first)
+        #expect(savedRecord.record.startDate == date("2026-03-11"))
+        #expect(savedRecord.record.endDate == date("2026-03-16"))
+        #expect(savedRecord.deleteFrom == date("2026-03-10"))
+        #expect(savedRecord.deleteThrough == date("2026-03-15"))
+        #expect(menstrualRecordUseCase.deletedRanges.isEmpty)
+    }
+
+    @Test("월경 기록 수정은 종료일이 시작일보다 이르면 시작일로 보정한다")
+    func updateClampsEndDateToStartDate() async throws {
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: FakeCurrentMenstrualEpisodeStore(),
+            calendar: calendar
+        )
+
+        try await useCase.update(
+            originalRecord: record("2026-03-10", "2026-03-15"),
+            startDate: date("2026-03-12"),
+            endDate: date("2026-03-09")
+        )
+
+        let savedRecord = try #require(menstrualRecordUseCase.savedRecords.first)
+        #expect(savedRecord.record.startDate == date("2026-03-12"))
+        #expect(savedRecord.record.endDate == date("2026-03-12"))
+    }
+
+    @Test("현재 episode와 같은 월경 기록을 수정하면 episode도 갱신한다")
+    func updateMatchingCurrentEpisodeUpdatesEpisode() async throws {
+        let episodeStore = FakeCurrentMenstrualEpisodeStore(
+            episode: CurrentMenstrualEpisode(
+                startDate: date("2026-03-10"),
+                endDate: nil,
+                closedReason: nil
+            )
+        )
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            currentMenstrualEpisodeStore: episodeStore,
+            calendar: calendar
+        )
+
+        try await useCase.update(
+            originalRecord: record("2026-03-10", "2026-03-15"),
+            startDate: date("2026-03-11"),
+            endDate: date("2026-03-16")
+        )
+
+        #expect(episodeStore.episode?.startDate == date("2026-03-11"))
+        #expect(episodeStore.episode?.endDate == date("2026-03-16"))
+        #expect(episodeStore.episode?.closedReason == .userEnded)
+    }
+
+    @Test("월경 기록 삭제는 저장 없이 기존 범위만 삭제한다")
+    func deleteRemovesRecordWithoutSavingReplacement() async throws {
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            currentMenstrualEpisodeStore: FakeCurrentMenstrualEpisodeStore(),
+            calendar: calendar
+        )
+
+        try await useCase.delete(record("2026-03-10", "2026-03-15"))
+
+        let deletedRange = try #require(menstrualRecordUseCase.deletedRanges.first)
+        #expect(deletedRange.startDate == date("2026-03-10"))
+        #expect(deletedRange.endDate == date("2026-03-15"))
+        #expect(menstrualRecordUseCase.savedRecords.isEmpty)
+    }
+
+    @Test("현재 episode와 같은 월경 기록을 삭제하면 episode를 정리한다")
+    func deleteMatchingCurrentEpisodeClearsEpisode() async throws {
+        let episodeStore = FakeCurrentMenstrualEpisodeStore(
+            episode: CurrentMenstrualEpisode(
+                startDate: date("2026-03-10"),
+                endDate: date("2026-03-15"),
+                closedReason: .userEnded
+            )
+        )
+        let useCase = MenstrualRecordEditingUseCaseImpl(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            currentMenstrualEpisodeStore: episodeStore,
+            calendar: calendar
+        )
+
+        try await useCase.delete(record("2026-03-10", "2026-03-15"))
+
+        #expect(episodeStore.episode == nil)
+        #expect(episodeStore.clearCount == 1)
+    }
+
+    private func record(_ start: String, _ end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: date(start),
+            endDate: date(end)
+        )
+    }
+
+    private func date(_ value: String) -> Date {
+        RefactorTestCalendar.date(value, calendar: calendar)
+    }
+
+    private func dateTime(_ value: String) -> Date {
+        RefactorTestCalendar.dateTime(value, calendar: calendar)
+    }
+}
+
+@MainActor
+struct CalendarMenstrualRecordRowsTests {
+
+    private let calendar = RefactorTestCalendar.make()
+
+    @Test("월경 기록 row는 최신순으로 정렬하고 주기 길이는 다음 실제 시작일 기준으로 계산한다")
+    func rowsAreNewestFirstAndUseNextActualStartForCycleLength() {
+        let overview = MenstrualOverview(
+            actualRecords: [
+                record("2026-03-01", "2026-03-06"),
+                record("2026-03-29", "2026-04-03"),
+                record("2026-05-02", "2026-05-07")
+            ],
+            allRecords: [],
+            prediction: prediction(predictedCycleLength: 31)
+        )
+
+        let rows = CalendarViewModel.makeMenstrualRecordRows(
+            overview: overview,
+            calendar: calendar
+        )
+
+        #expect(rows.map(\.startDateText) == [
+            "2026.05.02",
+            "2026.03.29",
+            "2026.03.01"
+        ])
+        #expect(rows.map(\.cycleLengthText) == ["31 일", "34 일", "28 일"])
+        #expect(rows.map(\.periodLengthText) == ["6 일", "6 일", "6 일"])
+    }
+
+    @Test("최신 기록의 다음 시작일이 없으면 예측 주기 길이를 fallback으로 표시한다")
+    func latestRowUsesPredictedCycleLengthFallback() {
+        let overview = MenstrualOverview(
+            actualRecords: [
+                record("2026-03-01", "2026-03-06")
+            ],
+            allRecords: [],
+            prediction: prediction(predictedCycleLength: 30)
+        )
+
+        let rows = CalendarViewModel.makeMenstrualRecordRows(
+            overview: overview,
+            calendar: calendar
+        )
+
+        #expect(rows.first?.cycleLengthText == "30 일")
+        #expect(rows.first?.periodLengthText == "6 일")
+    }
+
+    private func record(_ start: String, _ end: String) -> MenstrualRecord {
+        MenstrualRecord(
+            type: .menstrualRecord,
+            startDate: date(start),
+            endDate: date(end)
+        )
+    }
+
+    private func prediction(predictedCycleLength: Int?) -> MenstrualPredictionResult {
+        MenstrualPredictionResult(
+            menstrualPredictions: [],
+            predictedCycleLength: predictedCycleLength,
+            predictedPeriodLength: 6,
+            confidence: .medium,
+            usedRecordCount: 3,
+            detectedShift: false,
+            usedDefaultRule: false
+        )
+    }
+
+    private func date(_ value: String) -> Date {
+        RefactorTestCalendar.date(value, calendar: calendar)
     }
 }
 
@@ -485,13 +692,16 @@ struct AppStateRefreshTests {
         let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
             snapshot: MenstrualCycleSnapshot(
                 overview: overview,
-                currentStatus: expectedStatus
+                currentStatus: expectedStatus,
+                didAutoClose: false
             )
         )
         let appState = AppState(
             menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
             refreshMenstrualCycleUseCase: refreshUseCase,
-            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase()
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
 
         await appState.refreshOnForeground()
@@ -502,19 +712,117 @@ struct AppStateRefreshTests {
         #expect(appState.currentMenstrualStatus == expectedStatus)
     }
 
+    @Test("foreground refresh는 보호된 HealthKit 데이터 일시 오류를 알럿으로 저장하지 않는다")
+    func foregroundRefreshSuppressesProtectedDataError() async {
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
+            error: HealthKitError.protectedDataUnavailable
+        )
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase(),
+            foregroundRefreshRetryDelayNanoseconds: 0,
+            foregroundRefreshMaxRetryCount: 0
+        )
+
+        await appState.refreshOnForeground()
+
+        #expect(refreshUseCase.calls.count == 1)
+        #expect(appState.menstrualRecordError == nil)
+    }
+
+    @Test("foreground refresh는 보호된 HealthKit 데이터 일시 오류 후 조용히 재시도해 성공 상태를 반영한다")
+    func foregroundRefreshRetriesProtectedDataErrorAndAppliesSuccess() async {
+        let overview = MenstrualOverview(
+            actualRecords: [record("2026-02-01", "2026-02-05")],
+            allRecords: [record("2026-02-01", "2026-02-05")],
+            prediction: nil
+        )
+        let expectedStatus = CurrentMenstrualStatus.inactive(
+            latestStartDate: date("2026-02-01"),
+            expectedEndDate: date("2026-02-05")
+        )
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
+            snapshot: MenstrualCycleSnapshot(
+                overview: overview,
+                currentStatus: expectedStatus,
+                didAutoClose: false
+            ),
+            errors: [HealthKitError.protectedDataUnavailable]
+        )
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase(),
+            foregroundRefreshRetryDelayNanoseconds: 0,
+            foregroundRefreshMaxRetryCount: 1
+        )
+
+        await appState.refreshOnForeground()
+
+        #expect(refreshUseCase.calls.count == 2)
+        #expect(appState.menstrualRecordError == nil)
+        #expect(appState.menstrualOverview.actualRecords == overview.actualRecords)
+        #expect(appState.currentMenstrualStatus == expectedStatus)
+    }
+
+    @Test("foreground refresh는 보호된 HealthKit 데이터 일시 오류가 반복되면 기존 화면 상태를 유지한다")
+    func foregroundRefreshKeepsExistingStateWhenProtectedDataErrorPersists() async {
+        let initialOverview = MenstrualOverview(
+            actualRecords: [record("2026-03-01", "2026-03-05")],
+            allRecords: [record("2026-03-01", "2026-03-05")],
+            prediction: nil
+        )
+        let initialStatus = CurrentMenstrualStatus.inactive(
+            latestStartDate: date("2026-03-01"),
+            expectedEndDate: date("2026-03-05")
+        )
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
+            errors: [
+                HealthKitError.protectedDataUnavailable,
+                HealthKitError.protectedDataUnavailable
+            ]
+        )
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase(),
+            foregroundRefreshRetryDelayNanoseconds: 0,
+            foregroundRefreshMaxRetryCount: 1
+        )
+        appState.menstrualOverview = initialOverview
+        appState.currentMenstrualStatus = initialStatus
+
+        await appState.refreshOnForeground()
+
+        #expect(refreshUseCase.calls.count == 2)
+        #expect(appState.menstrualRecordError == nil)
+        #expect(appState.menstrualOverview.actualRecords == initialOverview.actualRecords)
+        #expect(appState.currentMenstrualStatus == initialStatus)
+    }
+
     @Test("initial load는 설정을 불러오고 최초 1회만 자동 종료 refresh를 요청한다")
     func initialLoadRequestsAutoCloseOnlyOnce() async {
         let settings = UserSettingState(
             menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6),
             calendarExportEnabled: true,
-            userInputMode: .blendUserInput
+            userInputMode: .blendUserInput,
+            hasCompletedOnboarding: true
         )
         let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
         let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
         let appState = AppState(
             menstrualRecordUseCase: menstrualRecordUseCase,
             refreshMenstrualCycleUseCase: refreshUseCase,
-            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(settings: settings)
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(settings: settings),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
 
         await appState.performInitialLoad()
@@ -526,6 +834,70 @@ struct AppStateRefreshTests {
         #expect(appState.userSetting.menstrualUserInput?.cycleLength == 31)
         #expect(appState.userSetting.menstrualUserInput?.periodLength == 6)
         #expect(appState.userSetting.userInputMode == .blendUserInput)
+        #expect(appState.userSetting.hasCompletedOnboarding)
+    }
+
+    @Test("initial load는 온보딩 미완료 상태에서 HealthKit 권한 요청과 refresh를 건너뛴다")
+    func initialLoadSkipsHealthKitWorkWhenOnboardingIncomplete() async {
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = AppState(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(
+                settings: UserSettingState(hasCompletedOnboarding: false)
+            ),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
+        )
+
+        await appState.performInitialLoad()
+
+        #expect(menstrualRecordUseCase.requestedAuthorizationCount == 0)
+        #expect(refreshUseCase.calls.isEmpty)
+        #expect(!appState.userSetting.hasCompletedOnboarding)
+    }
+
+    @Test("온보딩 완료는 저장 후 최초 자동 종료 refresh를 실행한다")
+    func completingOnboardingPersistsAndRunsInitialRefresh() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let menstrualRecordUseCase = FakeMenstrualRecordUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = AppState(
+            menstrualRecordUseCase: menstrualRecordUseCase,
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
+        )
+
+        await appState.completeOnboarding()
+
+        #expect(userSettingUseCase.savedHasCompletedOnboarding == [true])
+        #expect(appState.userSetting.hasCompletedOnboarding)
+        #expect(menstrualRecordUseCase.requestedAuthorizationCount == 1)
+        #expect(refreshUseCase.calls.map(\.runAutoClose) == [true])
+    }
+
+    @Test("foreground refresh는 일반 오류를 기존처럼 알럿 상태에 저장한다")
+    func foregroundRefreshStoresNonTransientError() async {
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase(
+            error: FakeRefreshError()
+        )
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase(),
+            foregroundRefreshRetryDelayNanoseconds: 0,
+            foregroundRefreshMaxRetryCount: 1
+        )
+
+        await appState.refreshOnForeground()
+
+        #expect(refreshUseCase.calls.count == 1)
+        #expect(appState.menstrualRecordError != nil)
     }
 
     private func record(_ start: String, _ end: String) -> MenstrualRecord {
@@ -541,6 +913,308 @@ struct AppStateRefreshTests {
             value,
             calendar: RefactorTestCalendar.make()
         )
+    }
+}
+
+@MainActor
+struct OnboardingViewModelTests {
+
+    @Test("1단계 권한 요청 성공 시 2단계로 이동한다")
+    func healthAuthorizationSuccessAdvancesToSecondStep() async {
+        let viewModel = OnboardingViewModel(
+            appState: makeAppState(),
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase()
+        )
+
+        await viewModel.requestHealthAuthorization()
+
+        #expect(viewModel.currentStep == .step2)
+        #expect(!viewModel.isRequestingAuthorization)
+        #expect(viewModel.permissionAlert == nil)
+    }
+
+    @Test("권한 요청 실패 시 1단계를 유지하고 알럿 상태를 설정한다")
+    func healthAuthorizationFailureKeepsFirstStepAndShowsAlert() async {
+        let viewModel = OnboardingViewModel(
+            appState: makeAppState(),
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(
+                authorizationError: HealthKitError.authorizationDenied
+            )
+        )
+
+        await viewModel.requestHealthAuthorization()
+
+        #expect(viewModel.currentStep == .step1)
+        #expect(!viewModel.isRequestingAuthorization)
+        #expect(viewModel.permissionAlert != nil)
+        #expect(viewModel.permissionAlert?.title == "건강 앱 권한이 필요해요")
+    }
+
+    @Test("5단계 완료 시 온보딩 완료를 저장하고 앱 상태를 갱신한다")
+    func finishingLastStepCompletesOnboarding() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let appState = makeAppState(userSettingUseCase: userSettingUseCase)
+        let viewModel = OnboardingViewModel(
+            appState: appState,
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase()
+        )
+
+        viewModel.advance()
+        viewModel.advance()
+        viewModel.advance()
+        viewModel.advance()
+        await viewModel.finish()
+
+        #expect(viewModel.currentStep == .step5)
+        #expect(appState.userSetting.hasCompletedOnboarding)
+        #expect(userSettingUseCase.savedHasCompletedOnboarding == [true])
+    }
+
+    private func makeAppState(
+        userSettingUseCase: FakeUserSettingUseCase = FakeUserSettingUseCase()
+    ) -> AppState {
+        AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: FakeRefreshMenstrualCycleUseCase(),
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
+        )
+    }
+}
+
+@MainActor
+struct SettingViewModelPredictionMethodDraftTests {
+
+    @Test("예측 방법 draft 변경은 저장과 refresh를 실행하지 않는다")
+    func changingPredictionMethodDraftDoesNotPersistOrRefresh() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = makeAppState(
+            settings: UserSettingState(userInputMode: .blendUserInput),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+        let viewModel = SettingViewModel(appState: appState)
+
+        viewModel.resetPredictionMethodDraft()
+        #expect(!viewModel.canSavePredictionMethodDraft)
+
+        viewModel.setPredictionMethodDraft(.onlyUserInput)
+        await Task.yield()
+
+        #expect(viewModel.predictionMethodDraft == .onlyUserInput)
+        #expect(viewModel.canSavePredictionMethodDraft)
+        #expect(appState.userSetting.userInputMode == .blendUserInput)
+        #expect(userSettingUseCase.savedUserInputModes.isEmpty)
+        #expect(refreshUseCase.calls.isEmpty)
+    }
+
+    @Test("예측 방법 draft 저장은 한 번만 저장하고 refresh를 요청한다")
+    func savingPredictionMethodDraftPersistsAndRefreshesOnce() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = makeAppState(
+            settings: UserSettingState(userInputMode: .blendUserInput),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+        let viewModel = SettingViewModel(appState: appState)
+
+        viewModel.resetPredictionMethodDraft()
+        viewModel.setPredictionMethodDraft(.notBlendUserInput)
+        viewModel.savePredictionMethodDraft()
+        await waitForRefreshCalls(refreshUseCase, count: 1)
+
+        #expect(!viewModel.canSavePredictionMethodDraft)
+        #expect(userSettingUseCase.savedUserInputModes == [.notBlendUserInput])
+        #expect(appState.userSetting.userInputMode == .notBlendUserInput)
+        #expect(refreshUseCase.calls.count == 1)
+        #expect(refreshUseCase.calls.first?.userSetting.userInputMode == .notBlendUserInput)
+    }
+
+    @Test("예측 방법 draft가 실제 값과 같으면 저장과 refresh를 생략한다")
+    func savingUnchangedPredictionMethodDraftSkipsPersistAndRefresh() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let appState = makeAppState(
+            settings: UserSettingState(userInputMode: .notBlendUserInput),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+        let viewModel = SettingViewModel(appState: appState)
+
+        viewModel.resetPredictionMethodDraft()
+        #expect(!viewModel.canSavePredictionMethodDraft)
+
+        viewModel.savePredictionMethodDraft()
+        await Task.yield()
+
+        #expect(userSettingUseCase.savedUserInputModes.isEmpty)
+        #expect(refreshUseCase.calls.isEmpty)
+    }
+
+    private func makeAppState(
+        settings: UserSettingState,
+        userSettingUseCase: FakeUserSettingUseCase,
+        refreshUseCase: FakeRefreshMenstrualCycleUseCase
+    ) -> AppState {
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(settings: settings),
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
+        )
+        appState.loadUserSettings()
+        return appState
+    }
+
+    private func waitForRefreshCalls(
+        _ refreshUseCase: FakeRefreshMenstrualCycleUseCase,
+        count: Int
+    ) async {
+        for _ in 0..<10 where refreshUseCase.calls.count < count {
+            await Task.yield()
+        }
+    }
+}
+
+@MainActor
+struct CycleSettingViewModelTests {
+
+    @Test("월경 주기와 길이 draft가 현재 값과 같으면 저장할 수 없다")
+    func resetDraftCannotSave() {
+        let viewModel = makeViewModel(
+            settings: UserSettingState(
+                menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6)
+            )
+        )
+
+        viewModel.reset()
+
+        #expect(viewModel.cycleLength == 31)
+        #expect(viewModel.periodLength == 6)
+        #expect(!viewModel.canSave)
+    }
+
+    @Test("월경 주기 또는 길이 중 하나라도 바뀌면 저장할 수 있다")
+    func changingEitherCycleOrPeriodLengthCanSave() {
+        let viewModel = makeViewModel(
+            settings: UserSettingState(
+                menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6)
+            )
+        )
+
+        viewModel.reset()
+        viewModel.cycleLength = 32
+        #expect(viewModel.canSave)
+
+        viewModel.cycleLength = 31
+        #expect(!viewModel.canSave)
+
+        viewModel.periodLength = 7
+        #expect(viewModel.canSave)
+
+        viewModel.periodLength = 6
+        #expect(!viewModel.canSave)
+    }
+
+    @Test("월경 주기와 길이가 바뀌지 않았으면 저장과 refresh를 생략한다")
+    func savingUnchangedDraftSkipsPersistAndRefresh() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let viewModel = makeViewModel(
+            settings: UserSettingState(
+                menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6)
+            ),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+
+        viewModel.reset()
+        viewModel.save()
+        await Task.yield()
+
+        #expect(userSettingUseCase.savedMenstrualUserInputs.isEmpty)
+        #expect(refreshUseCase.calls.isEmpty)
+    }
+
+    @Test("월경 주기와 길이 저장 후 현재 값이 새 기준이 된다")
+    func savingChangedDraftUpdatesOriginalValues() async {
+        let userSettingUseCase = FakeUserSettingUseCase()
+        let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
+        let viewModel = makeViewModel(
+            settings: UserSettingState(
+                menstrualUserInput: MenstrualUserInput(cycleLength: 31, periodLength: 6)
+            ),
+            userSettingUseCase: userSettingUseCase,
+            refreshUseCase: refreshUseCase
+        )
+
+        viewModel.reset()
+        viewModel.cycleLength = 32
+        viewModel.save()
+        await waitForRefreshCalls(refreshUseCase, count: 1)
+
+        #expect(!viewModel.canSave)
+        #expect(userSettingUseCase.savedMenstrualUserInputs.count == 1)
+        #expect(userSettingUseCase.savedMenstrualUserInputs.first?.cycleLength == 32)
+        #expect(userSettingUseCase.savedMenstrualUserInputs.first?.periodLength == 6)
+        #expect(refreshUseCase.calls.count == 1)
+    }
+
+    private func makeViewModel(
+        settings: UserSettingState,
+        userSettingUseCase: FakeUserSettingUseCase = FakeUserSettingUseCase(),
+        refreshUseCase: FakeRefreshMenstrualCycleUseCase = FakeRefreshMenstrualCycleUseCase()
+    ) -> CycleSettingViewModel {
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: refreshUseCase,
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(settings: settings),
+            userSettingUseCase: userSettingUseCase,
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
+        )
+        appState.loadUserSettings()
+        return CycleSettingViewModel(appState: appState)
+    }
+
+    private func waitForRefreshCalls(
+        _ refreshUseCase: FakeRefreshMenstrualCycleUseCase,
+        count: Int
+    ) async {
+        for _ in 0..<10 where refreshUseCase.calls.count < count {
+            await Task.yield()
+        }
+    }
+}
+
+struct HealthKitRepositoryImplErrorMappingTests {
+
+    @Test("HealthKit 보호 데이터 접근 실패는 일시 오류로 매핑한다")
+    func mapsDatabaseInaccessibleErrorToProtectedDataUnavailable() async {
+        let dataStore = FakeHealthKitDataStore(
+            readCategoryError: NSError(
+                domain: HKError.errorDomain,
+                code: HKError.Code.errorDatabaseInaccessible.rawValue
+            )
+        )
+        let repository = HealthKitRepositoryImpl(dataStore: dataStore)
+
+        var didCatchProtectedDataError = false
+        do {
+            _ = try await repository.readMenstrualCycleRecords(
+                from: Date(),
+                to: Date()
+            )
+        } catch HealthKitError.protectedDataUnavailable {
+            didCatchProtectedDataError = true
+        } catch {
+            didCatchProtectedDataError = false
+        }
+
+        #expect(didCatchProtectedDataError)
     }
 }
 
@@ -657,7 +1331,9 @@ struct HomeViewModelEndMenstruationTests {
         let appState = AppState(
             menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
             refreshMenstrualCycleUseCase: refreshUseCase,
-            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase()
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
         appState.currentMenstrualStatus = CurrentMenstrualStatus(
             isActive: true,
@@ -714,10 +1390,65 @@ struct CycleCalendarUseCaseTests {
         )
 
         #expect(month.days.count == 42)
-        #expect(day("2026-03-12", in: month).kind == .menstrual)
+        #expect(day("2026-03-12", in: month).kind == .menstrualRecord)
         #expect(day("2026-03-15", in: month).kind == .fertileWindow)
         #expect(day("2026-03-18", in: month).kind == .ovulationDay)
-        #expect(day("2026-03-20", in: month).kind == .today)
+        #expect(day("2026-03-20", in: month).kind == .none)
+        #expect(day("2026-03-20", in: month).isToday)
+        #expect(!day("2026-03-18", in: month).isToday)
+    }
+
+    @Test("캘린더 월경 날짜 분류는 실제 기록과 예측을 구분한다")
+    func menstrualDayKindDistinguishesRecordsFromPredictions() {
+        let useCase = CycleCalendarUseCaseImpl(calendar: calendar)
+        let records = [
+            record(.menstrualRecord, "2026-03-10", "2026-03-14"),
+            record(.menstrualPrediction, "2026-03-28", "2026-04-01"),
+            record(.ovulationPrediction, "2026-03-12", "2026-03-12")
+        ]
+
+        let month = useCase.makeMonth(
+            displayedMonth: date("2026-03-01"),
+            records: records,
+            today: date("2026-03-20")
+        )
+
+        #expect(day("2026-03-12", in: month).kind == .menstrualRecord)
+        #expect(day("2026-03-29", in: month).kind == .menstrualPrediction)
+    }
+
+    @Test("오늘 표시는 기간 분류와 독립적으로 보존된다")
+    func todayFlagIsIndependentFromDayKind() {
+        let useCase = CycleCalendarUseCaseImpl(calendar: calendar)
+        let records = [
+            record(.menstrualRecord, "2026-03-10", "2026-03-14"),
+            record(.ovulationPrediction, "2026-03-18", "2026-03-18"),
+            record(.ovulationFertileWindowPrediction, "2026-03-20", "2026-03-24")
+        ]
+
+        let menstrualMonth = useCase.makeMonth(
+            displayedMonth: date("2026-03-01"),
+            records: records,
+            today: date("2026-03-12")
+        )
+        #expect(day("2026-03-12", in: menstrualMonth).kind == .menstrualRecord)
+        #expect(day("2026-03-12", in: menstrualMonth).isToday)
+
+        let ovulationDayMonth = useCase.makeMonth(
+            displayedMonth: date("2026-03-01"),
+            records: records,
+            today: date("2026-03-18")
+        )
+        #expect(day("2026-03-18", in: ovulationDayMonth).kind == .ovulationDay)
+        #expect(day("2026-03-18", in: ovulationDayMonth).isToday)
+
+        let fertileWindowMonth = useCase.makeMonth(
+            displayedMonth: date("2026-03-01"),
+            records: records,
+            today: date("2026-03-21")
+        )
+        #expect(day("2026-03-21", in: fertileWindowMonth).kind == .fertileWindow)
+        #expect(day("2026-03-21", in: fertileWindowMonth).isToday)
     }
 
     private func day(_ value: String, in month: CycleCalendarMonth) -> CycleCalendarDay {
@@ -812,6 +1543,11 @@ private struct SavedMenstrualRecord {
     let deleteThrough: Date?
 }
 
+private struct DeletedMenstrualRecordRange {
+    let startDate: Date
+    let endDate: Date
+}
+
 private struct FetchMenstrualOverviewRequest {
     let activeMenstrualStartDate: Date?
     let userInput: MenstrualUserInput?
@@ -820,16 +1556,29 @@ private struct FetchMenstrualOverviewRequest {
 
 private final class FakeMenstrualRecordUseCase: MenstrualRecordUseCase {
     var overviewResponses: [MenstrualOverview]
+    var authorizationError: Error?
     private(set) var fetchRequests: [FetchMenstrualOverviewRequest] = []
     private(set) var savedRecords: [SavedMenstrualRecord] = []
+    private(set) var deletedRanges: [DeletedMenstrualRecordRange] = []
     private(set) var requestedAuthorizationCount = 0
 
-    init(overviewResponses: [MenstrualOverview] = []) {
+    init(
+        overviewResponses: [MenstrualOverview] = [],
+        authorizationError: Error? = nil
+    ) {
         self.overviewResponses = overviewResponses
+        self.authorizationError = authorizationError
     }
 
     func requestHealthKitAuthorization() async throws {
         requestedAuthorizationCount += 1
+        if let authorizationError {
+            throw authorizationError
+        }
+    }
+
+    func requestConfirmedHealthKitAuthorization() async throws {
+        try await requestHealthKitAuthorization()
     }
 
     func fetchMenstrualOverview(
@@ -862,6 +1611,15 @@ private final class FakeMenstrualRecordUseCase: MenstrualRecordUseCase {
             )
         )
     }
+
+    func deleteMenstrualRecord(from startDate: Date, to endDate: Date) async throws {
+        deletedRanges.append(
+            DeletedMenstrualRecordRange(
+                startDate: startDate,
+                endDate: endDate
+            )
+        )
+    }
 }
 
 private final class FakeSyncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase {
@@ -870,6 +1628,8 @@ private final class FakeSyncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCa
     func execute(records: [MenstrualRecord], isEnabled: Bool) async throws {
         calls.append((records: records, isEnabled: isEnabled))
     }
+
+    func removeCalendar() async throws { }
 }
 
 private final class FakeRecordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase {
@@ -898,19 +1658,21 @@ private struct RefreshMenstrualCycleCall {
 private final class FakeRefreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCase {
     private(set) var calls: [RefreshMenstrualCycleCall] = []
     var snapshot: MenstrualCycleSnapshot
-    var error: Error?
+    var errors: [Error]
     var delayNanoseconds: UInt64
 
     init(
         snapshot: MenstrualCycleSnapshot = MenstrualCycleSnapshot(
             overview: MenstrualOverview(),
-            currentStatus: .inactive()
+            currentStatus: .inactive(),
+            didAutoClose: false
         ),
         error: Error? = nil,
+        errors: [Error] = [],
         delayNanoseconds: UInt64 = 0
     ) {
         self.snapshot = snapshot
-        self.error = error
+        self.errors = error.map { [$0] } ?? errors
         self.delayNanoseconds = delayNanoseconds
     }
 
@@ -929,11 +1691,62 @@ private final class FakeRefreshMenstrualCycleUseCase: RefreshMenstrualCycleUseCa
                 referenceDate: referenceDate
             )
         )
-        if let error {
+        if !errors.isEmpty {
+            let error = errors.removeFirst()
             throw error
         }
         return snapshot
     }
+}
+
+private final class FakeHealthKitDataStore: HealthKitDataStore {
+    let readCategoryError: Error?
+
+    init(readCategoryError: Error?) {
+        self.readCategoryError = readCategoryError
+    }
+
+    func isHealthDataAvailable() -> Bool {
+        true
+    }
+
+    func requestAuthorization(
+        writeTypes: Set<HKSampleType>,
+        readTypes: Set<HKObjectType>
+    ) async throws {}
+
+    func checkWriteAuthorization(
+        for type: HKObjectType
+    ) -> HKAuthorizationStatus {
+        .sharingAuthorized
+    }
+
+    func saveSamples(samples: [HKObject]) async throws {}
+
+    func readCategorySamples(
+        type: HKCategoryType,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [HKCategorySample] {
+        if let readCategoryError {
+            throw readCategoryError
+        }
+        return []
+    }
+
+    func readQuantitySamples(
+        type: HKQuantityType,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [HKQuantitySample] {
+        []
+    }
+
+    func deleteSamples(
+        type: HKObjectType,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws {}
 }
 
 private struct FakeRefreshError: Error { }
@@ -947,6 +1760,30 @@ private struct FakeLoadUserSettingsUseCase: LoadUserSettingsUseCase {
 
     func execute() -> UserSettingState {
         settings
+    }
+}
+
+private final class FakeUserSettingUseCase: UserSettingUseCase {
+    private(set) var savedMenstrualUserInputs: [MenstrualUserInput] = []
+    private(set) var savedCalendarExportEnabled: [Bool] = []
+    private(set) var savedUserInputModes: [UserInputMode] = []
+    private(set) var savedHasCompletedOnboarding: [Bool] = []
+
+    func loadMenstrualUserInput() -> MenstrualUserInput? { nil }
+    func loadCalendarExportEnabled() -> Bool { false }
+    func loadUserInputMode() -> UserInputMode? { nil }
+    func loadHasCompletedOnboarding() -> Bool { false }
+    func saveMenstrualUserInput(_ input: MenstrualUserInput) {
+        savedMenstrualUserInputs.append(input)
+    }
+    func saveCalendarExportEnabled(_ enabled: Bool) {
+        savedCalendarExportEnabled.append(enabled)
+    }
+    func saveUserInputMode(_ mode: UserInputMode) {
+        savedUserInputModes.append(mode)
+    }
+    func saveHasCompletedOnboarding(_ completed: Bool) {
+        savedHasCompletedOnboarding.append(completed)
     }
 }
 

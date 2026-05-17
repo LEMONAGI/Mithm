@@ -9,12 +9,14 @@ import Foundation
 
 protocol MenstrualRecordUseCase {
     func requestHealthKitAuthorization() async throws
+    func requestConfirmedHealthKitAuthorization() async throws
     func fetchMenstrualOverview(
         activeMenstrualStartDate: Date?,
         userInput: MenstrualUserInput?,
         userInputMode: UserInputMode?
     ) async throws -> MenstrualOverview
     func saveMenstrualRecored(_ record: MenstrualRecord, deleteFrom: Date?, deleteThrough: Date?) async throws
+    func deleteMenstrualRecord(from startDate: Date, to endDate: Date) async throws
 }
 
 extension MenstrualRecordUseCase {

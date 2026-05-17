@@ -26,9 +26,12 @@ protocol EventKitDataStore {
     
     
     // MARK: - Calendar
-    
+
     /// 우리 앱 전용 캘린더를 가져오거나, 없으면 새롭게 생성합니다.
     func fetchOrCreateCalendar() throws -> EKCalendar
+
+    /// 저장된 앱 전용 캘린더가 있으면 삭제하고 식별자를 지웁니다. 없으면 아무것도 하지 않습니다.
+    func deleteCalendarIfExists() throws
     
     
     // MARK: - Event CRUD

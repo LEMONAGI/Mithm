@@ -49,4 +49,10 @@ protocol HealthKitRepository {
         deleteFrom: Date?,
         deleteThrough: Date?
     ) async throws
+
+    /// 해당 기간의 월경 기록을 HealthKit에서 삭제한다.
+    func deleteMenstrualCycleRecords(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws
 }

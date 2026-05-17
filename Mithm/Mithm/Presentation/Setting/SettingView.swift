@@ -9,10 +9,11 @@ import SwiftUI
 
 
 struct SettingView: View {
-    @EnvironmentObject private var appState: AppState
-    @State private var isHealthSyncOn: Bool = false
-    @State private var isCalendarExportOn: Bool = false
-    
+    @EnvironmentObject private var settingViewModel: SettingViewModel
+    @Environment(\.openURL) private var openURL
+    @State private var showPredictionMethodSetting = false
+    @State private var showCycleSetting = false
+
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
@@ -27,6 +28,15 @@ struct SettingView: View {
             }
             .padding(.top, 26)
             .padding(.horizontal, 20)
+            .navigationDestination(isPresented: $showPredictionMethodSetting) {
+                PredictionMethodSettingView()
+                    .environmentObject(settingViewModel)
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+            .navigationDestination(isPresented: $showCycleSetting) {
+                CycleSettingView()
+                    .navigationBarTitleDisplayMode(.inline)
+            }
         }
     }
 }
@@ -35,27 +45,33 @@ extension SettingView {
     @ViewBuilder
     private func settingMenuRow(for item: SettingMenuItem) -> some View {
         switch item {
-        case .healthSync:
-            SettingMenuRow(item: item, isOn: $isHealthSyncOn)
         case .calendarExport:
-            SettingMenuRow(item: item, isOn: $isCalendarExportOn)
+            SettingMenuRow(item: item, isOn: Binding(
+                get: { settingViewModel.calendarExportEnabled },
+                set: { settingViewModel.setCalendarExportEnabled($0) }
+            ))
+        case .predictionMethod:
+            SettingMenuRow(item: item, isOn: .constant(false)) {
+                showPredictionMethodSetting = true
+            }
         case .cycleSetting:
             SettingMenuRow(item: item, isOn: .constant(false)) {
-                // TODO: Navigate to cycle setting
+                showCycleSetting = true
             }
         case .privacyPolicy:
             SettingMenuRow(item: item, isOn: .constant(false)) {
-                // TODO: Navigate to privacy policy
+                if let url = item.url { openURL(url) }
             }
         case .support:
             SettingMenuRow(item: item, isOn: .constant(false)) {
-                // TODO: Navigate to support
+                if let url = item.url { openURL(url) }
             }
         }
     }
 }
 
 #Preview {
+    let graph = AppDIContainer.makeAppDependencyGraph()
     SettingView()
-        .environmentObject(AppDIContainer.makeAppState())
+        .environmentObject(graph.settingViewModel)
 }
