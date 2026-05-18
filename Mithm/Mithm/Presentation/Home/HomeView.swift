@@ -47,7 +47,8 @@ struct HomeView: View {
         .ignoresSafeArea(edges: .horizontal)
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
-                .presentationDetents([.medium])
+                .presentationDetents([.height(380)])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showPhaseDetail) {
             PhaseDetailSheet(phase: homeViewModel.currentPhase)
@@ -149,11 +150,11 @@ private extension HomeView {
     var datePickerSheet: some View {
         VStack(spacing: 0) {
             Text(isPickingEndDate ? String(localized: "월경 종료일을 선택하세요") : String(localized: "월경 시작일을 선택하세요"))
-                .font(.pretendardBold(24))
+                .font(.pretendardSemiBold(22))
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 24)
-                .padding(.top, 28)
-                .padding(.bottom, 16)
+                .padding(.horizontal, 16)
+                .padding(.top, 22)
+                .padding(.bottom, 30)
             
             DatePicker(
                 "",
@@ -163,7 +164,7 @@ private extension HomeView {
             )
             .datePickerStyle(.wheel)
             .labelsHidden()
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
             
             Spacer()
             
@@ -183,16 +184,16 @@ private extension HomeView {
                 }
             } label: {
                 Text("선택 완료")
-                    .font(.pretendardBold(20))
-                    .foregroundStyle(.white)
+                    .font(.pretendardBold(18))
+                    .foregroundStyle(.primaryWhite)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 64)
+                    .frame(height: 52)
                     .background(
                         RoundedRectangle(cornerRadius: 32)
                             .fill(Color.primaryBlack)
                     )
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
     }
