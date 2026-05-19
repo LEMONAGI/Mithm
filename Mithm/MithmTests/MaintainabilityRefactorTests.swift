@@ -1083,7 +1083,7 @@ struct SettingViewModelPredictionMethodDraftTests {
 @MainActor
 struct CycleSettingViewModelTests {
 
-    @Test("월경 주기와 길이 draft가 현재 값과 같으면 저장할 수 없다")
+    @Test("월경 주기와 기간 draft가 현재 값과 같으면 저장할 수 없다")
     func resetDraftCannotSave() {
         let viewModel = makeViewModel(
             settings: UserSettingState(
@@ -1120,7 +1120,7 @@ struct CycleSettingViewModelTests {
         #expect(!viewModel.canSave)
     }
 
-    @Test("월경 주기와 길이가 바뀌지 않았으면 저장과 refresh를 생략한다")
+    @Test("월경 주기와 기간이 바뀌지 않았으면 저장과 refresh를 생략한다")
     func savingUnchangedDraftSkipsPersistAndRefresh() async {
         let userSettingUseCase = FakeUserSettingUseCase()
         let refreshUseCase = FakeRefreshMenstrualCycleUseCase()
@@ -1140,7 +1140,7 @@ struct CycleSettingViewModelTests {
         #expect(refreshUseCase.calls.isEmpty)
     }
 
-    @Test("월경 주기와 길이 저장 후 현재 값이 새 기준이 된다")
+    @Test("월경 주기와 기간 저장 후 현재 값이 새 기준이 된다")
     func savingChangedDraftUpdatesOriginalValues() async {
         let userSettingUseCase = FakeUserSettingUseCase()
         let refreshUseCase = FakeRefreshMenstrualCycleUseCase()

@@ -481,9 +481,6 @@
     "권한 요청 + 조회 + 캘린더" : {
 
     },
-    "권한 허용됨" : {
-
-    },
     "권한 요청하기" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -494,6 +491,9 @@
           }
         }
       }
+    },
+    "권한 허용됨" : {
+
     },
     "기록 데이터" : {
       "extractionState" : "manual",
@@ -587,17 +587,6 @@
     "다시 조회 + 캘린더" : {
 
     },
-    "다음으로" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "다음으로"
-          }
-        }
-      }
-    },
     "다음 월경 예정일" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -605,6 +594,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 월경 예정일"
+          }
+        }
+      }
+    },
+    "다음으로" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음으로"
           }
         }
       }
@@ -623,6 +623,9 @@
         }
       }
     },
+    "당신만의 리듬 패턴을\n알려주세요" : {
+
+    },
     "당신만의 리듬 패턴을\n알아갈게요" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -633,9 +636,6 @@
           }
         }
       }
-    },
-    "당신만의 리듬 패턴을\n알려주세요" : {
-
     },
     "당신의 리듬을 이해하는\n첫 단계예요" : {
       "extractionState" : "manual",
@@ -696,17 +696,6 @@
     "마지막 동기화:" : {
 
     },
-    "마지막 월경 날짜는 언제인가요?" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "마지막 월경 날짜는 언제인가요?"
-          }
-        }
-      }
-    },
     "마지막 동기화: %@ %@" : {
       "localizations" : {
         "ko" : {
@@ -723,6 +712,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "마지막 로드: %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "마지막 월경 날짜는 언제인가요?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마지막 월경 날짜는 언제인가요?"
           }
         }
       }
@@ -1115,6 +1115,17 @@
     "월경 강도" : {
 
     },
+    "월경 기간" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "월경 기간"
+          }
+        }
+      }
+    },
     "월경 기록" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1122,17 +1133,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "월경 기록"
-          }
-        }
-      }
-    },
-    "월경 길이" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "월경 길이"
           }
         }
       }
@@ -1252,6 +1252,17 @@
         }
       }
     },
+    "월경 주기" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "월경 주기"
+          }
+        }
+      }
+    },
     "월경 주기 예측 방법 변경" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1266,44 +1277,30 @@
     "월경 주기 예측 방법을 선택할 수 있어요." : {
 
     },
-    "월경 주기·길이 변경" : {
+    "월경 주기·기간 변경" : {
       "extractionState" : "manual",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "월경 주기·길이 변경"
+            "value" : "월경 주기·기간 변경"
           }
         }
       }
     },
-    "월경 주기" : {
+    "월경 주기와 기간은 며칠인가요?" : {
       "extractionState" : "manual",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "월경 주기"
+            "value" : "월경 주기와 기간은 며칠인가요?"
           }
         }
       }
     },
-    "월경 주기와 길이는 며칠인가요?" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "월경 주기와 길이는 며칠인가요?"
-          }
-        }
-      }
-    },
-    "월경 주기와 길이는 몇일인가요?" : {
-
-    },
-    "월경 주기와 길이를 모른다면 눌러주세요.\n미리듬이 우선 보편적 수치를 적용할게요." : {
-
+    "월경 주기와 기간을 모른다면 눌러주세요.\n미리듬이 우선 보편적 수치를 적용할게요." : {
+      "extractionState" : "manual"
     },
     "월경·배란 주기를 캘린더에 내보낼 수 있어요.\n한 번 연결하면, 이후 업데이트는\n미리듬이 알아서 관리할게요." : {
       "extractionState" : "manual",
@@ -1349,6 +1346,17 @@
         }
       }
     },
+    "일" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일"
+          }
+        }
+      }
+    },
     "이번 월경을 기록하였습니다" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1367,17 +1375,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 월경 종료를 자동으로 기록했습니다!"
-          }
-        }
-      }
-    },
-    "일" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일"
           }
         }
       }

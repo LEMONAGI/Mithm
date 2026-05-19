@@ -28,7 +28,7 @@ struct CycleSettingView: View {
 
                 Spacer().frame(height: 70)
 
-                Text("월경 주기와 길이는 몇일인가요?")
+                Text("월경 주기와 기간은 며칠인가요?")
                     .font(.pretendardRegular(18))
                     .foregroundStyle(.textPrimary)
 
@@ -55,7 +55,7 @@ struct CycleSettingView: View {
                     Divider()
                         .padding(.horizontal, 20)
                     CycleInputRow(
-                        label: "월경 길이",
+                        label: "월경 기간",
                         value: viewModel.periodLength,
                         isExpanded: expandedField == .periodLength,
                         onTap: {
@@ -79,7 +79,7 @@ struct CycleSettingView: View {
             }
         }
         .background(Color(.secondaryPink).ignoresSafeArea())
-        .navigationTitle("월경 주기·길이 변경")
+        .navigationTitle("월경 주기·기간 변경")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button(role: .confirm) {

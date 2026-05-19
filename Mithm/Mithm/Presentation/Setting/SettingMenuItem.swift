@@ -18,7 +18,7 @@ enum SettingMenuItem: CaseIterable {
         switch self {
         case .calendarExport: String(localized: "캘린더로 내보내기")
         case .predictionMethod: String(localized: "월경 주기 예측 방법 변경")
-        case .cycleSetting: String(localized: "월경 주기·길이 변경")
+        case .cycleSetting: String(localized: "월경 주기·기간 변경")
         case .privacyPolicy: String(localized: "개인정보 처리방침")
         case .support: String(localized: "지원")
         }

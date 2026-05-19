@@ -160,8 +160,8 @@ extension CalendarView {
 
     private var statsView: some View {
         VStack(spacing: 8) {
-            statRow(title: "calendar.stats.period_length", value: calendarViewModel.predictedPeriodLength)
             statRow(title: "calendar.stats.cycle_length", value: calendarViewModel.predictedCycleLength)
+            statRow(title: "calendar.stats.period_length", value: calendarViewModel.predictedPeriodLength)
         }
     }
 

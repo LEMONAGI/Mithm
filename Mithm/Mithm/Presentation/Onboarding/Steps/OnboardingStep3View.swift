@@ -18,7 +18,7 @@ struct OnboardingStep3View: View {
         OnboardingStepContainer(
             step: .step3,
             title: "당신만의 리듬 패턴을\n알아갈게요",
-            description: "월경 주기와 길이는 며칠인가요?",
+            description: "월경 주기와 기간은 며칠인가요?",
             buttonTitle: "다음으로",
             isButtonEnabled: true,
             isLoading: false,
@@ -47,7 +47,7 @@ struct OnboardingStep3View: View {
                 Divider()
                     .padding(.horizontal, 16)
                 CycleInputRow(
-                    label: "월경 길이",
+                    label: "월경 기간",
                     value: viewModel.averagePeriodLength,
                     isExpanded: expandedField == .periodLength
                 ) {
@@ -88,7 +88,7 @@ struct OnboardingStep3View: View {
 
             Spacer().frame(height: 12)
 
-            Text("월경 주기와 길이를 모른다면 눌러주세요.\n미리듬이 우선 보편적 수치를 적용할게요.")
+            Text("월경 주기와 기간을 모른다면 눌러주세요.\n미리듬이 우선 보편적 수치를 적용할게요.")
                 .font(.pretendardLight(12))
                 .foregroundStyle(.textSecondary)
                 .multilineTextAlignment(.center)
