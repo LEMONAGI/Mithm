@@ -1457,6 +1457,23 @@
         }
       }
     },
+    "calendar.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "미리듬"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mirythm"
+          }
+        }
+      }
+    },
     "미듬": {
       "extractionState": "manual",
       "localizations": {
