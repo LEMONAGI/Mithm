@@ -1853,6 +1853,52 @@ struct MenstrualRecordUseCaseTests {
         })
     }
 
+    @Test("fetchMenstrualOverview는 실제 월경 시작일 기준 배란을 예상이 아닌 추정으로만 만든다")
+    func fetchMenstrualOverviewPrioritizesEstimatedOvulationForActualPeriodStart() async throws {
+        let activeStartDate = Self.date("2025-02-26", calendar: calendar)
+        let repository = MockHealthKitRepository(records: [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-26", end: "2025-02-26")
+        ])
+        let useCase = MenstrualRecordUseCaseImpl(
+            healthKitRepository: repository,
+            calendar: calendar
+        )
+
+        let overview = try await useCase.fetchMenstrualOverview(
+            activeMenstrualStartDate: activeStartDate
+        )
+        let result = overview.allRecords
+
+        #expect(result.contains {
+            $0.type == .menstrualPrediction &&
+            Self.dayString($0.startDate, calendar: calendar) == "2025-02-26"
+        })
+        #expect(result.contains {
+            $0.type == .ovulationEstimated &&
+            Self.dayString($0.startDate, calendar: calendar) == "2025-02-12"
+        })
+        #expect(result.contains {
+            $0.type == .ovulationFertileWindowEstimated &&
+            Self.dayString($0.startDate, calendar: calendar) == "2025-02-07" &&
+            Self.dayString($0.endDate, calendar: calendar) == "2025-02-13"
+        })
+        #expect(!result.contains {
+            $0.type == .ovulationPrediction &&
+            Self.dayString($0.startDate, calendar: calendar) == "2025-02-12"
+        })
+        #expect(!result.contains {
+            $0.type == .ovulationFertileWindowPrediction &&
+            Self.dayString($0.startDate, calendar: calendar) == "2025-02-07" &&
+            Self.dayString($0.endDate, calendar: calendar) == "2025-02-13"
+        })
+        #expect(result.contains {
+            $0.type == .ovulationPrediction &&
+            Self.dayString($0.startDate, calendar: calendar) == "2025-03-12"
+        })
+    }
+
     private func makeRecord(start: String, end: String) -> MenstrualRecord {
         MenstrualRecord(
             type: .menstrualRecord,

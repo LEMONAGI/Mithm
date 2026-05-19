@@ -37,6 +37,20 @@ struct OvulationRecordGenerator {
         let bases = records
             .filter { $0.type == .menstrualRecord || $0.type == .menstrualPrediction }
             .sorted { $0.startDate < $1.startDate }
+            .reduce(into: [Date: MenstrualRecord]()) { recordsByStartDay, record in
+                let startDay = calendar.startOfDay(for: record.startDate)
+                guard let selectedRecord = recordsByStartDay[startDay] else {
+                    recordsByStartDay[startDay] = record
+                    return
+                }
+
+                if selectedRecord.type == .menstrualPrediction,
+                   record.type == .menstrualRecord {
+                    recordsByStartDay[startDay] = record
+                }
+            }
+            .values
+            .sorted { $0.startDate < $1.startDate }
         
         var result: [MenstrualRecord] = []
         
