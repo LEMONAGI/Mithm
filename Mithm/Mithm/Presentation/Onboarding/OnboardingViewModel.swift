@@ -58,6 +58,10 @@ final class OnboardingViewModel: ObservableObject {
     // Step 5 - 완료 처리
     @Published var isFinishing = false
 
+    var currentStep: Step {
+        navigationPath.last ?? .step1
+    }
+
     private let appState: AppState
     private let menstrualRecordUseCase: MenstrualRecordUseCase
     private let syncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase

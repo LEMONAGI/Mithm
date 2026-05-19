@@ -923,7 +923,8 @@ struct OnboardingViewModelTests {
     func healthAuthorizationSuccessAdvancesToSecondStep() async {
         let viewModel = OnboardingViewModel(
             appState: makeAppState(),
-            menstrualRecordUseCase: FakeMenstrualRecordUseCase()
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
 
         await viewModel.requestHealthAuthorization()
@@ -939,7 +940,8 @@ struct OnboardingViewModelTests {
             appState: makeAppState(),
             menstrualRecordUseCase: FakeMenstrualRecordUseCase(
                 authorizationError: HealthKitError.authorizationDenied
-            )
+            ),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
 
         await viewModel.requestHealthAuthorization()
@@ -956,7 +958,8 @@ struct OnboardingViewModelTests {
         let appState = makeAppState(userSettingUseCase: userSettingUseCase)
         let viewModel = OnboardingViewModel(
             appState: appState,
-            menstrualRecordUseCase: FakeMenstrualRecordUseCase()
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            syncMenstrualCalendarUseCase: FakeSyncMenstrualCalendarUseCase()
         )
 
         viewModel.advance()
