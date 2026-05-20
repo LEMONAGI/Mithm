@@ -428,6 +428,74 @@
         }
       }
     },
+    "home.phase_title.follicular": {
+      "extractionState": "manual",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "난포기"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follicular"
+          }
+        }
+      }
+    },
+    "home.phase_title.luteal": {
+      "extractionState": "manual",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "황체기"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luteal"
+          }
+        }
+      }
+    },
+    "home.phase_title.menstrual": {
+      "extractionState": "manual",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "월경기"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menstrual"
+          }
+        }
+      }
+    },
+    "home.phase_title.ovulation": {
+      "extractionState": "manual",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "배란기"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ovulation"
+          }
+        }
+      }
+    },
     "home.phase_range.date_format": {
       "extractionState": "manual",
       "localizations": {

@@ -7,6 +7,7 @@ import SwiftUI
 
 struct PhasePresentation {
     let name: String
+    let homeTitleName: String
     let color: Color
     let tertiaryColor: Color
     let description: String
@@ -33,6 +34,7 @@ extension PhaseType {
         case .menstrual:
             return PhasePresentation(
                 name: String(localized: "월경기"),
+                homeTitleName: String(localized: "home.phase_title.menstrual"),
                 color: .primaryYellow,
                 tertiaryColor: .tertiaryYellow,
                 description: String(localized: "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"),
@@ -42,6 +44,7 @@ extension PhaseType {
         case .follicular:
             return PhasePresentation(
                 name: String(localized: "난포기"),
+                homeTitleName: String(localized: "home.phase_title.follicular"),
                 color: .primaryBlue,
                 tertiaryColor: .tertiaryBlue,
                 description: String(localized: "에스트로겐이 증가하며 에너지와 집중이 올라요\n전반적인 리듬이 부드럽게 올라와요"),
@@ -51,6 +54,7 @@ extension PhaseType {
         case .ovulation:
             return PhasePresentation(
                 name: String(localized: "배란기"),
+                homeTitleName: String(localized: "home.phase_title.ovulation"),
                 color: .primaryTeal,
                 tertiaryColor: .tertiaryTeal,
                 description: String(localized: "에스트로겐이 최고조로 컨디션이 안정돼요\n몸의 리듬이 안정적으로 맞물려요"),
@@ -60,6 +64,7 @@ extension PhaseType {
         case .luteal:
             return PhasePresentation(
                 name: String(localized: "황체기"),
+                homeTitleName: String(localized: "home.phase_title.luteal"),
                 color: .primaryPurple,
                 tertiaryColor: .tertiaryPurple,
                 description: String(localized: "프로게스테론이 높아지며 몸이 회복을 준비해요\n리듬이 정리되며 몸이 쉬어갈 준비를 해요"),

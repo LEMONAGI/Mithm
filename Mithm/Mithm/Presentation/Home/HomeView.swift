@@ -104,7 +104,7 @@ private extension HomeView {
             
             // Phase name + info
             HStack(alignment: .bottom, spacing: 10) {
-                Text(homeViewModel.currentPhasePresentation.name)
+                Text(homeViewModel.currentPhasePresentation.homeTitleName)
                     .font(.highlight1)
                     .foregroundStyle(.primaryBlack)
                 Button {
