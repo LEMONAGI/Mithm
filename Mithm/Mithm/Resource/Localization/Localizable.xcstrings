@@ -245,6 +245,57 @@
         }
       }
     },
+    "launch_splash.app_name": {
+      "extractionState": "manual",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "미리듬"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mithm"
+          }
+        }
+      }
+    },
+    "launch_splash.headline": {
+      "extractionState": "manual",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "나의 리듬을 이해하고\n꼭 맞는 일정으로\n더 평온하고\n효율적인 하루를 살도록"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Understand your rhythm\nand shape your schedule\nfor calmer, more peaceful,\nmore efficient days"
+          }
+        }
+      }
+    },
+    "launch_splash.notice": {
+      "extractionState": "manual",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "미리듬이 제공하는 월경 주기, 배란일 및 관련 예측 정보는\n사용자의 월경 기록을 바탕으로 한 추정값입니다.\n실제 신체 상태 및 건강 상태와 다를 수 있으며,\n피임, 임신 계획 또는 건강 관련 의사결정의 근거로 단독 사용하지 마십시오.\n정확한 진단과 상담은 반드시 의료 전문가에게 받으시기 바랍니다."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The period cycle, ovulation day, and related prediction information provided by Mithm\nare estimates based on your period records.\nThey may differ from your actual body or health condition,\nand should not be used alone as the basis for contraception, pregnancy planning, or health-related decisions.\nFor accurate diagnosis and advice, please consult a medical professional."
+          }
+        }
+      }
+    },
     "EventKit Demo": {
       "localizations": {
         "en": {
