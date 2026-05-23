@@ -66,7 +66,9 @@ private extension PhaseDetailSheet {
                 Text(detail.subtitle)
                     .font(.pretendardSemiBold(18))
                     .foregroundStyle(.primaryBlack)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.trailing)
+                    .minimumScaleFactor(0.6)
                     .padding(.trailing, 5)
             }
         }

@@ -2800,23 +2800,6 @@
         }
       }
     },
-    "일" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "days"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일"
-          }
-        }
-      }
-    },
     "이전 월경 종료를 자동으로 기록했습니다!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2830,6 +2813,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 월경 종료를 자동으로 기록했습니다!"
+          }
+        }
+      }
+    },
+    "일" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "days"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일"
           }
         }
       }
@@ -3465,7 +3465,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Luteal Phase"
+            "value" : "Luteal"
           }
         },
         "ko" : {
