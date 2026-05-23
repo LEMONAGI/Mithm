@@ -37,7 +37,7 @@ extension PhaseType {
                 homeTitleName: String(localized: "home.phase_title.menstrual"),
                 color: .primaryYellow,
                 tertiaryColor: .tertiaryYellow,
-                description: String(localized: "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"),
+                description: String(localized: "모든 호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"),
                 mainImage: .mainMenstrual,
                 detailImage: .mainDetailMenstrual
             )

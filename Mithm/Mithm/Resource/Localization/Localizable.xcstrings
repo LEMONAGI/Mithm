@@ -512,7 +512,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The cycle, ovulation day, and related prediction information provided by Mirideum\nare estimates based on your period records.\nThey may differ from your actual body or health condition,\nand should not be used alone as the basis for contraception, pregnancy planning, or health-related decisions.\nFor accurate diagnosis and advice, please consult a medical professional."
+            "value" : "The cycle, ovulation day, and related prediction information provided by Mirideum are estimates based on your period records.\nThey may differ from your actual body or health condition,\nand should not be used alone as the basis for contraception, pregnancy planning, or health-related decisions.\nFor accurate diagnosis and advice, please consult a medical professional."
           }
         },
         "ko" : {
@@ -981,7 +981,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow Mirideum to read your period records\nfrom the Health app.\nYour health data will be handled with care."
+            "value" : "Allow Mirideum to read your period records from the Health app.\nYour health data will be handled with care."
           }
         },
         "ko" : {
@@ -1176,7 +1176,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Follicular Phase"
+            "value" : "Follicular"
           }
         },
         "ko" : {
@@ -1317,7 +1317,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tell us about\nyour own rhythm pattern"
+            "value" : "Tell us about\nyour rhythm"
           }
         }
       }
@@ -1328,7 +1328,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Let's learn\nyour rhythm pattern"
+            "value" : "Let's learn\nyour rhythm"
           }
         },
         "ko" : {
@@ -1345,7 +1345,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The first step\nto understanding your rhythm"
+            "value" : "The first step\nto understanding you"
           }
         },
         "ko" : {
@@ -1362,7 +1362,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connect your rhythm\nto your everyday life"
+            "value" : "Bring your rhythm\ninto everyday life"
           }
         },
         "ko" : {
@@ -1379,7 +1379,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "To understand\nyour rhythm more accurately"
+            "value" : "To understand you\nmore accurately"
           }
         },
         "ko" : {
@@ -1552,6 +1552,23 @@
         }
       }
     },
+    "모든 호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As all hormones drop, your body shifts into rest mode. Your body slows down and resets its rhythm."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"
+          }
+        }
+      }
+    },
     "몸과 뇌가 함께 깨어나는 시기예요. 미뤄뒀던 일을 꺼내기에 좋고, 새로운 루틴을 시작하기에도 가장 수월한 타이밍이에요." : {
       "localizations" : {
         "en" : {
@@ -1654,7 +1671,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Right after ovulation - just before your period starts"
+            "value" : "after ovulation \n- before period starts"
           }
         }
       }
@@ -1675,7 +1692,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ovulation Phase"
+            "value" : "Ovulation"
           }
         },
         "ko" : {
@@ -1725,7 +1742,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Before ovulation - right after ovulation"
+            "value" : "before ovulation \n- after ovulation"
           }
         }
       }
@@ -2098,7 +2115,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tune future predictions\nto fit you"
+            "value" : "Tuning forecasts\nto fit you"
           }
         }
       }
@@ -2200,7 +2217,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "As estrogen rises, energy and focus may increase\nYour overall rhythm may start to feel lighter"
+            "value" : "As estrogen rises, energy and focus may increase. Your overall rhythm may start to feel lighter."
           }
         },
         "ko" : {
@@ -2217,7 +2234,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "As estrogen peaks, you may feel more steady\nYour body's rhythm may feel steady and in sync"
+            "value" : "As estrogen peaks, you may feel more steady. Your body's rhythm may feel steady and in sync."
           }
         },
         "ko" : {
@@ -2469,7 +2486,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Right after your period ends - just before ovulation"
+            "value" : "after period ends \n- before ovulation"
           }
         }
       }
@@ -2516,7 +2533,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Period start - period end"
+            "value" : "period start \n- period end"
           }
         }
       }
@@ -2721,7 +2738,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Menstrual Phase"
+            "value" : "Menstrual"
           }
         },
         "ko" : {
@@ -2766,23 +2783,6 @@
         }
       }
     },
-    "일" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "days"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일"
-          }
-        }
-      }
-    },
     "이번 월경을 기록하였습니다" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2796,6 +2796,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이번 월경을 기록하였습니다"
+          }
+        }
+      }
+    },
+    "일" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "days"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일"
           }
         }
       }
@@ -3317,7 +3334,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "As progesterone rises, your body prepares to recover\nYour rhythm settles as your body gets ready to rest"
+            "value" : "As progesterone rises, your body prepares to recover. Your rhythm settles as your body gets ready to rest."
           }
         },
         "ko" : {
@@ -3421,23 +3438,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "홈"
-          }
-        }
-      }
-    },
-    "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "As hormones drop, your body shifts into rest mode\nYour body slows down and resets its rhythm"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"
           }
         }
       }
