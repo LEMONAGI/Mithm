@@ -79,7 +79,6 @@ struct CycleSettingView: View {
             }
         }
         .background(Color(.secondaryPink).ignoresSafeArea())
-        .navigationTitle("월경 주기·기간 변경")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button(role: .confirm) {

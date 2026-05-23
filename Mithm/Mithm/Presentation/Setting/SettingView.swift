@@ -32,11 +32,9 @@ struct SettingView: View {
             .navigationDestination(isPresented: $showPredictionMethodSetting) {
                 PredictionMethodSettingView()
                     .environmentObject(settingViewModel)
-                    .navigationBarTitleDisplayMode(.inline)
             }
             .navigationDestination(isPresented: $showCycleSetting) {
                 CycleSettingView()
-                    .navigationBarTitleDisplayMode(.inline)
             }
         }
     }
