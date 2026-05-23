@@ -42,11 +42,34 @@ enum SettingMenuItem: CaseIterable {
     }
 
     var url: URL? {
+        url(preferredLanguages: Locale.preferredLanguages)
+    }
+
+    func url(preferredLanguages: [String]) -> URL? {
+        let usesKoreanURL = Self.usesKoreanURL(preferredLanguages: preferredLanguages)
+
         switch self {
-        case .privacyPolicy: URL(string: "https://jinthelemon.notion.site/2cc90636549f80cea5ebfbdd29671611?source=copy_link")
-        case .support: URL(string: "https://jinthelemon.notion.site/2cc90636549f80999adace0a614b046d?source=copy_link")
-        default: nil
+        case .privacyPolicy:
+            return URL(string: usesKoreanURL
+                ? "https://jinthelemon.notion.site/2cc90636549f80cea5ebfbdd29671611?source=copy_link"
+                : "https://jinthelemon.notion.site/Miridum-Privacy-Policy-35190636549f8094bd70cf6344efd3a1?source=copy_link")
+        case .support:
+            return URL(string: usesKoreanURL
+                ? "https://jinthelemon.notion.site/2cc90636549f80999adace0a614b046d?source=copy_link"
+                : "https://jinthelemon.notion.site/App-Support-Page-35190636549f80e69371f0f7dffcfa38?source=copy_link")
+        default:
+            return nil
         }
+    }
+
+    private static func usesKoreanURL(preferredLanguages: [String]) -> Bool {
+        guard let firstLanguage = preferredLanguages.first else { return false }
+
+        let normalizedLanguage = firstLanguage
+            .lowercased()
+            .replacingOccurrences(of: "_", with: "-")
+
+        return normalizedLanguage == "ko" || normalizedLanguage.hasPrefix("ko-")
     }
 }
 
