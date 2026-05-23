@@ -207,7 +207,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mirythm"
+            "value" : "mirideum"
           }
         },
         "ko" : {
@@ -509,7 +509,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mithm shows ovulation and the fertile window as the same period. The actual fertile window can vary by person, so do not use this as a method of contraception."
+            "value" : "mirideum shows ovulation and the fertile window as the same period. The actual fertile window can vary by person, so do not use this as a method of contraception."
           }
         },
         "ko" : {
@@ -577,7 +577,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mithm"
+            "value" : "mirideum"
           }
         },
         "ko" : {
@@ -611,7 +611,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The period cycle, ovulation day, and related prediction information provided by Mithm\nare estimates based on your period records.\nThey may differ from your actual body or health condition,\nand should not be used alone as the basis for contraception, pregnancy planning, or health-related decisions.\nFor accurate diagnosis and advice, please consult a medical professional."
+            "value" : "The period cycle, ovulation day, and related prediction information provided by mirideum\nare estimates based on your period records.\nThey may differ from your actual body or health condition,\nand should not be used alone as the basis for contraception, pregnancy planning, or health-related decisions.\nFor accurate diagnosis and advice, please consult a medical professional."
           }
         },
         "ko" : {
@@ -979,7 +979,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Add a period record in the Health app, or check Mithm's access in\nSettings > Privacy > Health."
+            "value" : "Add a period record in the Health app, or check mirideum's access in\nSettings > Privacy > Health."
           }
         },
         "ko" : {
@@ -1030,7 +1030,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow Mithm to read your period records\nfrom the Health app.\nYour body data will be handled with care."
+            "value" : "Allow mirideum to read your period records\nfrom the Health app.\nYour body data will be handled with care."
           }
         },
         "ko" : {
@@ -1668,30 +1668,19 @@
         }
       }
     },
-    "미듬" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mithm"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "미듬"
-          }
-        }
-      }
-    },
     "미리듬" : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mithm"
+            "value" : "mirideum"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리듬"
           }
         }
       }
@@ -1701,7 +1690,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Period records not created by Mithm cannot be edited here.\nPlease edit them directly in the Health app."
+            "value" : "Period records not created by mirideum cannot be edited here.\nPlease edit them directly in the Health app."
           }
         }
       }
@@ -1998,7 +1987,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Check Mithm's access in\nSettings > Privacy > Health."
+            "value" : "Check mirideum's access in\nSettings > Privacy > Health."
           }
         },
         "ko" : {
@@ -2015,7 +2004,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Check Mithm's access in\nSettings > Privacy > Calendars."
+            "value" : "Check mirideum's access in\nSettings > Privacy > Calendars."
           }
         },
         "ko" : {
@@ -2760,7 +2749,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap here if you are not sure about your cycle or period length.\nMithm will start with common values first."
+            "value" : "Tap here if you are not sure about your cycle or period length.\nmirideum will start with common values first."
           }
         }
       }
@@ -2771,7 +2760,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You can export your period and ovulation cycle to Calendar.\nOnce connected, Mithm will manage future updates for you."
+            "value" : "You can export your period and ovulation cycle to Calendar.\nOnce connected, mirideum will manage future updates for you."
           }
         },
         "ko" : {

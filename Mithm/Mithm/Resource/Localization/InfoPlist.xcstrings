@@ -13,7 +13,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mithm"
+            "value": "mirideum"
           }
         }
       }
@@ -31,7 +31,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mithm"
+            "value": "mirideum"
           }
         }
       }
@@ -42,13 +42,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "미듬"
+            "value": "미리듬"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mithm"
+            "value": "mirideum"
           }
         }
       }
@@ -65,7 +65,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mithm needs calendar access to show your period cycle and fertile window in Calendar, helping you plan your schedule more comfortably."
+            "value": "mirideum needs calendar access to show your period cycle and fertile window in Calendar, helping you plan your schedule more comfortably."
           }
         }
       }
@@ -82,7 +82,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mithm reads period-related data from the Health app to support cycle analysis and ovulation pattern tracking. The data is used only for cycle predictions and calendar display, and is not sent outside the app."
+            "value": "mirideum reads period-related data from the Health app to support cycle analysis and ovulation pattern tracking. The data is used only for cycle predictions and calendar display, and is not sent outside the app."
           }
         }
       }
@@ -99,7 +99,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mithm saves the period information you record in the app to the Health app as well, so you can manage your cycle records in one place. Only records you enter are saved; predictions are not saved."
+            "value": "mirideum saves the period information you record in the app to the Health app as well, so you can manage your cycle records in one place. Only records you enter are saved; predictions are not saved."
           }
         }
       }
