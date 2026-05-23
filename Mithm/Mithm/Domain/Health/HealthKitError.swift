@@ -69,7 +69,7 @@ extension HealthKitError: AlertPresentable {
         case .authorizationNotDetermined:
             return String(localized: "건강 앱 접근 권한을 허용해 주세요.")
         case .authorizationDenied:
-            return String(localized: "설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요.")
+            return String(localized: "설정 > 개인정보 보호 > 건강에서\n미리듬의 접근 권한을 확인해 주세요.")
         case .readFailed:
             return String(localized: "건강 데이터를 불러오지 못했어요.\n잠시 후 다시 시도해 주세요.")
         case .protectedDataUnavailable:
@@ -79,7 +79,7 @@ extension HealthKitError: AlertPresentable {
         case .deleteFailed:
             return String(localized: "건강 데이터를 삭제하지 못했어요.\n잠시 후 다시 시도해 주세요.")
         case .emptyResult:
-            return String(localized: "건강 앱에서 월경 기록을 추가하거나,\n설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요.")
+            return String(localized: "건강 앱에서 월경 기록을 추가하거나,\n설정 > 개인정보 보호 > 건강에서\n미리듬의 접근 권한을 확인해 주세요.")
         case .unknown:
             return String(localized: "잠시 후 다시 시도해 주세요.")
         }

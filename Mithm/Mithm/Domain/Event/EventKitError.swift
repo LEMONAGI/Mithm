@@ -54,7 +54,7 @@ extension EventKitError: AlertPresentable {
     var alertMessage: String {
         switch self {
         case .accessDenied:
-            return String(localized: "설정 > 개인정보 보호 > 캘린더에서\nMithm의 접근 권한을 확인해 주세요.")
+            return String(localized: "설정 > 개인정보 보호 > 캘린더에서\n미리듬의 접근 권한을 확인해 주세요.")
         case .noCalendarSource:
             return String(localized: "캘린더 계정을 추가한 뒤 다시 시도해 주세요.")
         case .syncFailed:

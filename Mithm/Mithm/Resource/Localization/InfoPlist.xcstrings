@@ -1,109 +1,108 @@
 {
-  "sourceLanguage": "ko",
-  "strings": {
-    "CFBundleDisplayName": {
-      "extractionState": "manual",
-      "localizations": {
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "미리듬"
+  "sourceLanguage" : "ko",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mirideum"
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리듬"
           }
         }
       }
     },
-    "CFBundleName": {
-      "comment": "Bundle name",
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "ko": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Mithm"
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mirideum"
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리듬"
           }
         }
       }
     },
-    "CFBundleURLName": {
-      "extractionState": "manual",
-      "localizations": {
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "미리듬"
+    "CFBundleURLName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mirideum"
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리듬"
           }
         }
       }
     },
-    "NSCalendarsFullAccessUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이 앱은 월경 주기와 가임기 일정을 캘린더에 표시하여 더 편리하게 일정 관리할 수 있도록 캘린더 접근 권한이 필요합니다."
+    "NSCalendarsFullAccessUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum needs calendar access to show your cycle and fertile window in Calendar, helping you plan your schedule more comfortably."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mirideum needs calendar access to show your period cycle and fertile window in Calendar, helping you plan your schedule more comfortably."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 앱은 월경 주기와 가임기 일정을 캘린더에 표시하여 더 편리하게 일정 관리할 수 있도록 캘린더 접근 권한이 필요합니다."
           }
         }
       }
     },
-    "NSHealthShareUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "월경 주기 분석과 배란 패턴 추적을 위해 건강 앱의 월경 관련 데이터를 읽어옵니다. 데이터는 주기 예측과 일정 표시 목적에만 사용되며 외부로 전송되지 않습니다."
+    "NSHealthShareUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum reads period-related data from the Health app to support cycle analysis and ovulation pattern tracking. The data is used only for cycle predictions and calendar display, and is not sent outside the app."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mirideum reads period-related data from the Health app to support cycle analysis and ovulation pattern tracking. The data is used only for cycle predictions and calendar display, and is not sent outside the app."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "월경 주기 분석과 배란 패턴 추적을 위해 건강 앱의 월경 관련 데이터를 읽어옵니다. 데이터는 주기 예측과 일정 표시 목적에만 사용되며 외부로 전송되지 않습니다."
           }
         }
       }
     },
-    "NSHealthUpdateUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "사용자가 앱에서 기록한 월경 정보를 건강 앱에도 함께 저장하여 한 곳에서 주기 기록을 관리할 수 있도록 도와줍니다. 사용자가 입력한 실제 기록만 저장되며, 예측 정보는 저장하지 않습니다."
+    "NSHealthUpdateUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum saves the period information you record in the app to the Health app as well, so you can manage your cycle records in one place. Only records you enter are saved; predictions are not saved."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mirideum saves the period information you record in the app to the Health app as well, so you can manage your cycle records in one place. Only records you enter are saved; predictions are not saved."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용자가 앱에서 기록한 월경 정보를 건강 앱에도 함께 저장하여 한 곳에서 주기 기록을 관리할 수 있도록 도와줍니다. 사용자가 입력한 실제 기록만 저장되며, 예측 정보는 저장하지 않습니다."
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

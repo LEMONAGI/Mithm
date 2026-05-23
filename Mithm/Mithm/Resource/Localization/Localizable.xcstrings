@@ -26,7 +26,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Remembering that this may be your hormones at this point in your cycle, not just you being sensitive, can help you handle your emotions with more kindness."
+            "value" : "Remembering \"it's not that I'm too sensitive — my hormones may be shifting right now\" can help you handle your emotions with more kindness."
           }
         }
       }
@@ -207,7 +207,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "mirideum"
+            "value" : "Mirideum"
           }
         },
         "ko" : {
@@ -241,7 +241,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "D-Day"
+            "value" : "Today"
           }
         },
         "ko" : {
@@ -253,14 +253,7 @@
       }
     },
     "EventKit Demo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "EventKit Demo"
-          }
-        }
-      }
+
     },
     "FRI" : {
       "extractionState" : "manual",
@@ -280,14 +273,7 @@
       }
     },
     "HealthKit Demo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HealthKit Demo"
-          }
-        }
-      }
+
     },
     "HealthKit 상태" : {
       "localizations" : {
@@ -305,7 +291,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "D-Day"
+            "value" : "Today"
           }
         },
         "ko" : {
@@ -322,7 +308,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "D-%d"
+            "value" : "in %d days"
           }
         },
         "ko" : {
@@ -339,7 +325,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "D+%d"
+            "value" : "%d days late"
           }
         },
         "ko" : {
@@ -486,6 +472,80 @@
         }
       }
     },
+    "launch_splash.app_name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리듬"
+          }
+        }
+      }
+    },
+    "launch_splash.headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Understand your rhythm\nand shape your schedule\nfor calmer, more peaceful,\nmore efficient days"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나의 리듬을 이해하고\n꼭 맞는 일정으로\n더 평온하고\n효율적인 하루를 살도록"
+          }
+        }
+      }
+    },
+    "launch_splash.notice" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The cycle, ovulation day, and related prediction information provided by Mirideum\nare estimates based on your period records.\nThey may differ from your actual body or health condition,\nand should not be used alone as the basis for contraception, pregnancy planning, or health-related decisions.\nFor accurate diagnosis and advice, please consult a medical professional."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리듬이 제공하는 월경 주기, 배란일 및 관련 예측 정보는\n사용자의 월경 기록을 바탕으로 한 추정값입니다.\n실제 신체 상태 및 건강 상태와 다를 수 있으며,\n피임, 임신 계획 또는 건강 관련 의사결정의 근거로 단독 사용하지 마십시오.\n정확한 진단과 상담은 반드시 의료 전문가에게 받으시기 바랍니다."
+          }
+        }
+      }
+    },
+    "menstrualFlow" : {
+
+    },
+    "MenstrualRecordUseCase 상태" : {
+
+    },
+    "MON" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MON"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MON"
+          }
+        }
+      }
+    },
     "phase_detail.mood.why_button" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -509,7 +569,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "mirideum shows ovulation and the fertile window as the same period. The actual fertile window can vary by person, so do not use this as a method of contraception."
+            "value" : "Mirideum treats the ovulation window and the fertile window as the same range. The actual fertile window can vary by person, so do not use this as a method of contraception."
           }
         },
         "ko" : {
@@ -571,94 +631,6 @@
         }
       }
     },
-    "launch_splash.app_name" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "mirideum"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "미리듬"
-          }
-        }
-      }
-    },
-    "launch_splash.headline" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Understand your rhythm\nand shape your schedule\nfor calmer, more peaceful,\nmore efficient days"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "나의 리듬을 이해하고\n꼭 맞는 일정으로\n더 평온하고\n효율적인 하루를 살도록"
-          }
-        }
-      }
-    },
-    "launch_splash.notice" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The period cycle, ovulation day, and related prediction information provided by mirideum\nare estimates based on your period records.\nThey may differ from your actual body or health condition,\nand should not be used alone as the basis for contraception, pregnancy planning, or health-related decisions.\nFor accurate diagnosis and advice, please consult a medical professional."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "미리듬이 제공하는 월경 주기, 배란일 및 관련 예측 정보는\n사용자의 월경 기록을 바탕으로 한 추정값입니다.\n실제 신체 상태 및 건강 상태와 다를 수 있으며,\n피임, 임신 계획 또는 건강 관련 의사결정의 근거로 단독 사용하지 마십시오.\n정확한 진단과 상담은 반드시 의료 전문가에게 받으시기 바랍니다."
-          }
-        }
-      }
-    },
-    "menstrualFlow" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "menstrualFlow"
-          }
-        }
-      }
-    },
-    "MenstrualRecordUseCase 상태" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MenstrualRecordUseCase Status"
-          }
-        }
-      }
-    },
-    "MON" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MON"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MON"
-          }
-        }
-      }
-    },
     "SAT" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -677,14 +649,7 @@
       }
     },
     "sleepingWristTemperature" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "sleepingWristTemperature"
-          }
-        }
-      }
+
     },
     "SUN" : {
       "extractionState" : "manual",
@@ -738,24 +703,10 @@
       }
     },
     "UseCase Demo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "UseCase Demo"
-          }
-        }
-      }
+
     },
     "value: %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "value: %lld"
-          }
-        }
-      }
+
     },
     "WED" : {
       "extractionState" : "manual",
@@ -934,7 +885,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Health app permission is needed"
+            "value" : "Health app access required"
           }
         }
       }
@@ -945,7 +896,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Please allow access to the Health app."
+            "value" : "Allow access to the Health app."
           }
         },
         "ko" : {
@@ -962,7 +913,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Health app access is needed"
+            "value" : "Health app access required"
           }
         },
         "ko" : {
@@ -973,19 +924,19 @@
         }
       }
     },
-    "건강 앱에서 월경 기록을 추가하거나,\n설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요." : {
+    "건강 앱에서 월경 기록을 추가하거나,\n설정 > 개인정보 보호 > 건강에서\n미리듬의 접근 권한을 확인해 주세요." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Add a period record in the Health app, or check mirideum's access in\nSettings > Privacy > Health."
+            "value" : "Add a period record in the Health app, or check Mirideum's access in\nSettings > Privacy & Security > Health."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "건강 앱에서 월경 기록을 추가하거나,\n설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요."
+            "value" : "건강 앱에서 월경 기록을 추가하거나,\n설정 > 개인정보 보호 > 건강에서\n미리듬의 접근 권한을 확인해 주세요."
           }
         }
       }
@@ -1030,7 +981,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow mirideum to read your period records\nfrom the Health app.\nYour body data will be handled with care."
+            "value" : "Allow Mirideum to read your period records\nfrom the Health app.\nYour health data will be handled with care."
           }
         },
         "ko" : {
@@ -1076,7 +1027,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No Permission"
+            "value" : "Permission Denied"
           }
         }
       }
@@ -1086,7 +1037,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Request Permission"
+            "value" : "Request Access"
           }
         }
       }
@@ -1096,7 +1047,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Request Permission + Load"
+            "value" : "Request Access + Load"
           }
         }
       }
@@ -1106,7 +1057,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Request Permission + Fetch + Calendar"
+            "value" : "Request Access + Load + Calendar"
           }
         }
       }
@@ -1190,14 +1141,7 @@
       }
     },
     "기록 저장 후 조회 + 캘린더" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save Record, Then Fetch + Calendar"
-          }
-        }
-      }
+
     },
     "기분이 안정되고 긍정적인 감정이 올라와요" : {
       "localizations" : {
@@ -1277,7 +1221,7 @@
         }
       }
     },
-    "뇌하수체에서 분비된 FSH(난포자극극호르몬)가 난소의 난포를 성장시키고, 성장하는 난포에서 에스트로겐이 점점 많이 분비되기 시작해요. 에스트로겐은 도파민, 세로토닌과 상호작용하면서 기분을 높이고 집중력·사고력을 향상시켜요. 뇌 기능이 실제로 활발해지는 시기라, \"오늘 머리가 잘 돌아가네\" 싶은 날이 많아요." : {
+    "뇌하수체에서 분비된 FSH(난포자극호르몬)가 난소의 난포를 성장시키고, 성장하는 난포에서 에스트로겐이 점점 많이 분비되기 시작해요. 에스트로겐은 도파민, 세로토닌과 상호작용하면서 기분을 높이고 집중력·사고력을 향상시켜요. 뇌 기능이 실제로 활발해지는 시기라, \"오늘 머리가 잘 돌아가네\" 싶은 날이 많아요." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1302,7 +1246,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fetch Again + Calendar"
+            "value" : "Load Again + Calendar"
           }
         }
       }
@@ -1674,7 +1618,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "mirideum"
+            "value" : "Mirideum"
           }
         },
         "ko" : {
@@ -1690,7 +1634,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Period records not created by mirideum cannot be edited here.\nPlease edit them directly in the Health app."
+            "value" : "Period records not created by Mirideum cannot be edited here.\nPlease edit them directly in the Health app."
           }
         }
       }
@@ -1855,7 +1799,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Social and outward-facing energy may rise"
+            "value" : "Your social energy may rise"
           }
         }
       }
@@ -1981,36 +1925,36 @@
         }
       }
     },
-    "설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요." : {
+    "설정 > 개인정보 보호 > 건강에서\n미리듬의 접근 권한을 확인해 주세요." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Check mirideum's access in\nSettings > Privacy > Health."
+            "value" : "Check Mirideum's access in\nSettings > Privacy & Security > Health."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "설정 > 개인정보 보호 > 건강에서\nMithm의 접근 권한을 확인해 주세요."
+            "value" : "설정 > 개인정보 보호 > 건강에서\n미리듬의 접근 권한을 확인해 주세요."
           }
         }
       }
     },
-    "설정 > 개인정보 보호 > 캘린더에서\nMithm의 접근 권한을 확인해 주세요." : {
+    "설정 > 개인정보 보호 > 캘린더에서\n미리듬의 접근 권한을 확인해 주세요." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Check mirideum's access in\nSettings > Privacy > Calendars."
+            "value" : "Check Mirideum's access in\nSettings > Privacy & Security > Calendars."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "설정 > 개인정보 보호 > 캘린더에서\nMithm의 접근 권한을 확인해 주세요."
+            "value" : "설정 > 개인정보 보호 > 캘린더에서\n미리듬의 접근 권한을 확인해 주세요."
           }
         }
       }
@@ -2021,7 +1965,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Turn it on in Settings > Privacy & Security > Health. Please allow permission."
+            "value" : "Allow access in Settings > Privacy & Security > Health."
           }
         },
         "ko" : {
@@ -2117,7 +2061,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "One side of the lower belly may briefly feel tight"
+            "value" : "You may feel a brief twinge or pulling sensation on one side of your lower belly"
           }
         }
       }
@@ -2256,7 +2200,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "As estrogen rises, energy and focus may increase\nYour overall rhythm may gently lift"
+            "value" : "As estrogen rises, energy and focus may increase\nYour overall rhythm may start to feel lighter"
           }
         },
         "ko" : {
@@ -2273,7 +2217,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "As estrogen peaks, you may feel more steady\nYour body rhythm may feel well aligned"
+            "value" : "As estrogen peaks, you may feel more steady\nYour body's rhythm may feel steady and in sync"
           }
         },
         "ko" : {
@@ -2353,7 +2297,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Outward-facing energy may rise, and being with people may feel more enjoyable. Confidence can increase, so presenting or having conversations may feel more natural than usual."
+            "value" : "Your social energy may rise, and spending time with others may feel more enjoyable. Confidence can increase, so presenting or having conversations may feel more natural than usual."
           }
         }
       }
@@ -2400,7 +2344,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Period Flow"
+            "value" : "Period Flow Intensity"
           }
         }
       }
@@ -2471,7 +2415,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Add Period Record to Health App"
+            "value" : "Add Period Record to the Health app"
           }
         }
       }
@@ -2688,7 +2632,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Change Period Prediction Method"
+            "value" : "Change Cycle Prediction Method"
           }
         },
         "ko" : {
@@ -2704,7 +2648,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choose how your period cycle is predicted."
+            "value" : "Choose how Mirideum predicts your cycle."
           }
         }
       }
@@ -2732,7 +2676,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "How many days are your cycle and period?"
+            "value" : "How long are your cycle and period?"
           }
         },
         "ko" : {
@@ -2749,7 +2693,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap here if you are not sure about your cycle or period length.\nmirideum will start with common values first."
+            "value" : "Tap here if you are not sure about your cycle or period length.\nMirideum will start with common values first."
           }
         }
       }
@@ -2760,7 +2704,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You can export your period and ovulation cycle to Calendar.\nOnce connected, mirideum will manage future updates for you."
+            "value" : "You can export your period and ovulation cycle to your calendar.\nOnce connected, Mirideum will manage future updates for you."
           }
         },
         "ko" : {
@@ -2794,7 +2738,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your period has been recorded."
+            "value" : "Your period has been recorded!"
           }
         },
         "ko" : {
@@ -2862,7 +2806,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your previous period end was recorded automatically."
+            "value" : "The end date of your previous period was recorded automatically!"
           }
         },
         "ko" : {
@@ -2888,7 +2832,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Confidence and expression may feel stronger"
+            "value" : "You may feel more confident and expressive"
           }
         }
       }
@@ -3113,7 +3057,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Strength and stamina may be among the highest in your cycle"
+            "value" : "Strength and stamina may peak during this phase."
           }
         }
       }
@@ -3143,7 +3087,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Body temperature may rise slightly, and more after ovulation"
+            "value" : "Body temperature may rise slightly (and more after ovulation)."
           }
         }
       }
@@ -3217,7 +3161,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Calendar Permission Status:"
+            "value" : "Calendar Access Status:"
           }
         }
       }
@@ -3245,7 +3189,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Calendar access is needed"
+            "value" : "Calendar access required"
           }
         },
         "ko" : {
@@ -3261,7 +3205,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Check/Create Calendar"
+            "value" : "Check or Create Calendar"
           }
         }
       }
@@ -3272,7 +3216,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Export to Calendar"
+            "value" : "Export to your calendar"
           }
         },
         "ko" : {
@@ -3306,7 +3250,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Could not export period records to Calendar.\nPlease try again in a moment."
+            "value" : "Could not export period records to your calendar.\nPlease try again in a moment."
           }
         },
         "ko" : {
@@ -3434,23 +3378,6 @@
         }
       }
     },
-    "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "As hormones drop, your body shifts into rest mode\nYour body slows down and resets its rhythm"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"
-          }
-        }
-      }
-    },
     "혼자 있고 싶거나, 쉬고 싶은 마음이 강해져요" : {
       "localizations" : {
         "en" : {
@@ -3494,6 +3421,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "홈"
+          }
+        }
+      }
+    },
+    "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As hormones drop, your body shifts into rest mode\nYour body slows down and resets its rhythm"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "호르몬이 낮아지며 몸이 휴식 모드로 바뀌어요\n몸이 리듬을 가다듬으며 쉬어가요"
           }
         }
       }
