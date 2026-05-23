@@ -160,6 +160,7 @@ private extension PhaseDetailSheet {
                         .foregroundStyle(.primaryBlack.opacity(0.4))
                         .rotationEffect(.degrees(isWhyExpanded ? 90 : 0))
                 }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             if isWhyExpanded {
