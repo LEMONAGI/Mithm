@@ -1540,6 +1540,82 @@ struct ArchitectureBoundaryTests {
     }
 }
 
+struct PhaseDetailLocalizationTests {
+
+    @Test("PhaseDetailSheet는 시트 문구를 semantic localization key로 관리한다")
+    func phaseDetailSheetUsesSemanticLocalizationKeys() throws {
+        let expectedLocalizations = [
+            "phase_detail.section.body.title",
+            "phase_detail.section.mood.title",
+            "phase_detail.section.tip.title",
+            "phase_detail.ovulation.warning",
+            "phase_detail.mood.why_button"
+        ]
+        let localizations = try localizableStrings()
+
+        for key in expectedLocalizations {
+            let entry = try #require(localizations[key] as? [String: Any])
+            let values = localizedValues(in: entry)
+            #expect(values["ko"]?.isEmpty == false)
+            #expect(values["en"]?.isEmpty == false)
+        }
+
+        let sheetSource = try String(contentsOf: phaseDetailSheetURL, encoding: .utf8)
+        let directLiterals = [
+            "지금 몸은 이런 느낌이에요",
+            "지금 기분은 이런 느낌이에요",
+            "리듬활용 Tip",
+            "미리듬은 배란기와 가임기를 동일한 시기로 안내합니다. 실제 가임 시기는 개인에 따라 달라질 수 있으므로, 이를 피임의 수단으로 사용하지 마십시오.",
+            "왜 이런 변화가 생길까요?"
+        ]
+
+        for literal in directLiterals {
+            #expect(!sheetSource.contains(literal))
+        }
+    }
+
+    private var projectRoot: URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+    }
+
+    private var phaseDetailSheetURL: URL {
+        projectRoot
+            .appendingPathComponent("Mithm")
+            .appendingPathComponent("Presentation")
+            .appendingPathComponent("Home")
+            .appendingPathComponent("PhaseDetailSheet.swift")
+    }
+
+    private var localizableURL: URL {
+        projectRoot
+            .appendingPathComponent("Mithm")
+            .appendingPathComponent("Resource")
+            .appendingPathComponent("Localization")
+            .appendingPathComponent("Localizable.xcstrings")
+    }
+
+    private func localizableStrings() throws -> [String: Any] {
+        let data = try Data(contentsOf: localizableURL)
+        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        return try #require(json["strings"] as? [String: Any])
+    }
+
+    private func localizedValues(in entry: [String: Any]) -> [String: String] {
+        guard let localizations = entry["localizations"] as? [String: Any] else {
+            return [:]
+        }
+
+        return localizations.reduce(into: [:]) { result, localization in
+            guard let value = (((localization.value as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String) else {
+                return
+            }
+            result[localization.key] = value
+        }
+    }
+}
+
 private struct SavedMenstrualRecord {
     let record: MenstrualRecord
     let deleteFrom: Date?

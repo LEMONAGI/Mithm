@@ -44,7 +44,7 @@ private extension PhaseDetailSheet {
             Image(systemName: "exclamationmark.circle.fill")
                 .foregroundStyle(.accent)
                 .font(.system(size: 15))
-            Text("미리듬은 배란기와 가임기를 동일한 시기로 안내합니다. 실제 가임 시기는 개인에 따라 달라질 수 있으므로, 이를 피임의 수단으로 사용하지 마십시오.")
+            Text(String(localized: "phase_detail.ovulation.warning"))
                 .font(.pretendardSemiBold(10))
                 .foregroundStyle(.gray350)
         }
@@ -74,13 +74,13 @@ private extension PhaseDetailSheet {
 
     var contentSection: some View {
         VStack(alignment: .leading, spacing: 20) {
-            sectionGroup(title: "지금 몸은 이런 느낌이에요") {
+            sectionGroup(title: String(localized: "phase_detail.section.body.title")) {
                 detailCard(section: detail.bodySection)
             }
-            sectionGroup(title: "지금 기분은 이런 느낌이에요") {
+            sectionGroup(title: String(localized: "phase_detail.section.mood.title")) {
                 moodCard
             }
-            sectionGroup(title: "리듬활용 Tip") {
+            sectionGroup(title: String(localized: "phase_detail.section.tip.title")) {
                 detailCard(section: detail.tipSection)
             }
         }
@@ -151,7 +151,7 @@ private extension PhaseDetailSheet {
                 }
             } label: {
                 HStack(spacing: 8) {
-                    Text("\n👉 왜 이런 변화가 생길까요?\n")
+                    Text(String(localized: "phase_detail.mood.why_button"))
                         .font(.pretendardBold(14))
                         .foregroundStyle(.primaryBlack)
                     Spacer()

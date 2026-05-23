@@ -29,7 +29,8 @@ struct OnboardingStepContainer<Content: View>: View {
                 .lineLimit(2)
                 .lineSpacing(4)
                 .padding(.horizontal, 24)
-                .fixedSize()
+                .frame(maxWidth: .infinity)
+                .fixedSize(horizontal: false, vertical: true)
 
             Spacer().frame(height: 50)
 
@@ -38,6 +39,9 @@ struct OnboardingStepContainer<Content: View>: View {
                 .foregroundStyle(.textPrimary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
+                .padding(.horizontal, 24)
+                .frame(maxWidth: .infinity)
+                .fixedSize(horizontal: false, vertical: true)
 
             content()
 
@@ -51,6 +55,9 @@ struct OnboardingStepContainer<Content: View>: View {
                         Text(secondaryTitle)
                             .font(.pretendardBold(18))
                             .foregroundStyle(Color(.primaryBlack))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                            .allowsTightening(true)
                             .frame(width: 134)
                             .frame(height: 52)
                             .background(.white)
@@ -70,6 +77,9 @@ struct OnboardingStepContainer<Content: View>: View {
                             Text(buttonTitle)
                                 .font(.pretendardBold(18))
                                 .foregroundStyle(.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                                .allowsTightening(true)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
@@ -93,6 +103,9 @@ struct OnboardingStepContainer<Content: View>: View {
                         Text(buttonTitle)
                             .font(.pretendardBold(18))
                             .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                            .allowsTightening(true)
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)

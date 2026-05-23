@@ -107,6 +107,10 @@ private extension HomeView {
                 Text(homeViewModel.currentPhasePresentation.homeTitleName)
                     .font(.highlight1)
                     .foregroundStyle(.primaryBlack)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.55)
+                    .allowsTightening(true)
+                    .layoutPriority(1)
                 Button {
                     showPhaseDetail = true
                 } label: {
