@@ -19,13 +19,13 @@
     {
       "layers" : [
         {
-          "image-name" : "Character_Mirideum.png",
-          "name" : "Character_Mirideum",
+          "image-name" : "Frame 1000002118.png",
+          "name" : "Frame 1000002118",
           "position" : {
-            "scale" : 1.7,
+            "scale" : 2,
             "translation-in-points" : [
-              0,
-              0
+              55.375,
+              839.3515625
             ]
           }
         }
