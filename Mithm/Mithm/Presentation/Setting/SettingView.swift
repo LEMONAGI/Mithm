@@ -16,18 +16,19 @@ struct SettingView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("설정")
-                    .font(.pretendardBold(36))
-                    .foregroundStyle(.textPrimary)
-                    .padding(.bottom, 26)
-                ForEach(SettingMenuItem.allCases, id: \.self) { item in
-                    settingMenuRow(for: item)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("설정")
+                        .font(.pretendardBold(36))
+                        .foregroundStyle(.textPrimary)
+                        .padding(.bottom, 26)
+                    ForEach(SettingMenuItem.allCases, id: \.self) { item in
+                        settingMenuRow(for: item)
+                    }
                 }
-                Spacer()
+                .padding(.top, 26)
+                .padding(.horizontal, 20)
             }
-            .padding(.top, 26)
-            .padding(.horizontal, 20)
             .navigationDestination(isPresented: $showPredictionMethodSetting) {
                 PredictionMethodSettingView()
                     .environmentObject(settingViewModel)

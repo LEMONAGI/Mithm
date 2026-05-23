@@ -70,6 +70,7 @@ private extension PhaseDetailSheet {
                     .multilineTextAlignment(.trailing)
                     .minimumScaleFactor(0.6)
                     .padding(.trailing, 5)
+                    .minimumScaleFactor(0.6)
             }
         }
     }
