@@ -11,9 +11,6 @@ struct PhaseDetailSheet: View {
 
     private var presentation: PhasePresentation { phase.presentation }
     private var detail: PhaseDetailContent { phase.detailContent }
-    private let sourceColumns = [
-        GridItem(.adaptive(minimum: 126), spacing: 8, alignment: .leading)
-    ]
 
     var body: some View {
         ScrollView {
@@ -112,13 +109,12 @@ private extension PhaseDetailSheet {
             Text(String(localized: "phase_detail.sources.title"))
                 .font(.pretendardSemiBold(12))
                 .foregroundStyle(.textSecondary)
-            LazyVGrid(columns: sourceColumns, alignment: .leading, spacing: 8) {
+            SourceLinkFlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
                 ForEach(MedicalSourceLink.allCases, id: \.self) { source in
                     Link(destination: source.url) {
                         Text(source.title)
                             .font(.pretendardSemiBold(12))
                             .foregroundStyle(.textPrimary)
-                            .lineLimit(1)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 7)
                             .background(
@@ -226,6 +222,114 @@ private extension PhaseDetailSheet {
                 .shadow(color: .buttonshadow, radius: 1, x: 0, y: 2)
         )
     }
+}
+
+private struct SourceLinkFlowLayout: Layout {
+    let horizontalSpacing: CGFloat
+    let verticalSpacing: CGFloat
+
+    init(horizontalSpacing: CGFloat, verticalSpacing: CGFloat) {
+        self.horizontalSpacing = horizontalSpacing
+        self.verticalSpacing = verticalSpacing
+    }
+
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout Void
+    ) -> CGSize {
+        let maxWidth = proposal.width ?? .greatestFiniteMagnitude
+        let rows = makeRows(for: subviews, maxWidth: maxWidth)
+        let height = rows.enumerated().reduce(CGFloat.zero) { total, row in
+            total + row.element.size.height + (row.offset == 0 ? 0 : verticalSpacing)
+        }
+
+        return CGSize(width: proposal.width ?? rows.map(\.size.width).max() ?? 0, height: height)
+    }
+
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout Void
+    ) {
+        let rows = makeRows(for: subviews, maxWidth: bounds.width)
+        var y = bounds.minY
+
+        for row in rows {
+            var x = bounds.minX
+
+            for item in row.items {
+                subviews[item.index].place(
+                    at: CGPoint(x: x, y: y),
+                    anchor: .topLeading,
+                    proposal: ProposedViewSize(width: item.size.width, height: item.size.height)
+                )
+                x += item.size.width + horizontalSpacing
+            }
+
+            y += row.size.height + verticalSpacing
+        }
+    }
+
+    private func makeRows(for subviews: Subviews, maxWidth: CGFloat) -> [SourceLinkFlowRow] {
+        guard maxWidth > 0 else { return [] }
+
+        var rows: [SourceLinkFlowRow] = []
+        var currentItems: [SourceLinkFlowItem] = []
+        var currentWidth: CGFloat = 0
+        var currentHeight: CGFloat = 0
+
+        for index in subviews.indices {
+            let measuredSize = subviews[index].sizeThatFits(.unspecified)
+            let itemSize = CGSize(
+                width: min(measuredSize.width, maxWidth),
+                height: measuredSize.height
+            )
+            let nextWidth = currentItems.isEmpty
+                ? itemSize.width
+                : currentWidth + horizontalSpacing + itemSize.width
+
+            if !currentItems.isEmpty, nextWidth > maxWidth {
+                rows.append(
+                    SourceLinkFlowRow(
+                        items: currentItems,
+                        size: CGSize(width: currentWidth, height: currentHeight)
+                    )
+                )
+                currentItems = []
+                currentWidth = 0
+                currentHeight = 0
+            }
+
+            currentItems.append(SourceLinkFlowItem(index: index, size: itemSize))
+            currentWidth = currentItems.count == 1
+                ? itemSize.width
+                : currentWidth + horizontalSpacing + itemSize.width
+            currentHeight = max(currentHeight, itemSize.height)
+        }
+
+        if !currentItems.isEmpty {
+            rows.append(
+                SourceLinkFlowRow(
+                    items: currentItems,
+                    size: CGSize(width: currentWidth, height: currentHeight)
+                )
+            )
+        }
+
+        return rows
+    }
+}
+
+private struct SourceLinkFlowRow {
+    let items: [SourceLinkFlowItem]
+    let size: CGSize
+}
+
+private struct SourceLinkFlowItem {
+    let index: Int
+    let size: CGSize
 }
 
 private enum MedicalSourceLink: CaseIterable {

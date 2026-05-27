@@ -1610,6 +1610,18 @@ struct PhaseDetailLocalizationTests {
         }
     }
 
+    @Test("PhaseDetailSheet의 출처 칩은 고정 열 그리드가 아니라 내용 크기 기반 줄바꿈 레이아웃을 사용한다")
+    func phaseDetailSheetSourceLinksWrapByContentSize() throws {
+        let sheetSource = try String(contentsOf: phaseDetailSheetURL, encoding: .utf8)
+        let sectionStart = try #require(sheetSource.range(of: "var sourceLinksSection: some View"))
+        let sectionEnd = try #require(sheetSource[sectionStart.upperBound...].range(of: "func sectionGroup"))
+        let sourceLinksSection = sheetSource[sectionStart.lowerBound..<sectionEnd.lowerBound]
+
+        #expect(sourceLinksSection.contains("SourceLinkFlowLayout"))
+        #expect(!sourceLinksSection.contains("LazyVGrid(columns: sourceColumns"))
+        #expect(!sourceLinksSection.contains(".lineLimit(1)"))
+    }
+
     @Test("변경된 PhaseDetailContent 문구는 영어 로컬라이제이션을 가진다")
     func updatedPhaseDetailContentCopyHasEnglishLocalization() throws {
         let expectedLocalizations = [
