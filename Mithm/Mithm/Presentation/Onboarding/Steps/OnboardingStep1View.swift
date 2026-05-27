@@ -12,9 +12,9 @@ struct OnboardingStep1View: View {
     var body: some View {
         OnboardingStepContainer(
             step: .step1,
-            title: "더 정확한\n리듬을 이해하기 위해",
-            description: "건강앱의 월경 기록을\n미리듬이 가져올 수 있게 허용해 주세요.\n몸의 기록은 안전하게 다룰게요.",
-            buttonTitle: "권한 요청하기",
+            title: "건강 앱의 월경 기록을\n연결해요",
+            description: "미리듬은 월경 기록을 바탕으로\n주기와 캘린더 표시를 계산해요.\n다음 화면에서 공유할 항목을 직접 선택할 수 있어요.",
+            buttonTitle: "다음",
             isButtonEnabled: !viewModel.isRequestingAuthorization,
             isLoading: viewModel.isRequestingAuthorization,
             onTapButton: {

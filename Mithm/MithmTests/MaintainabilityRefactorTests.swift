@@ -1616,6 +1616,146 @@ struct PhaseDetailLocalizationTests {
     }
 }
 
+struct OnboardingHealthPermissionCopyTests {
+
+    @Test("HealthKit 사전 안내 버튼은 허용 유도 문구 대신 다음 문구를 사용한다")
+    func healthPermissionIntroButtonUsesNeutralNextCopy() throws {
+        let localizations = try localizableStrings()
+        let entry = try #require(localizations["다음"] as? [String: Any])
+        let values = localizedValues(in: entry)
+
+        #expect(values["ko"] == "다음")
+        #expect(values["en"] == "Next")
+
+        for value in values.values {
+            assertDoesNotContainPermissionPromptingTerms(value)
+        }
+
+        let source = try String(contentsOf: onboardingStep1ViewURL, encoding: .utf8)
+        #expect(source.contains(#"buttonTitle: "다음""#))
+        #expect(!source.contains(#"buttonTitle: "권한 요청하기""#))
+    }
+
+    @Test("HealthKit 사전 안내 화면은 다음 화면에서 직접 선택한다는 설명을 사용한다")
+    func healthPermissionIntroExplainsUserChoiceOnNextScreen() throws {
+        let localizations = try localizableStrings()
+        let titleEntry = try #require(localizations["건강 앱의 월경 기록을\n연결해요"] as? [String: Any])
+        let descriptionEntry = try #require(localizations["미리듬은 월경 기록을 바탕으로\n주기와 캘린더 표시를 계산해요.\n다음 화면에서 공유할 항목을 직접 선택할 수 있어요."] as? [String: Any])
+        let titleValues = localizedValues(in: titleEntry)
+        let descriptionValues = localizedValues(in: descriptionEntry)
+
+        #expect(titleValues["en"] == "Connect your Apple Health\nperiod records")
+        #expect(descriptionValues["en"] == "Mirideum uses period records to calculate cycle insights and calendar views.\nOn the next screen, you can choose which items to share.")
+
+        let source = try String(contentsOf: onboardingStep1ViewURL, encoding: .utf8)
+
+        #expect(source.contains("건강 앱의 월경 기록을\\n연결해요"))
+        #expect(source.contains("다음 화면에서 공유할 항목을 직접 선택할 수 있어요."))
+        #expect(!source.contains("허용해 주세요"))
+        #expect(!source.contains("권한 요청하기"))
+    }
+
+    @Test("HealthKit 권한 실패 알럿은 허용 요청 표현을 사용하지 않는다")
+    func healthPermissionFailureAlertUsesNeutralCopy() throws {
+        let source = try String(contentsOf: onboardingViewModelURL, encoding: .utf8)
+        let healthKitErrorSource = try String(contentsOf: healthKitErrorURL, encoding: .utf8)
+
+        #expect(source.contains("설정에서 건강 앱 접근 범위를 다시 확인할 수 있어요."))
+        #expect(!source.contains("권한을 허용해 주세요"))
+        #expect(healthKitErrorSource.contains("건강 앱 접근 범위를 확인해 주세요."))
+        #expect(!healthKitErrorSource.contains("건강 앱 접근 권한을 허용해 주세요."))
+    }
+
+    @Test("온보딩 저장 실패 알럿은 캘린더 내보내기 여부에 맞는 접근 범위 문구를 사용한다")
+    func onboardingSaveFailureAlertsUseContextualAccessCopy() throws {
+        let localizations = try localizableStrings()
+        let calendarExportEntry = try #require(localizations["건강 앱 또는 캘린더 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요."] as? [String: Any])
+        let healthOnlyEntry = try #require(localizations["건강 앱 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요."] as? [String: Any])
+        let calendarExportValues = localizedValues(in: calendarExportEntry)
+        let healthOnlyValues = localizedValues(in: healthOnlyEntry)
+        let source = try String(contentsOf: onboardingViewModelURL, encoding: .utf8)
+
+        #expect(source.contains("건강 앱 또는 캘린더 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요."))
+        #expect(source.contains("건강 앱 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요."))
+        #expect(!source.contains("건강 앱 권한을 확인하거나 잠시 후 다시 시도해 주세요."))
+        #expect(calendarExportValues["en"] == "Review Apple Health or calendar access, then try again in a moment.")
+        #expect(healthOnlyValues["en"] == "Review Apple Health access, then try again in a moment.")
+    }
+
+    private var projectRoot: URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+    }
+
+    private var onboardingStep1ViewURL: URL {
+        projectRoot
+            .appendingPathComponent("Mithm")
+            .appendingPathComponent("Presentation")
+            .appendingPathComponent("Onboarding")
+            .appendingPathComponent("Steps")
+            .appendingPathComponent("OnboardingStep1View.swift")
+    }
+
+    private var onboardingViewModelURL: URL {
+        projectRoot
+            .appendingPathComponent("Mithm")
+            .appendingPathComponent("Presentation")
+            .appendingPathComponent("Onboarding")
+            .appendingPathComponent("OnboardingViewModel.swift")
+    }
+
+    private var healthKitErrorURL: URL {
+        projectRoot
+            .appendingPathComponent("Mithm")
+            .appendingPathComponent("Domain")
+            .appendingPathComponent("Health")
+            .appendingPathComponent("HealthKitError.swift")
+    }
+
+    private var localizableURL: URL {
+        projectRoot
+            .appendingPathComponent("Mithm")
+            .appendingPathComponent("Resource")
+            .appendingPathComponent("Localization")
+            .appendingPathComponent("Localizable.xcstrings")
+    }
+
+    private func localizableStrings() throws -> [String: Any] {
+        let data = try Data(contentsOf: localizableURL)
+        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        return try #require(json["strings"] as? [String: Any])
+    }
+
+    private func localizedValues(in entry: [String: Any]) -> [String: String] {
+        guard let localizations = entry["localizations"] as? [String: Any] else {
+            return [:]
+        }
+
+        return localizations.reduce(into: [:]) { result, localization in
+            guard let value = (((localization.value as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String) else {
+                return
+            }
+            result[localization.key] = value
+        }
+    }
+
+    private func assertDoesNotContainPermissionPromptingTerms(_ value: String) {
+        let forbiddenTerms = [
+            "Allow",
+            "Grant",
+            "Permission",
+            "Authorize",
+            "권한",
+            "허용"
+        ]
+
+        for term in forbiddenTerms {
+            #expect(!value.localizedCaseInsensitiveContains(term))
+        }
+    }
+}
+
 private struct SavedMenstrualRecord {
     let record: MenstrualRecord
     let deleteFrom: Date?

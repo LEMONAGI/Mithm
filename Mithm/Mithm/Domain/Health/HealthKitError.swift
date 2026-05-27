@@ -67,7 +67,7 @@ extension HealthKitError: AlertPresentable {
         case .notAvailableOnDevice:
             return String(localized: "이 기기에서는 건강 앱이 지원되지 않아요.")
         case .authorizationNotDetermined:
-            return String(localized: "건강 앱 접근 권한을 허용해 주세요.")
+            return String(localized: "건강 앱 접근 범위를 확인해 주세요.")
         case .authorizationDenied:
             return String(localized: "설정 > 개인정보 보호 > 건강에서\n미리듬의 접근 권한을 확인해 주세요.")
         case .readFailed:

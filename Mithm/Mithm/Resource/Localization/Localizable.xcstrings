@@ -870,12 +870,36 @@
         }
       }
     },
-    "건강 앱 권한을 확인하거나 잠시 후 다시 시도해 주세요." : {
+    "건강 앱 또는 캘린더 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Check your Health app permissions or try again in a moment."
+            "value" : "Review Apple Health or calendar access, then try again in a moment."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "건강 앱 또는 캘린더 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
+    "건강 앱 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review Apple Health access, then try again in a moment."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "건강 앱 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요."
           }
         }
       }
@@ -890,19 +914,19 @@
         }
       }
     },
-    "건강 앱 접근 권한을 허용해 주세요." : {
+    "건강 앱 접근 범위를 확인해 주세요." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow access to the Health app."
+            "value" : "Review Apple Health access."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "건강 앱 접근 권한을 허용해 주세요."
+            "value" : "건강 앱 접근 범위를 확인해 주세요."
           }
         }
       }
@@ -975,19 +999,19 @@
         }
       }
     },
-    "건강앱의 월경 기록을\n미리듬이 가져올 수 있게 허용해 주세요.\n몸의 기록은 안전하게 다룰게요." : {
+    "건강 앱의 월경 기록을\n연결해요" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow Mirideum to read your period records from the Health app.\nYour health data will be handled with care."
+            "value" : "Connect your Apple Health\nperiod records"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "건강앱의 월경 기록을\n미리듬이 가져올 수 있게 허용해 주세요.\n몸의 기록은 안전하게 다룰게요."
+            "value" : "건강 앱의 월경 기록을\n연결해요"
           }
         }
       }
@@ -1058,23 +1082,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Request Access + Load + Calendar"
-          }
-        }
-      }
-    },
-    "권한 요청하기" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allow Access"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "권한 요청하기"
           }
         }
       }
@@ -1281,6 +1288,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음으로"
+          }
+        }
+      }
+    },
+    "다음" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음"
           }
         }
       }
@@ -1656,6 +1680,23 @@
         }
       }
     },
+    "미리듬은 월경 기록을 바탕으로\n주기와 캘린더 표시를 계산해요.\n다음 화면에서 공유할 항목을 직접 선택할 수 있어요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum uses period records to calculate cycle insights and calendar views.\nOn the next screen, you can choose which items to share."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리듬은 월경 기록을 바탕으로\n주기와 캘린더 표시를 계산해요.\n다음 화면에서 공유할 항목을 직접 선택할 수 있어요."
+          }
+        }
+      }
+    },
     "발표, 면접, 중요한 미팅처럼 인상을 남겨야 하는 자리에 잘 맞는 시기예요." : {
       "localizations" : {
         "en" : {
@@ -1976,19 +2017,19 @@
         }
       }
     },
-    "설정 > 개인정보 보호 및 보안 > 건강에서 활성화해 주세요. 권한을 허용해 주세요." : {
+    "설정에서 건강 앱 접근 범위를 다시 확인할 수 있어요." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow access in Settings > Privacy & Security > Health."
+            "value" : "You can review Apple Health access in Settings."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "설정 > 개인정보 보호 및 보안 > 건강에서 활성화해 주세요. 권한을 허용해 주세요."
+            "value" : "설정에서 건강 앱 접근 범위를 다시 확인할 수 있어요."
           }
         }
       }

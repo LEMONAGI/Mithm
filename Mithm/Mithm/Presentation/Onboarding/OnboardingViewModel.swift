@@ -92,7 +92,7 @@ final class OnboardingViewModel: ObservableObject {
         } catch {
             permissionAlert = PermissionAlert(
                 title: String(localized: "건강 앱 권한이 필요해요"),
-                message: String(localized: "설정 > 개인정보 보호 및 보안 > 건강에서 활성화해 주세요. 권한을 허용해 주세요.")
+                message: String(localized: "설정에서 건강 앱 접근 범위를 다시 확인할 수 있어요.")
             )
         }
     }
@@ -112,7 +112,7 @@ final class OnboardingViewModel: ObservableObject {
         } catch {
             permissionAlert = PermissionAlert(
                 title: String(localized: "저장에 실패했어요"),
-                message: String(localized: "건강 앱 권한을 확인하거나 잠시 후 다시 시도해 주세요.")
+                message: String(localized: "건강 앱 또는 캘린더 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요.")
             )
         }
     }
@@ -136,7 +136,7 @@ final class OnboardingViewModel: ObservableObject {
         } catch {
             permissionAlert = PermissionAlert(
                 title: String(localized: "저장에 실패했어요"),
-                message: String(localized: "건강 앱 권한을 확인하거나 잠시 후 다시 시도해 주세요.")
+                message: String(localized: "건강 앱 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요.")
             )
         }
     }
