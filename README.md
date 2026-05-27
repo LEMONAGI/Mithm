@@ -48,13 +48,11 @@ Apple 건강 앱의 월경 기록을 바탕으로 현재 주기 흐름을 보여
 5. 캘린더에서 기록과 예상 흐름을 살펴봅니다.
 6. 원하면 설정에서 iOS 캘린더 내보내기를 켭니다.
 
-## 스크린샷
+## 앱스토어 이미지
+| | | | | |
+|-|-|-|-|-|
+|<img alt="6 9_1" src="https://github.com/user-attachments/assets/5cc92691-fa76-4ffd-9a97-ba2668d182ee" />|<img alt="6 9_2" src="https://github.com/user-attachments/assets/8411d97f-4b61-4e9c-b8f5-9a232baab7a3" />|<img alt="6 9_3" src="https://github.com/user-attachments/assets/188d2454-eba7-4926-b034-7fd92be5ebb2" />|<img alt="6 9_4" src="https://github.com/user-attachments/assets/d9d7b894-bcfd-4440-b3cf-c20f4fa61ffa" />|<img alt="6 9_5" src="https://github.com/user-attachments/assets/fe4657e8-73cd-4b12-bb30-8b54d010c8f0" />|
 
-스크린샷은 준비 중입니다. 추후 아래 영역에 홈, 캘린더, 설정 화면 이미지를 추가할 예정입니다.
-
-| 홈 | 캘린더 | 설정 |
-| --- | --- | --- |
-| 준비 중 | 준비 중 | 준비 중 |
 
 ## 데이터와 권한
 
@@ -69,4 +67,3 @@ Apple 건강 앱의 월경 기록을 바탕으로 현재 주기 흐름을 보여
 - 시스템 연동: HealthKit, EventKit
 - 아키텍처: Clean Architecture + MVVM
 - 외부 의존성: 없음
-- Xcode 프로젝트: `Mithm/Mithm.xcodeproj`
