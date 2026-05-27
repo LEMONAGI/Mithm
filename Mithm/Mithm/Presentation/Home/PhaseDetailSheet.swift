@@ -30,6 +30,7 @@ struct PhaseDetailSheet: View {
                     .padding(.bottom, 48)
             }
         }
+        .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
         .background(presentation.tertiaryColor)
     }
@@ -76,17 +77,29 @@ private extension PhaseDetailSheet {
     }
 
     var contentSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 0) {
             sectionGroup(title: String(localized: "phase_detail.section.body.title")) {
                 detailCard(section: detail.bodySection)
             }
+            .padding(.bottom, 20)
             sectionGroup(title: String(localized: "phase_detail.section.mood.title")) {
                 moodCard
             }
+            .padding(.bottom, 20)
             sectionGroup(title: String(localized: "phase_detail.section.tip.title")) {
                 detailCard(section: detail.tipSection)
             }
+            .padding(.bottom, 16)
+            footerDisclaimer
         }
+    }
+
+    var footerDisclaimer: some View {
+        Text(String(localized: "phase_detail.footer.disclaimer"))
+            .font(.pretendardLight(12))
+            .foregroundStyle(.textSecondary)
+            .lineSpacing(2)
+            .padding(.horizontal, 19)
     }
 
     func sectionGroup<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -104,7 +117,7 @@ private extension PhaseDetailSheet {
             Text(section.description)
                 .font(.pretendardRegular(14))
                 .foregroundStyle(.primaryBlack)
-                .lineSpacing(4)
+                .lineSpacing(5)
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(section.bullets, id: \.self) { bullet in
                     HStack(alignment: .top, spacing: 8) {
@@ -114,7 +127,7 @@ private extension PhaseDetailSheet {
                         Text(bullet)
                             .font(.pretendardRegular(14))
                             .foregroundStyle(.primaryBlack)
-                            .lineSpacing(4)
+                            .lineSpacing(5)
                     }
                 }
             }
@@ -134,7 +147,7 @@ private extension PhaseDetailSheet {
             Text(detail.moodSection.description)
                 .font(.pretendardRegular(14))
                 .foregroundStyle(.primaryBlack)
-                .lineSpacing(4)
+                .lineSpacing(5)
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(detail.moodSection.bullets, id: \.self) { bullet in
                     HStack(alignment: .top, spacing: 8) {
@@ -144,7 +157,7 @@ private extension PhaseDetailSheet {
                         Text(bullet)
                             .font(.pretendardRegular(14))
                             .foregroundStyle(.primaryBlack)
-                            .lineSpacing(2)
+                            .lineSpacing(5)
                     }
                 }
             }
@@ -169,8 +182,8 @@ private extension PhaseDetailSheet {
             if isWhyExpanded {
                 Text(detail.whyContent)
                     .font(.pretendardRegular(14))
-                    .foregroundStyle(.primaryBlack.opacity(0.85))
-                    .lineSpacing(4)
+                    .foregroundStyle(.primaryBlack)
+                    .lineSpacing(5)
                     .padding(.top, 4)
             }
         }
