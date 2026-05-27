@@ -569,13 +569,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This content is based on information from the Office on Women's Health, NICHD, the American College of Obstetricians and Gynecologists (ACOG), and Mayo Clinic. This information is for educational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
+            "value" : "This content is based on information from the Office on Women's Health, NICHD, the American College of Obstetricians and Gynecologists (ACOG), and Mayo Clinic. This information is for educational and informational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "본 콘텐츠는 Office on Women's Health, NICHD, ACOG(미국산부인과학회), Mayo Clinic의 자료를 바탕으로 작성되었습니다. 이 정보는 오직 교육(정보제공) 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다."
+            "value" : "본 콘텐츠는 Office on Women's Health, NICHD, ACOG(미국산부인과학회), Mayo Clinic의 자료를 바탕으로 작성되었습니다. 이 정보는 오직 교육 및 정보제공 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다."
           }
         }
       }
@@ -2107,6 +2107,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사용자 기록에 기반한 실제 월경 기간입니다."
+          }
+        }
+      }
+    },
+    "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum's cycle tracking uses period records from Apple Health."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요."
           }
         }
       }

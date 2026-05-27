@@ -12,8 +12,8 @@ struct OnboardingStep1View: View {
     var body: some View {
         OnboardingStepContainer(
             step: .step1,
-            title: "건강 앱의 월경 기록을\n연결해요",
-            description: "미리듬은 월경 기록을 바탕으로\n주기와 캘린더 표시를 계산해요.\n다음 화면에서 공유할 항목을 직접 선택할 수 있어요.",
+            title: "더 정확한\n리듬을 이해하기 위해",
+            description: "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요.",
             buttonTitle: "다음",
             isButtonEnabled: !viewModel.isRequestingAuthorization,
             isLoading: viewModel.isRequestingAuthorization,

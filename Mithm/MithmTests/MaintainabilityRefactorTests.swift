@@ -1569,8 +1569,8 @@ struct PhaseDetailLocalizationTests {
             "미리듬은 배란기와 가임기를 동일한 시기로 안내합니다. 실제 가임 시기는 개인에 따라 달라질 수 있으므로, 이를 피임의 수단으로 사용하지 마십시오.",
             "왜 이런 변화가 생길까요?",
             "자료 출처",
-            "본 콘텐츠는 Office on Women's Health, NICHD, ACOG(미국산부인과학회), Mayo Clinic의 자료를 바탕으로 작성되었습니다. 이 정보는 오직 교육(정보제공) 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다.",
-            "This content is based on information from the Office on Women's Health, NICHD, the American College of Obstetricians and Gynecologists (ACOG), and Mayo Clinic. This information is for educational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
+            "본 콘텐츠는 Office on Women's Health, NICHD, ACOG(미국산부인과학회), Mayo Clinic의 자료를 바탕으로 작성되었습니다. 이 정보는 오직 교육 및 정보제공 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다.",
+            "This content is based on information from the Office on Women's Health, NICHD, the American College of Obstetricians and Gynecologists (ACOG), and Mayo Clinic. This information is for educational and informational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
         ]
 
         for literal in directLiterals {
@@ -1712,18 +1712,18 @@ struct OnboardingHealthPermissionCopyTests {
     @Test("HealthKit 사전 안내 화면은 다음 화면에서 직접 선택한다는 설명을 사용한다")
     func healthPermissionIntroExplainsUserChoiceOnNextScreen() throws {
         let localizations = try localizableStrings()
-        let titleEntry = try #require(localizations["건강 앱의 월경 기록을\n연결해요"] as? [String: Any])
-        let descriptionEntry = try #require(localizations["미리듬은 월경 기록을 바탕으로\n주기와 캘린더 표시를 계산해요.\n다음 화면에서 공유할 항목을 직접 선택할 수 있어요."] as? [String: Any])
+        let titleEntry = try #require(localizations["더 정확한\n리듬을 이해하기 위해"] as? [String: Any])
+        let descriptionEntry = try #require(localizations["미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요."] as? [String: Any])
         let titleValues = localizedValues(in: titleEntry)
         let descriptionValues = localizedValues(in: descriptionEntry)
 
-        #expect(titleValues["en"] == "Connect your Apple Health\nperiod records")
-        #expect(descriptionValues["en"] == "Mirideum uses period records to calculate cycle insights and calendar views.\nOn the next screen, you can choose which items to share.")
+        #expect(titleValues["en"] == "To understand you\nmore accurately")
+        #expect(descriptionValues["en"] == "Mirideum's cycle tracking uses period records from Apple Health.")
 
         let source = try String(contentsOf: onboardingStep1ViewURL, encoding: .utf8)
 
-        #expect(source.contains("건강 앱의 월경 기록을\\n연결해요"))
-        #expect(source.contains("다음 화면에서 공유할 항목을 직접 선택할 수 있어요."))
+        #expect(source.contains("더 정확한\\n리듬을 이해하기 위해"))
+        #expect(source.contains("미리듬의 주기 추적 기능은\\nApple 건강 앱의 월경 기록을 바탕으로 작동해요."))
         #expect(!source.contains("허용해 주세요"))
         #expect(!source.contains("권한 요청하기"))
     }
