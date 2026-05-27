@@ -1568,12 +1568,45 @@ struct PhaseDetailLocalizationTests {
             "리듬활용 Tip",
             "미리듬은 배란기와 가임기를 동일한 시기로 안내합니다. 실제 가임 시기는 개인에 따라 달라질 수 있으므로, 이를 피임의 수단으로 사용하지 마십시오.",
             "왜 이런 변화가 생길까요?",
-            "본 콘텐츠는 ACOG(미국산부인과학회), NHS, Mayo Clinic 등의 가이드라인을 바탕으로 작성되었습니다. 이 정보는 오직 교육(정보제공) 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다.",
-            "This content is derived from guidelines by the American College of Obstetricians and Gynecologists (ACOG), NHS, and Mayo Clinic. This information is for educational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
+            "자료 출처",
+            "본 콘텐츠는 Office on Women's Health, NICHD, ACOG(미국산부인과학회), Mayo Clinic의 자료를 바탕으로 작성되었습니다. 이 정보는 오직 교육(정보제공) 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다.",
+            "This content is based on information from the Office on Women's Health, NICHD, the American College of Obstetricians and Gynecologists (ACOG), and Mayo Clinic. This information is for educational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
         ]
 
         for literal in directLiterals {
             #expect(!sheetSource.contains(literal))
+        }
+    }
+
+    @Test("PhaseDetailSheet는 사용자가 확인할 수 있는 의학 정보 출처 링크를 제공한다")
+    func phaseDetailSheetProvidesMedicalSourceLinks() throws {
+        let expectedLocalizations = [
+            "phase_detail.sources.title",
+            "phase_detail.sources.owh",
+            "phase_detail.sources.nichd",
+            "phase_detail.sources.acog_pms",
+            "phase_detail.sources.mayo_cramps"
+        ]
+        let expectedURLs = [
+            "https://womenshealth.gov/menstrual-cycle",
+            "https://www.nichd.nih.gov/health/topics/factsheets/menstruation",
+            "https://www.acog.org/womens-health/faqs/premenstrual-syndrome",
+            "https://www.mayoclinic.org/diseases-conditions/menstrual-cramps/diagnosis-treatment/drc-20374944"
+        ]
+        let localizations = try localizableStrings()
+        let sheetSource = try String(contentsOf: phaseDetailSheetURL, encoding: .utf8)
+
+        #expect(sheetSource.contains("Link(destination: source.url)"))
+
+        for key in expectedLocalizations {
+            let entry = try #require(localizations[key] as? [String: Any])
+            let values = localizedValues(in: entry)
+            #expect(values["ko"]?.isEmpty == false)
+            #expect(values["en"]?.isEmpty == false)
+        }
+
+        for url in expectedURLs {
+            #expect(sheetSource.contains(url))
         }
     }
 

@@ -569,13 +569,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This content is derived from guidelines by the American College of Obstetricians and Gynecologists (ACOG), NHS, and Mayo Clinic. This information is for educational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
+            "value" : "This content is based on information from the Office on Women's Health, NICHD, the American College of Obstetricians and Gynecologists (ACOG), and Mayo Clinic. This information is for educational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "본 콘텐츠는 ACOG(미국산부인과학회), NHS, Mayo Clinic 등의 가이드라인을 바탕으로 작성되었습니다. 이 정보는 오직 교육(정보제공) 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다."
+            "value" : "본 콘텐츠는 Office on Women's Health, NICHD, ACOG(미국산부인과학회), Mayo Clinic의 자료를 바탕으로 작성되었습니다. 이 정보는 오직 교육(정보제공) 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다."
           }
         }
       }
@@ -593,6 +593,91 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "미리듬은 배란기와 가임기를 동일한 시기로 안내합니다. 실제 가임 시기는 개인에 따라 달라질 수 있으므로, 이를 피임의 수단으로 사용하지 마십시오."
+          }
+        }
+      }
+    },
+    "phase_detail.sources.acog_pms" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ACOG PMS"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ACOG PMS"
+          }
+        }
+      }
+    },
+    "phase_detail.sources.mayo_cramps" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mayo Clinic Cramps"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mayo Clinic 월경통"
+          }
+        }
+      }
+    },
+    "phase_detail.sources.nichd" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NICHD Menstruation"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NICHD 월경"
+          }
+        }
+      }
+    },
+    "phase_detail.sources.owh" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Office on Women's Health"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Office on Women's Health"
+          }
+        }
+      }
+    },
+    "phase_detail.sources.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sources"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자료 출처"
           }
         }
       }

@@ -11,6 +11,9 @@ struct PhaseDetailSheet: View {
 
     private var presentation: PhasePresentation { phase.presentation }
     private var detail: PhaseDetailContent { phase.detailContent }
+    private let sourceColumns = [
+        GridItem(.adaptive(minimum: 126), spacing: 8, alignment: .leading)
+    ]
 
     var body: some View {
         ScrollView {
@@ -91,6 +94,8 @@ private extension PhaseDetailSheet {
             }
             .padding(.bottom, 16)
             footerDisclaimer
+                .padding(.bottom, 14)
+            sourceLinksSection
         }
     }
 
@@ -100,6 +105,31 @@ private extension PhaseDetailSheet {
             .foregroundStyle(.textSecondary)
             .lineSpacing(2)
             .padding(.horizontal, 19)
+    }
+
+    var sourceLinksSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(String(localized: "phase_detail.sources.title"))
+                .font(.pretendardSemiBold(12))
+                .foregroundStyle(.textSecondary)
+            LazyVGrid(columns: sourceColumns, alignment: .leading, spacing: 8) {
+                ForEach(MedicalSourceLink.allCases, id: \.self) { source in
+                    Link(destination: source.url) {
+                        Text(source.title)
+                            .font(.pretendardSemiBold(12))
+                            .foregroundStyle(.textPrimary)
+                            .lineLimit(1)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(
+                                Capsule()
+                                    .fill(Color.primaryWhite.opacity(0.72))
+                            )
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 19)
     }
 
     func sectionGroup<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -195,6 +225,39 @@ private extension PhaseDetailSheet {
                 .fill(Color.primaryWhite)
                 .shadow(color: .buttonshadow, radius: 1, x: 0, y: 2)
         )
+    }
+}
+
+private enum MedicalSourceLink: CaseIterable {
+    case officeOnWomensHealth
+    case nichd
+    case acogPMS
+    case mayoCramps
+
+    var title: String {
+        switch self {
+        case .officeOnWomensHealth:
+            return String(localized: "phase_detail.sources.owh")
+        case .nichd:
+            return String(localized: "phase_detail.sources.nichd")
+        case .acogPMS:
+            return String(localized: "phase_detail.sources.acog_pms")
+        case .mayoCramps:
+            return String(localized: "phase_detail.sources.mayo_cramps")
+        }
+    }
+
+    var url: URL {
+        switch self {
+        case .officeOnWomensHealth:
+            return URL(string: "https://womenshealth.gov/menstrual-cycle")!
+        case .nichd:
+            return URL(string: "https://www.nichd.nih.gov/health/topics/factsheets/menstruation")!
+        case .acogPMS:
+            return URL(string: "https://www.acog.org/womens-health/faqs/premenstrual-syndrome")!
+        case .mayoCramps:
+            return URL(string: "https://www.mayoclinic.org/diseases-conditions/menstrual-cramps/diagnosis-treatment/drc-20374944")!
+        }
     }
 }
 
