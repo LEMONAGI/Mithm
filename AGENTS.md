@@ -66,13 +66,7 @@
 - HealthKit/EventKit 권한 및 실제 시스템 반영: 실기기 체크리스트 병행
 - 문서 변경: `AGENTS.md` / `CLAUDE.md` 동일성, 링크, 경로 확인
 
-시뮬레이터 이름을 가정하지 않는다. 빌드/테스트 전에 설치된 iPhone 시뮬레이터를 확인한다.
-
-```bash
-xcrun simctl list devices available | rg "iPhone"
-```
-
-자세한 빌드/테스트 명령은 `docs/agent/working-rules.md`를 따른다.
+빌드/테스트/Preview 검증은 기본적으로 Xcode MCP를 우선 사용한다. 사용할 수 없을 때의 fallback 절차는 `docs/agent/working-rules.md`를 따른다.
 
 ## 문서 동기화
 

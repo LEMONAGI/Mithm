@@ -20,12 +20,7 @@ Swift Testing(`@Test` 매크로) 기반 단위 테스트 타겟이다. 비즈니
 - **새 테스트 추가**: `@Test` 매크로 사용. 파일은 테스트 대상 UseCase/Helper와 대응되게 이름 지정
 - **날짜 조작**: `TestCalendar` / `HomePhaseTestCalendar` 헬퍼로 결정론적 날짜 생성. `Date()` 직접 사용 금지 (테스트 날짜에 따라 결과가 달라짐)
 - **record 생성**: `makeRecord(...)` 팩토리 함수 사용. 직접 `MenstrualRecord(...)` 생성자를 쓰면 필수 필드 누락 위험
-- **단일 테스트 실행**: 
-  ```bash
-  xcodebuild test -project Mithm/Mithm.xcodeproj -scheme Mithm \
-    -destination 'platform=iOS Simulator,name=iPhone 16' \
-    -only-testing:MithmTests/MithmTests/<테스트함수명>
-  ```
+- **단일 테스트 실행**: Xcode MCP의 `GetTestList`로 테스트 식별자를 확인한 뒤 `RunSomeTests`를 사용한다.
 
 ## 4. ⛔ HOW NOT — 시스템을 깨뜨리는 비명백한 함정
 

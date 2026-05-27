@@ -44,7 +44,19 @@
 
 ## 빌드와 테스트
 
-시뮬레이터 이름을 가정하지 않는다. 실행 전에 설치된 iPhone 시뮬레이터를 확인한다.
+빌드/테스트/Preview 검증은 기본적으로 Xcode MCP를 셸 명령보다 우선 사용한다.
+
+1. `XcodeListWindows`로 `Mithm/Mithm.xcodeproj`가 열린 Xcode tab을 확인한다.
+2. Xcode의 활성 scheme이 `Mithm`이고 destination이 설치된 iPhone 시뮬레이터인지 확인한다.
+3. 빌드는 `BuildProject`를 실행한다.
+4. 전체 테스트는 `RunAllTests`를 실행한다.
+5. 일부 테스트는 `GetTestList`로 테스트 식별자를 확인한 뒤 `RunSomeTests`를 실행한다.
+6. 실패 원인은 `GetBuildLog`로 확인한다.
+7. SwiftUI Preview 확인이 필요한 Presentation 변경은 `RenderPreview`를 사용할 수 있다.
+
+### Xcode MCP fallback
+
+Xcode MCP를 사용할 수 없거나 Xcode tab, scheme, destination 상태를 확신할 수 없을 때만 셸 명령으로 검증한다. 이때도 시뮬레이터 이름을 가정하지 않는다. 실행 전에 설치된 iPhone 시뮬레이터를 확인한다.
 
 ```bash
 xcrun simctl list devices available | rg "iPhone"
@@ -65,18 +77,6 @@ xcodebuild test \
   -project Mithm/Mithm.xcodeproj -scheme Mithm \
   -destination 'platform=iOS Simulator,name=<설치된 iPhone 시뮬레이터 이름>'
 ```
-
-Xcode MCP가 사용 가능하면 셸 명령보다 우선 사용한다.
-
-1. Xcode에서 `Mithm/Mithm.xcodeproj`가 열린 상태인지 확인한다.
-2. 활성 scheme이 `Mithm`이고 destination이 설치된 iPhone 시뮬레이터인지 확인한다.
-3. 빌드는 `BuildProject`를 실행한다.
-4. 전체 테스트는 `RunAllTests`를 실행한다.
-5. 일부 테스트는 `GetTestList`로 테스트 식별자를 확인한 뒤 `RunSomeTests`를 실행한다.
-6. 실패 원인은 `GetBuildLog`로 확인한다.
-7. SwiftUI Preview 확인이 필요한 Presentation 변경은 `RenderPreview`를 사용할 수 있다.
-
-Xcode MCP를 사용할 수 없거나 Xcode 탭, scheme, destination 상태를 확신할 수 없으면 위의 `xcodebuild` 명령으로 검증한다.
 
 ## 위험 작업
 
