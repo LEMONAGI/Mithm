@@ -563,6 +563,23 @@
         }
       }
     },
+    "phase_detail.footer.disclaimer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This content is derived from guidelines by the American College of Obstetricians and Gynecologists (ACOG), NHS, and Mayo Clinic. This information is for educational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "본 콘텐츠는 ACOG(미국산부인과학회), NHS, Mayo Clinic 등의 가이드라인을 바탕으로 작성되었습니다. 이 정보는 오직 교육(정보제공) 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다."
+          }
+        }
+      }
+    },
     "phase_detail.ovulation.warning" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -870,6 +887,16 @@
         }
       }
     },
+    "건강 앱 권한이 필요해요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health app access required"
+          }
+        }
+      }
+    },
     "건강 앱 또는 캘린더 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -883,6 +910,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "건강 앱 또는 캘린더 접근 범위를 확인하거나 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
+    "건강 앱 접근 권한이 필요해요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health app access required"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "건강 앱 접근 권한이 필요해요"
           }
         }
       }
@@ -904,16 +948,6 @@
         }
       }
     },
-    "건강 앱 권한이 필요해요" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Health app access required"
-          }
-        }
-      }
-    },
     "건강 앱 접근 범위를 확인해 주세요." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -927,23 +961,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "건강 앱 접근 범위를 확인해 주세요."
-          }
-        }
-      }
-    },
-    "건강 앱 접근 권한이 필요해요" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Health app access required"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "건강 앱 접근 권한이 필요해요"
           }
         }
       }
@@ -982,23 +999,6 @@
         }
       }
     },
-    "건강앱과 연동하기" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connect to the Health app"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "건강앱과 연동하기"
-          }
-        }
-      }
-    },
     "건강 앱의 월경 기록을\n연결해요" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1012,6 +1012,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "건강 앱의 월경 기록을\n연결해요"
+          }
+        }
+      }
+    },
+    "건강앱과 연동하기" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect to the Health app"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "건강앱과 연동하기"
           }
         }
       }
@@ -1037,6 +1054,7 @@
       }
     },
     "결단력이 있고 행동으로 옮기기 쉬운 시기예요" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1151,6 +1169,7 @@
 
     },
     "기분이 안정되고 긍정적인 감정이 올라와요" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1194,6 +1213,16 @@
         }
       }
     },
+    "난포기 동안 차곡차곡 쌓여온 에스트로겐 수치가 마침내 최고조에 달하면, 우리 뇌는 배란을 일으키는 핵심 신호인 LH(황체형성호르몬)를 급격하게 분비해요. 이 신호를 받아 성숙한 난자가 난소 밖으로 나오는 '배란'이 일어납니다. 이 시기는 한 주기 중 에스트로겐이 가장 정점을 찍는 때라, 몸과 마음에 활력을 주는 시너지 효과가 일어나요. 신체적 복원력과 기분을 안정시키는 호르몬들이 든든하게 받쳐주고 있기 때문에 가장 생기 있는 컨디션을 유지할 수 있는 것이죠." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When estrogen levels built up through the follicular phase finally reach their peak, the brain releases a sharp surge of LH, or luteinizing hormone, which is the key signal for ovulation. In response, a mature egg leaves the ovary. Because estrogen is often at its highest point in the cycle, your body and mind may feel more energized. Hormones that support physical resilience and a steadier mood are also working strongly, helping you maintain a more vibrant condition."
+          }
+        }
+      }
+    },
     "내일부터 난포기가 시작됩니다." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1229,6 +1258,7 @@
       }
     },
     "뇌하수체에서 분비된 FSH(난포자극호르몬)가 난소의 난포를 성장시키고, 성장하는 난포에서 에스트로겐이 점점 많이 분비되기 시작해요. 에스트로겐은 도파민, 세로토닌과 상호작용하면서 기분을 높이고 집중력·사고력을 향상시켜요. 뇌 기능이 실제로 활발해지는 시기라, \"오늘 머리가 잘 돌아가네\" 싶은 날이 많아요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1254,6 +1284,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Load Again + Calendar"
+          }
+        }
+      }
+    },
+    "다음" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음"
           }
         }
       }
@@ -1288,23 +1335,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음으로"
-          }
-        }
-      }
-    },
-    "다음" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Next"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "다음"
           }
         }
       }
@@ -1425,6 +1455,7 @@
       }
     },
     "도전적인 일에 의욕이 생기는 시기예요" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1467,6 +1498,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Records"
+          }
+        }
+      }
+    },
+    "마음의 여유가 생기는 때라 사람들을 만나거나 협업하는 일이 평소보다 훨씬 자연스럽고 즐겁게 느껴질 거예요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With more mental space, meeting people or collaborating may feel much more natural and enjoyable than usual."
           }
         }
       }
@@ -1557,6 +1598,7 @@
       }
     },
     "머리가 맑고 뭔가 해보고 싶은 마음이 슬슬 생기는 시기예요. 새로운 걸 시작하거나 사람들을 만나는 게 부담스럽지 않고, 오히려 에너지가 느껴져요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1594,6 +1636,7 @@
       }
     },
     "몸과 뇌가 함께 깨어나는 시기예요. 미뤄뒀던 일을 꺼내기에 좋고, 새로운 루틴을 시작하기에도 가장 수월한 타이밍이에요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1603,12 +1646,33 @@
         }
       }
     },
+    "몸과 마음의 에너지가 가장 균형 있게 돌아가는 시기예요. 그동안 미뤄뒀던 일들을 꺼내어 시작하거나 적극적인 활동을 계획하기에 가장 수월한 타이밍이랍니다." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is when your body and mind may return to a more balanced energy state. It can be one of the easiest times to bring out tasks you have been putting off or plan more active things."
+          }
+        }
+      }
+    },
     "몸과 마음이 가장 잘 맞아 돌아가는 시기예요. 중요한 일, 사람을 만나는 일, 목소리를 내야 하는 일들을 이 시기에 배치하면 훨씬 수월하게 느껴질 거예요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "This may be a time when your body and mind feel especially in sync. Important tasks, meetings, or moments when you need to speak up may feel easier here."
+          }
+        }
+      }
+    },
+    "몸이 가벼워진 만큼 마음에도 긍정적인 활력과 생기가 도는 시기예요. 감정의 가라앉음이 덜하고 컨디션이 받쳐주다 보니, 평소보다 대화나 대인 활동을 할 때 조금 더 편안하고 자연스럽게 나를 표현할 수 있어요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As your body feels lighter, your mood may also feel more positive and energized. With fewer emotional dips and more physical support, conversation and social activities can feel a little more comfortable, and expressing yourself may come more naturally."
           }
         }
       }
@@ -1649,6 +1713,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This is a time when your body may start to feel heavier, swollen, or more sensitive. Symptoms often become stronger as time passes after ovulation, and that is very common."
+          }
+        }
+      }
+    },
+    "무기력함이 걷히고 활동적인 일들을 적극적으로 해내고 싶은 마음이 들어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sense of low energy may lift, and you may feel more ready to take on active tasks."
+          }
+        }
+      }
+    },
+    "무너졌던 수면이나 식습관 루틴을 다시 탄탄하게 붙잡기에 몸도 마음도 가장 잘 도와주는 구간이에요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This can be a supportive window for rebuilding sleep or eating routines that have slipped."
+          }
+        }
+      }
+    },
+    "미뤄뒀던 야외 활동, 취미 생활, 혹은 에너지가 많이 드는 외부 일정을 이 시기에 배치하면 훨씬 수월하고 즐겁게 해낼 수 있어요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outdoor plans, hobbies, or energy-heavy outside commitments you have been postponing may feel easier and more enjoyable during this time."
+          }
+        }
+      }
+    },
+    "미뤄뒀던 일이나 새로운 도전에 대한 의욕이 생기는 시기예요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You may feel more motivated to return to postponed tasks or try something new."
           }
         }
       }
@@ -1698,11 +1802,22 @@
       }
     },
     "발표, 면접, 중요한 미팅처럼 인상을 남겨야 하는 자리에 잘 맞는 시기예요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "This may be a good time for moments where you want to make an impression, such as presentations, interviews, or important meetings."
+          }
+        }
+      }
+    },
+    "배란 전후로 투명하고 끈적한 분비물(자궁경부 점액)이 늘어나는 것을 관찰할 수 있음" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Around ovulation, you may notice more clear, stretchy discharge, also called cervical mucus."
           }
         }
       }
@@ -1842,6 +1957,16 @@
         }
       }
     },
+    "불안감이나 예민함이 줄어들어 마음이 한결 편안해져요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anxiety or sensitivity may ease, helping your mind feel more comfortable."
+          }
+        }
+      }
+    },
     "불안하거나 이유 없이 울고 싶은 날이 있을 수 있어요" : {
       "localizations" : {
         "en" : {
@@ -1853,6 +1978,7 @@
       }
     },
     "사교적이고 외향적인 에너지가 올라와요" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1862,7 +1988,18 @@
         }
       }
     },
+    "사람들과 소통하거나 내 의견을 표현하는 데 부담이 적고 편안함을 느껴요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Communicating with others or sharing your opinions may feel less burdensome and more comfortable."
+          }
+        }
+      }
+    },
     "사람들을 만나거나 협업하는 일이 평소보다 자연스럽게 느껴질 거예요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2095,11 +2232,22 @@
       }
     },
     "식욕이 비교적 안정적" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Appetite may feel relatively steady"
+          }
+        }
+      }
+    },
+    "신체적 불편감이 적어 마음의 여유가 생기고 기분이 안정적인 편이에요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With fewer physical discomforts, you may have more mental space and a steadier mood."
           }
         }
       }
@@ -2114,7 +2262,18 @@
         }
       }
     },
+    "아랫배 한쪽이 잠깐 당기는 느낌(배란통)이 들 수 있음" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You may briefly feel a pulling sensation on one side of your lower belly, known as ovulation pain."
+          }
+        }
+      }
+    },
     "아랫배 한쪽이 잠깐 당기는 느낌이 들 수 있음" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2223,6 +2382,7 @@
       }
     },
     "어려운 개념 정리, 복잡한 기획, 논리적 사고가 필요한 작업을 이 시기에 몰아두면 효율이 달라요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2233,11 +2393,22 @@
       }
     },
     "에너지가 넘친다고 과하게 쓰기보다, 다음 황체기를 위해 조금 여유를 남겨두는 것도 좋아요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Even if you feel full of energy, it may help to leave a little margin for the luteal phase ahead."
+          }
+        }
+      }
+    },
+    "에너지가 넘친다고 해서 몸을 과도하게 무리해서 쓰기보다는, 곧 찾아올 황체기(생리 전 시기)를 고려해 기분 좋은 활력을 즐기며 적절한 휴식도 함께 챙겨주세요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Even if you feel full of energy, try not to overuse your body. Enjoy the good momentum while also making room for rest, keeping the coming luteal phase in mind."
           }
         }
       }
@@ -2287,6 +2458,7 @@
       }
     },
     "에스트로겐이 최고조에 달하면 LH(황체형성호르몬)가 급격히 분비되면서 배란이 일어나요. 이 시기엔 테스토스테론도 소폭 상승해 활력과 자신감, 사교성이 높아지는 데 기여해요. 진화적으로 이 시기에 사회적 활동이 활발해지도록 설계되어 있다는 연구들도 있어요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2324,6 +2496,7 @@
       }
     },
     "오래 미뤄온 어려운 대화, 협상, 부탁—지금 하면 생각보다 잘 풀릴 수 있어요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2351,6 +2524,7 @@
       }
     },
     "외향적인 에너지가 올라오고, 사람들과 함께하는 게 즐겁게 느껴지는 시기예요. 자신감이 올라와 발표나 대화가 평소보다 자연스럽게 느껴질 수 있어요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2361,6 +2535,7 @@
       }
     },
     "운동 강도를 높이거나 체력 테스트를 해보고 싶다면 지금이 가장 좋아요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2807,6 +2982,16 @@
         }
       }
     },
+    "월경이 끝나갈 무렵 뇌하수체에서 분비되는 FSH(난포자극호르몬)가 난소 속 난포들을 성장시키기 시작해요. 이 난포들이 자라나면서 에스트로겐이라는 호르몬을 점점 더 많이 분비하게 됩니다. 에스트로겐은 자궁 내막을 다시 두껍게 준비시키는 역할도 하지만, 뇌 속 신경전달물질(세로토닌 등)의 활성을 도와 기분을 좋게 만들고 신체 피로를 빠르게 걷어내 줘요. 몸과 마음의 브레이크가 풀리며 서서히 에너지가 차오르는 상태가 되는 것이죠." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As your period comes to an end, FSH from the pituitary gland begins helping follicles in the ovaries grow. As these follicles develop, they release more estrogen. Estrogen helps rebuild the uterine lining, and it may also support neurotransmitters such as serotonin, which can lift your mood and help physical fatigue clear more quickly. It is a time when your body and mind may slowly release the brakes and regain energy."
+          }
+        }
+      }
+    },
     "이 기기에서는 건강 앱이 지원되지 않아요." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2841,23 +3026,6 @@
         }
       }
     },
-    "이전 월경 종료를 자동으로 기록했습니다!" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The end date of your previous period was recorded automatically!"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이전 월경 종료를 자동으로 기록했습니다!"
-          }
-        }
-      }
-    },
     "일" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2875,6 +3043,23 @@
         }
       }
     },
+    "이전 월경 종료를 자동으로 기록했습니다!" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The end date of your previous period was recorded automatically!"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전 월경 종료를 자동으로 기록했습니다!"
+          }
+        }
+      }
+    },
     "일정이 꽉 차 있다면 중간에 짧은 휴식을 의식적으로 끼워 넣어보세요." : {
       "localizations" : {
         "en" : {
@@ -2886,6 +3071,7 @@
       }
     },
     "자신감과 표현력이 좋아지는 편이에요" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2952,12 +3138,33 @@
         }
       }
     },
+    "전반적으로 몸의 컨디션이 좋고, 가볍게 잘 움직이는 느낌이 드는 시기예요. 에너지가 차올라 활력이 넘치지만, 간혹 아랫배 한쪽이 콕콕 찌르듯 당기는 느낌을 받기도 하는데 이는 자연스러운 “배란통”이랍니다." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overall, your body may feel in good condition and move more easily. Energy can rise and feel lively, though you may sometimes notice a sharp or pulling sensation on one side of your lower belly. This can be natural ovulation pain."
+          }
+        }
+      }
+    },
     "전반적으로 컨디션이 좋고, 몸이 잘 움직이는 느낌이에요. 일부는 아랫배 한쪽이 살짝 당기는 느낌을 경험하기도 하는데, 배란 통증이에요." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "You may generally feel well and physically capable. Some people may feel a slight pulling sensation on one side of the lower belly, which can be ovulation pain."
+          }
+        }
+      }
+    },
+    "점차 머리가 맑아지고, 뭔가 해보고 싶은 마음이 슬슬 생기는 시기예요. 새로운 걸 시작하거나 사람들을 만나는 게 부담스럽지 않고, 오히려 에너지가 느껴져요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gradually, your mind may feel clearer, and you may start to feel like trying something new. Starting something or meeting people may feel less burdensome, and you may even feel more energized by it."
           }
         }
       }
@@ -3081,6 +3288,7 @@
       }
     },
     "집중력과 기억력이 좋아지는 편이에요" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3106,6 +3314,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You may feel unfocused or foggy"
+          }
+        }
+      }
+    },
+    "체력과 지구력이 가장 좋은 때입니다. 고강도 운동(러닝, 웨이트 등)에 도전해 보거나 평소보다 운동량을 조금 늘려보셔도 몸이 잘 따라와 줄 거예요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is often when stamina and endurance feel strongest. If you want to try higher-intensity exercise, such as running or weight training, or increase your usual amount a little, your body may respond well."
           }
         }
       }
@@ -3141,6 +3359,7 @@
       }
     },
     "체온이 살짝 오르는 시기 (배란 후 더 오름)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3319,12 +3538,32 @@
         }
       }
     },
+    "컨디션과 기분이 가장 안정적인 시기이므로 면접, 발표, 혹은 의견을 조율해야 하는 중요한 만남을 잡기에 아주 좋은 타이밍이에요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Because your condition and mood may be at their steadiest, this can be a good time for interviews, presentations, or important meetings where opinions need to be aligned."
+          }
+        }
+      }
+    },
     "평소보다 쉽게 피로해지는 느낌" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "You may feel tired more easily than usual"
+          }
+        }
+      }
+    },
+    "폭식이나 특정 음식에 대한 갈망이 줄어들음" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Binge eating or cravings for specific foods may decrease."
           }
         }
       }
@@ -3397,6 +3636,7 @@
       }
     },
     "피부 광택이 좋고 전반적으로 컨디션이 좋음" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3426,12 +3666,69 @@
         }
       }
     },
+    "피부에 생기가 돌고 컨디션이 전반적으로 올라감" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skin may look more vibrant, and your overall condition may improve."
+          }
+        }
+      }
+    },
+    "한 주기 중 신체적 활력이 가장 정점에 이르는 구간이에요. 나의 에너지를 외적으로 발산하거나 체력을 기르는 활동에 적극적으로 활용해 보세요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is the point in the cycle when physical energy often reaches its peak. Try using that energy for outward expression or activities that build strength and stamina."
+          }
+        }
+      }
+    },
     "해당 기간 삭제" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete This Period"
+          }
+        }
+      }
+    },
+    "호르몬의 영향으로 기분이 안정되고 긍정적인 감정이 올라와요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hormonal changes may help your mood feel steadier and bring more positive feelings."
+          }
+        }
+      }
+    },
+    "홈" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "홈"
+          }
+        }
+      }
+    },
+    "호르몬이 정점에 달하며 활력과 긍정적인 에너지가 유지돼요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As hormones reach a peak, vitality and positive energy may feel more sustained."
           }
         }
       }
@@ -3462,23 +3759,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You may feel a stronger need for time alone"
-          }
-        }
-      }
-    },
-    "홈" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Home"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "홈"
           }
         }
       }

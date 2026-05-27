@@ -1549,7 +1549,8 @@ struct PhaseDetailLocalizationTests {
             "phase_detail.section.mood.title",
             "phase_detail.section.tip.title",
             "phase_detail.ovulation.warning",
-            "phase_detail.mood.why_button"
+            "phase_detail.mood.why_button",
+            "phase_detail.footer.disclaimer"
         ]
         let localizations = try localizableStrings()
 
@@ -1566,11 +1567,50 @@ struct PhaseDetailLocalizationTests {
             "지금 기분은 이런 느낌이에요",
             "리듬활용 Tip",
             "미리듬은 배란기와 가임기를 동일한 시기로 안내합니다. 실제 가임 시기는 개인에 따라 달라질 수 있으므로, 이를 피임의 수단으로 사용하지 마십시오.",
-            "왜 이런 변화가 생길까요?"
+            "왜 이런 변화가 생길까요?",
+            "본 콘텐츠는 ACOG(미국산부인과학회), NHS, Mayo Clinic 등의 가이드라인을 바탕으로 작성되었습니다. 이 정보는 오직 교육(정보제공) 목적으로만 사용되며, 개인의 신체적 특성에 따른 전문의의 실제 진단 결과와는 다를 수 있습니다.",
+            "This content is derived from guidelines by the American College of Obstetricians and Gynecologists (ACOG), NHS, and Mayo Clinic. This information is for educational purposes only and may differ from a specialist's diagnosis based on individual physical characteristics."
         ]
 
         for literal in directLiterals {
             #expect(!sheetSource.contains(literal))
+        }
+    }
+
+    @Test("변경된 PhaseDetailContent 문구는 영어 로컬라이제이션을 가진다")
+    func updatedPhaseDetailContentCopyHasEnglishLocalization() throws {
+        let expectedLocalizations = [
+            "폭식이나 특정 음식에 대한 갈망이 줄어들음",
+            "점차 머리가 맑아지고, 뭔가 해보고 싶은 마음이 슬슬 생기는 시기예요. 새로운 걸 시작하거나 사람들을 만나는 게 부담스럽지 않고, 오히려 에너지가 느껴져요.",
+            "호르몬의 영향으로 기분이 안정되고 긍정적인 감정이 올라와요",
+            "미뤄뒀던 일이나 새로운 도전에 대한 의욕이 생기는 시기예요",
+            "불안감이나 예민함이 줄어들어 마음이 한결 편안해져요",
+            "월경이 끝나갈 무렵 뇌하수체에서 분비되는 FSH(난포자극호르몬)가 난소 속 난포들을 성장시키기 시작해요. 이 난포들이 자라나면서 에스트로겐이라는 호르몬을 점점 더 많이 분비하게 됩니다. 에스트로겐은 자궁 내막을 다시 두껍게 준비시키는 역할도 하지만, 뇌 속 신경전달물질(세로토닌 등)의 활성을 도와 기분을 좋게 만들고 신체 피로를 빠르게 걷어내 줘요. 몸과 마음의 브레이크가 풀리며 서서히 에너지가 차오르는 상태가 되는 것이죠.",
+            "몸과 마음의 에너지가 가장 균형 있게 돌아가는 시기예요. 그동안 미뤄뒀던 일들을 꺼내어 시작하거나 적극적인 활동을 계획하기에 가장 수월한 타이밍이랍니다.",
+            "마음의 여유가 생기는 때라 사람들을 만나거나 협업하는 일이 평소보다 훨씬 자연스럽고 즐겁게 느껴질 거예요.",
+            "무너졌던 수면이나 식습관 루틴을 다시 탄탄하게 붙잡기에 몸도 마음도 가장 잘 도와주는 구간이에요.",
+            "전반적으로 몸의 컨디션이 좋고, 가볍게 잘 움직이는 느낌이 드는 시기예요. 에너지가 차올라 활력이 넘치지만, 간혹 아랫배 한쪽이 콕콕 찌르듯 당기는 느낌을 받기도 하는데 이는 자연스러운 “배란통”이랍니다.",
+            "피부에 생기가 돌고 컨디션이 전반적으로 올라감",
+            "아랫배 한쪽이 잠깐 당기는 느낌(배란통)이 들 수 있음",
+            "배란 전후로 투명하고 끈적한 분비물(자궁경부 점액)이 늘어나는 것을 관찰할 수 있음",
+            "몸이 가벼워진 만큼 마음에도 긍정적인 활력과 생기가 도는 시기예요. 감정의 가라앉음이 덜하고 컨디션이 받쳐주다 보니, 평소보다 대화나 대인 활동을 할 때 조금 더 편안하고 자연스럽게 나를 표현할 수 있어요.",
+            "호르몬이 정점에 달하며 활력과 긍정적인 에너지가 유지돼요",
+            "신체적 불편감이 적어 마음의 여유가 생기고 기분이 안정적인 편이에요",
+            "사람들과 소통하거나 내 의견을 표현하는 데 부담이 적고 편안함을 느껴요",
+            "무기력함이 걷히고 활동적인 일들을 적극적으로 해내고 싶은 마음이 들어요",
+            "난포기 동안 차곡차곡 쌓여온 에스트로겐 수치가 마침내 최고조에 달하면, 우리 뇌는 배란을 일으키는 핵심 신호인 LH(황체형성호르몬)를 급격하게 분비해요. 이 신호를 받아 성숙한 난자가 난소 밖으로 나오는 '배란'이 일어납니다. 이 시기는 한 주기 중 에스트로겐이 가장 정점을 찍는 때라, 몸과 마음에 활력을 주는 시너지 효과가 일어나요. 신체적 복원력과 기분을 안정시키는 호르몬들이 든든하게 받쳐주고 있기 때문에 가장 생기 있는 컨디션을 유지할 수 있는 것이죠.",
+            "한 주기 중 신체적 활력이 가장 정점에 이르는 구간이에요. 나의 에너지를 외적으로 발산하거나 체력을 기르는 활동에 적극적으로 활용해 보세요.",
+            "컨디션과 기분이 가장 안정적인 시기이므로 면접, 발표, 혹은 의견을 조율해야 하는 중요한 만남을 잡기에 아주 좋은 타이밍이에요.",
+            "체력과 지구력이 가장 좋은 때입니다. 고강도 운동(러닝, 웨이트 등)에 도전해 보거나 평소보다 운동량을 조금 늘려보셔도 몸이 잘 따라와 줄 거예요.",
+            "미뤄뒀던 야외 활동, 취미 생활, 혹은 에너지가 많이 드는 외부 일정을 이 시기에 배치하면 훨씬 수월하고 즐겁게 해낼 수 있어요.",
+            "에너지가 넘친다고 해서 몸을 과도하게 무리해서 쓰기보다는, 곧 찾아올 황체기(생리 전 시기)를 고려해 기분 좋은 활력을 즐기며 적절한 휴식도 함께 챙겨주세요."
+        ]
+        let localizations = try localizableStrings()
+
+        for key in expectedLocalizations {
+            let entry = try #require(localizations[key] as? [String: Any])
+            let values = localizedValues(in: entry)
+            #expect(values["en"]?.isEmpty == false)
         }
     }
 
