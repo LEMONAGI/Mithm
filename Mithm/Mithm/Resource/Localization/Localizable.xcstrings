@@ -133,6 +133,57 @@
         }
       }
     },
+    "calendar.prediction_source.link_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OASH (Office on Women’s Health)"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미국여성건강청(OASH)"
+          }
+        }
+      }
+    },
+    "calendar.prediction_source.prefix" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predictions based on "
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ""
+          }
+        }
+      }
+    },
+    "calendar.prediction_source.suffix" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ""
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " 데이터를 기반으로 한 예측"
+          }
+        }
+      }
+    },
     "calendar.record.status.ongoing" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -546,23 +597,6 @@
         }
       }
     },
-    "phase_detail.mood.why_button" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\n👉 Why does this happen?\n"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\n👉 왜 이런 변화가 생길까요?\n"
-          }
-        }
-      }
-    },
     "phase_detail.footer.disclaimer" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -580,6 +614,23 @@
         }
       }
     },
+    "phase_detail.mood.why_button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\n👉 Why does this happen?\n"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\n👉 왜 이런 변화가 생길까요?\n"
+          }
+        }
+      }
+    },
     "phase_detail.ovulation.warning" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -593,6 +644,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "미리듬은 배란기와 가임기를 동일한 시기로 안내합니다. 실제 가임 시기는 개인에 따라 달라질 수 있으므로, 이를 피임의 수단으로 사용하지 마십시오."
+          }
+        }
+      }
+    },
+    "phase_detail.section.body.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What your body may feel like now"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금 몸은 이런 느낌이에요"
+          }
+        }
+      }
+    },
+    "phase_detail.section.mood.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What your mood may feel like now"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금 기분은 이런 느낌이에요"
+          }
+        }
+      }
+    },
+    "phase_detail.section.tip.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rhythm Tips"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "리듬활용 Tip"
           }
         }
       }
@@ -678,57 +780,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자료 출처"
-          }
-        }
-      }
-    },
-    "phase_detail.section.body.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "What your body may feel like now"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "지금 몸은 이런 느낌이에요"
-          }
-        }
-      }
-    },
-    "phase_detail.section.mood.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "What your mood may feel like now"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "지금 기분은 이런 느낌이에요"
-          }
-        }
-      }
-    },
-    "phase_detail.section.tip.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rhythm Tips"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "리듬활용 Tip"
           }
         }
       }
@@ -1886,6 +1937,23 @@
         }
       }
     },
+    "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirideum's cycle tracking uses period records from Apple Health."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요."
+          }
+        }
+      }
+    },
     "발표, 면접, 중요한 미팅처럼 인상을 남겨야 하는 자리에 잘 맞는 시기예요." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2107,23 +2175,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사용자 기록에 기반한 실제 월경 기간입니다."
-          }
-        }
-      }
-    },
-    "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mirideum's cycle tracking uses period records from Apple Health."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요."
           }
         }
       }
@@ -3128,23 +3179,6 @@
         }
       }
     },
-    "일" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "days"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일"
-          }
-        }
-      }
-    },
     "이전 월경 종료를 자동으로 기록했습니다!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3158,6 +3192,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 월경 종료를 자동으로 기록했습니다!"
+          }
+        }
+      }
+    },
+    "일" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "days"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일"
           }
         }
       }
@@ -3808,23 +3859,6 @@
         }
       }
     },
-    "홈" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Home"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "홈"
-          }
-        }
-      }
-    },
     "호르몬이 정점에 달하며 활력과 긍정적인 에너지가 유지돼요" : {
       "localizations" : {
         "en" : {
@@ -3861,6 +3895,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You may feel a stronger need for time alone"
+          }
+        }
+      }
+    },
+    "홈" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "홈"
           }
         }
       }

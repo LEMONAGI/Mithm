@@ -31,7 +31,11 @@ struct CalendarView: View {
 
                 // Calendar Card
                 calendarCard
-                    .padding(.bottom, 24)
+                    .padding(.bottom, 6)
+
+                // Source Notice
+                predictionSourceNotice
+                    .padding(.bottom, 12)
 
                 // Stats
                 statsView
@@ -158,6 +162,16 @@ extension CalendarView {
         }
     }
 
+    private var predictionSourceNotice: some View {
+        Text(CalendarPredictionSourceNotice.attributedText)
+            .font(.pretendardLight(12))
+            .foregroundStyle(.textTertiary)
+            .tint(.textTertiary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.horizontal, 16)
+    }
+
     private var statsView: some View {
         VStack(spacing: 8) {
             statRow(title: "calendar.stats.cycle_length", value: calendarViewModel.predictedCycleLength)
@@ -245,6 +259,20 @@ extension CalendarView {
             .pickerStyle(.wheel)
         }
         .frame(width: 280, height: 200)
+    }
+}
+
+enum CalendarPredictionSourceNotice {
+    static let url = URL(string: "https://womenshealth.gov/menstrual-cycle/your-menstrual-cycle")!
+
+    static var attributedText: AttributedString {
+        var text = AttributedString(String(localized: "calendar.prediction_source.prefix"))
+        var link = AttributedString(String(localized: "calendar.prediction_source.link_label"))
+        link.link = url
+        link.underlineStyle = .single
+        text += link
+        text += AttributedString(String(localized: "calendar.prediction_source.suffix"))
+        return text
     }
 }
 

@@ -116,7 +116,8 @@ private extension HomeView {
                 } label: {
                     Image(systemName: "info.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundStyle(homeViewModel.currentPhase == .ovulation ? .accent : .gray)
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(homeViewModel.currentPhasePresentation.color, homeViewModel.currentPhase == .ovulation ? .accent : .gray)
                 }
                 .offset(y: -12)
             }
