@@ -1760,7 +1760,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "As all hormones drop, your body shifts into rest mode.\nIt is a time to close out the cycle."
+            "value" : "As all hormones drop, your body shifts into rest mode. It is a time to close out the cycle."
           }
         },
         "ko" : {
@@ -1937,19 +1937,19 @@
         }
       }
     },
-    "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요." : {
+    "미리듬의 주기 추적 기능을 이용하려면\nApple 건강 앱 연결이 필요해요." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mirideum's cycle tracking uses period records from Apple Health."
+            "value" : "To use Mirideum's cycle tracking,\nyou need to connect Apple Health."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요."
+            "value" : "미리듬의 주기 추적 기능을 이용하려면\nApple 건강 앱 연결이 필요해요."
           }
         }
       }
@@ -2582,30 +2582,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "As estrogen rises, energy and focus may increase.\nYour rhythm gradually starts to wake up."
+            "value" : "As estrogen rises, energy and focus may increase. Your rhythm gradually starts to wake up."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "에스트로겐이 증가하며 에너지와 집중이 올라요\n리듬이 서서히 깨어나기 시작해요"
-          }
-        }
-      }
-    },
-    "에스트로겐이 최고조에 달해 에너지가 높아져요\n몸의 리듬이 안정적으로 맞물려요" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "As estrogen reaches its peak, your energy may rise.\nYour body's rhythm may feel steady and in sync."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "에스트로겐이 최고조에 달해 에너지가 높아져요\n몸의 리듬이 안정적으로 맞물려요"
           }
         }
       }
@@ -2617,6 +2600,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "When estrogen reaches its peak, LH, or luteinizing hormone, rises sharply and ovulation occurs. Testosterone may also rise slightly during this time, which can contribute to energy, confidence, and sociability. Some research suggests social activity may naturally feel easier around this phase."
+          }
+        }
+      }
+    },
+    "에스트로겐이 최고조에 달해 에너지가 높아져요\n몸의 리듬이 안정적으로 맞물려요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As estrogen reaches its peak, your energy may rise. Your body's rhythm may feel steady and in sync."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "에스트로겐이 최고조에 달해 에너지가 높아져요\n몸의 리듬이 안정적으로 맞물려요"
           }
         }
       }
@@ -3162,6 +3162,23 @@
         }
       }
     },
+    "일" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "days"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일"
+          }
+        }
+      }
+    },
     "이번 월경을 기록하였습니다" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3192,23 +3209,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 월경 종료를 자동으로 기록했습니다!"
-          }
-        }
-      }
-    },
-    "일" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "days"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일"
           }
         }
       }
@@ -3767,7 +3767,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "As progesterone rises, your body sends signals to rest.\nYour rhythm slows, and your energy may gradually dip."
+            "value" : "As progesterone rises, your body sends signals to rest. Your rhythm slows, and your energy may gradually dip."
           }
         },
         "ko" : {

@@ -13,7 +13,7 @@ struct OnboardingStep1View: View {
         OnboardingStepContainer(
             step: .step1,
             title: "더 정확한\n리듬을 이해하기 위해",
-            description: "미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요.",
+            description: "미리듬의 주기 추적 기능을 이용하려면\nApple 건강 앱 연결이 필요해요.",
             buttonTitle: "다음",
             isButtonEnabled: !viewModel.isRequestingAuthorization,
             isLoading: viewModel.isRequestingAuthorization,

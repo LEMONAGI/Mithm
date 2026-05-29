@@ -1730,21 +1730,21 @@ struct OnboardingHealthPermissionCopyTests {
         #expect(!source.contains(#"buttonTitle: "권한 요청하기""#))
     }
 
-    @Test("HealthKit 사전 안내 화면은 다음 화면에서 직접 선택한다는 설명을 사용한다")
+    @Test("HealthKit 사전 안내 화면은 건강 앱 연결 필요성을 설명한다")
     func healthPermissionIntroExplainsUserChoiceOnNextScreen() throws {
         let localizations = try localizableStrings()
         let titleEntry = try #require(localizations["더 정확한\n리듬을 이해하기 위해"] as? [String: Any])
-        let descriptionEntry = try #require(localizations["미리듬의 주기 추적 기능은\nApple 건강 앱의 월경 기록을 바탕으로 작동해요."] as? [String: Any])
+        let descriptionEntry = try #require(localizations["미리듬의 주기 추적 기능을 이용하려면\nApple 건강 앱 연결이 필요해요."] as? [String: Any])
         let titleValues = localizedValues(in: titleEntry)
         let descriptionValues = localizedValues(in: descriptionEntry)
 
         #expect(titleValues["en"] == "To understand you\nmore accurately")
-        #expect(descriptionValues["en"] == "Mirideum's cycle tracking uses period records from Apple Health.")
+        #expect(descriptionValues["en"] == "To use Mirideum's cycle tracking,\nyou need to connect Apple Health.")
 
         let source = try String(contentsOf: onboardingStep1ViewURL, encoding: .utf8)
 
         #expect(source.contains("더 정확한\\n리듬을 이해하기 위해"))
-        #expect(source.contains("미리듬의 주기 추적 기능은\\nApple 건강 앱의 월경 기록을 바탕으로 작동해요."))
+        #expect(source.contains("미리듬의 주기 추적 기능을 이용하려면\\nApple 건강 앱 연결이 필요해요."))
         #expect(!source.contains("허용해 주세요"))
         #expect(!source.contains("권한 요청하기"))
     }
