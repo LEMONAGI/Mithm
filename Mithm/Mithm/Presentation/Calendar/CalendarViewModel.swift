@@ -128,7 +128,7 @@ final class CalendarViewModel: ObservableObject {
             let cycleLength = cycleLength(
                 from: record,
                 to: nextRecord,
-                fallback: nil,
+                fallback: overview.prediction?.predictedCycleLength,
                 calendar: calendar
             )
             let periodLength = record.dayCount(calendar: calendar)

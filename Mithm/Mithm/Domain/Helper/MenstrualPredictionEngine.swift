@@ -206,7 +206,7 @@ struct MenstrualPredictionEngine {
             userInputPeriodWeightHighHistory: 0.12,
 
             shiftThreshold: 4.0,
-            predictionCount: 3
+            predictionCount: 12
         )
     }
 

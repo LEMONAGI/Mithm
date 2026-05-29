@@ -759,7 +759,7 @@ struct BlendControlTests {
         #expect(result.predictedCycleLength == 28)
         #expect(result.predictedPeriodLength == 5)
         #expect(result.usedDefaultRule == true)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     @Test("notBlendUserInput이고 기록 1개이면 통계 기본값 주기로 fallback하고 실제 period는 유지한다")
@@ -778,7 +778,7 @@ struct BlendControlTests {
         #expect(result.predictedCycleLength == 28)  // 통계 기본값
         #expect(result.predictedPeriodLength == 5)   // 실제 기록의 period
         #expect(result.usedDefaultRule == true)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     @Test("blendUserInput이면 기록 0개에서도 사용자 입력으로 예측을 생성한다")
@@ -794,7 +794,7 @@ struct BlendControlTests {
         #expect(result.confidence == .low)
         #expect(result.predictedCycleLength == 28)
         #expect(result.predictedPeriodLength == 5)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     @Test("onlyUserInput이면 기록이 있어도 모델 예측 없이 사용자 입력값만 사용한다")
@@ -818,7 +818,7 @@ struct BlendControlTests {
         #expect(result.predictedCycleLength == 35)
         #expect(result.predictedPeriodLength == 7)
         #expect(result.confidence == .low)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     @Test("onlyUserInput이고 userInput이 nil이면 통계 기본값으로 fallback한다")
@@ -839,7 +839,7 @@ struct BlendControlTests {
         // userInput이 nil이면 모델 예측 경로로 fallback (effectiveUserInput = nil)
         #expect(result.predictedCycleLength != nil)
         #expect(result.predictedPeriodLength != nil)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     private func makeRecord(start: String, end: String) -> MenstrualRecord {
@@ -887,7 +887,7 @@ struct PredictFromUserInputTests {
         #expect(result.usedRecordCount == 2)
         #expect(result.usedDefaultRule == false)
         #expect(result.confidence == .low)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
 
         // 마지막 기록 01-29 + 30일 = 02-28
         #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-28")
@@ -910,7 +910,7 @@ struct PredictFromUserInputTests {
         #expect(result.predictedPeriodLength == 5)
         #expect(result.usedRecordCount == 0)
         #expect(result.usedDefaultRule == false)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     @Test("진행 중 기록(endDate nil)이 있으면 해당 startDate를 기준으로 예측하고 월경 예정기간으로 치환한다")
@@ -932,7 +932,7 @@ struct PredictFromUserInputTests {
         )
 
         #expect(result.usedRecordCount == 3)
-        #expect(result.menstrualPredictions.count == 4)
+        #expect(result.menstrualPredictions.count == 13)
         // 진행 중 기록이 예측으로 치환됨
         #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-26")
         #expect(Self.dayString(result.menstrualPredictions[0].endDate) == "2026-03-03")
@@ -1005,7 +1005,7 @@ struct PredictFromUserInputTests {
         #expect(result.predictedCycleLength == 28)
         #expect(result.predictedPeriodLength == 5)
         #expect(result.usedDefaultRule == true)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     // MARK: predict()와의 차이
@@ -1082,7 +1082,7 @@ struct IntegrationPredictionTests {
         #expect(result.confidence == .low)
         #expect(result.usedRecordCount == 0)
         #expect(result.usedDefaultRule == true)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     @Test("기록 0개 + 유효한 사용자 입력 → 해당 값으로 예측 생성, low confidence")
@@ -1097,7 +1097,7 @@ struct IntegrationPredictionTests {
         #expect(result.predictedPeriodLength == 6)
         #expect(result.confidence == .low)
         #expect(result.usedRecordCount == 0)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     @Test("기록 0개 + cycle만 입력(period 없음) → 통계 기본값으로 fallback 예측")
@@ -1112,7 +1112,7 @@ struct IntegrationPredictionTests {
         #expect(result.predictedPeriodLength == 5)
         #expect(result.confidence == .low)
         #expect(result.usedDefaultRule == true)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     @Test("기록 0개 + 유효 범위 밖 사용자 입력 → 통계 기본값으로 fallback 예측")
@@ -1127,7 +1127,7 @@ struct IntegrationPredictionTests {
         #expect(result.predictedPeriodLength == 5)
         #expect(result.confidence == .low)
         #expect(result.usedDefaultRule == true)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
     }
 
     // MARK: Case 1 — 유효 기록 1개
@@ -1146,7 +1146,7 @@ struct IntegrationPredictionTests {
         #expect(result.predictedPeriodLength == 5)  // 실제 period = 5일
         #expect(result.confidence == .low)
         #expect(result.usedRecordCount == 1)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
         #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-09")
     }
 
@@ -1164,7 +1164,7 @@ struct IntegrationPredictionTests {
         #expect(result.predictedPeriodLength == 5)   // 실제 기록의 period
         #expect(result.confidence == .low)
         #expect(result.usedDefaultRule == true)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
         #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-07")
     }
 
@@ -1199,7 +1199,7 @@ struct IntegrationPredictionTests {
         #expect(result.predictedPeriodLength == 5)
         #expect(result.confidence == .low)
         #expect(result.usedRecordCount == 2)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
 
         #expect(result.menstrualPredictions[0].type == .menstrualPrediction)
         #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2026-02-28")
@@ -1240,7 +1240,7 @@ struct IntegrationPredictionTests {
         #expect(result.predictedCycleLength == 28)
         #expect(result.predictedPeriodLength == 5)
         #expect(result.usedRecordCount == 3)
-        #expect(result.menstrualPredictions.count == 4)
+        #expect(result.menstrualPredictions.count == 13)
         #expect(result.menstrualPredictions[0].type == .menstrualPrediction)
         #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2025-02-26")
         #expect(Self.dayString(result.menstrualPredictions[0].endDate) == "2025-03-02")
@@ -1287,7 +1287,7 @@ struct IntegrationPredictionTests {
         #expect(result.confidence == .high)
         #expect(result.detectedShift == false)
         #expect(result.usedRecordCount == 7)
-        #expect(result.menstrualPredictions.count == 3)
+        #expect(result.menstrualPredictions.count == 12)
 
         #expect(Self.dayString(result.menstrualPredictions[0].startDate) == "2025-07-16")
         #expect(Self.dayString(result.menstrualPredictions[0].endDate) == "2025-07-20")
@@ -1736,12 +1736,12 @@ struct MenstrualRecordUseCaseTests {
         let result = overview.allRecords
 
         #expect(result.filter { $0.type == .menstrualRecord }.count == 3)
-        #expect(result.filter { $0.type == .menstrualPrediction }.count == 3)
+        #expect(result.filter { $0.type == .menstrualPrediction }.count == 12)
         #expect(result.filter { $0.type == .ovulationEstimated }.count == 3)
         #expect(result.filter { $0.type == .ovulationFertileWindowEstimated }.count == 3)
-        #expect(result.filter { $0.type == .ovulationPrediction }.count == 3)
-        #expect(result.filter { $0.type == .ovulationFertileWindowPrediction }.count == 3)
-        #expect(result.count == 18)
+        #expect(result.filter { $0.type == .ovulationPrediction }.count == 12)
+        #expect(result.filter { $0.type == .ovulationFertileWindowPrediction }.count == 12)
+        #expect(result.count == 45)
         #expect(result.map(\.startDate) == result.map(\.startDate).sorted())
     }
 
@@ -1757,7 +1757,7 @@ struct MenstrualRecordUseCaseTests {
         let result = overview.allRecords
 
         #expect(result.filter { $0.type == .menstrualRecord }.count == 0)
-        #expect(result.filter { $0.type == .menstrualPrediction }.count == 3)
+        #expect(result.filter { $0.type == .menstrualPrediction }.count == 12)
     }
 
     @Test("fetchMenstrualOverview는 전달된 사용자 입력을 예측에 반영한다")
@@ -1776,7 +1776,7 @@ struct MenstrualRecordUseCaseTests {
 
         #expect(overview.prediction?.predictedCycleLength == 35)
         #expect(overview.prediction?.predictedPeriodLength == 7)
-        #expect(overview.prediction?.menstrualPredictions.count == 3)
+        #expect(overview.prediction?.menstrualPredictions.count == 12)
     }
 
     @Test("fetchMenstrualOverview는 notBlendUserInput이면 전달된 사용자 입력을 무시한다")
@@ -1840,7 +1840,7 @@ struct MenstrualRecordUseCaseTests {
         let result = overview.allRecords
 
         #expect(result.filter { $0.type == .menstrualRecord }.count == 2)
-        #expect(result.filter { $0.type == .menstrualPrediction }.count == 4)
+        #expect(result.filter { $0.type == .menstrualPrediction }.count == 13)
         #expect(result.contains {
             $0.type == .menstrualPrediction &&
             Self.dayString($0.startDate, calendar: calendar) == "2025-02-26" &&
