@@ -144,6 +144,7 @@ private extension PhaseDetailSheet {
                 .font(.pretendardRegular(14))
                 .foregroundStyle(.primaryBlack)
                 .lineSpacing(5)
+                .padding(.bottom, 12)
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(section.bullets, id: \.self) { bullet in
                     HStack(alignment: .top, spacing: 8) {
@@ -174,6 +175,7 @@ private extension PhaseDetailSheet {
                 .font(.pretendardRegular(14))
                 .foregroundStyle(.primaryBlack)
                 .lineSpacing(5)
+                .padding(.bottom, 12)
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(detail.moodSection.bullets, id: \.self) { bullet in
                     HStack(alignment: .top, spacing: 8) {

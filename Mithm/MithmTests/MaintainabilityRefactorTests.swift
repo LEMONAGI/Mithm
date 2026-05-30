@@ -1587,6 +1587,11 @@ struct PhaseDetailLocalizationTests {
             "phase_detail.sources.acog_pms",
             "phase_detail.sources.mayo_cramps"
         ]
+        let expectedSourceLabels = [
+            "phase_detail.sources.nichd": ["ko": "NICHD", "en": "NICHD"],
+            "phase_detail.sources.acog_pms": ["ko": "ACOG", "en": "ACOG"],
+            "phase_detail.sources.mayo_cramps": ["ko": "Mayo Clinic", "en": "Mayo Clinic"]
+        ]
         let expectedURLs = [
             "https://womenshealth.gov/menstrual-cycle",
             "https://www.nichd.nih.gov/health/topics/factsheets/menstruation",
@@ -1603,6 +1608,13 @@ struct PhaseDetailLocalizationTests {
             let values = localizedValues(in: entry)
             #expect(values["ko"]?.isEmpty == false)
             #expect(values["en"]?.isEmpty == false)
+        }
+
+        for (key, expectedValues) in expectedSourceLabels {
+            let entry = try #require(localizations[key] as? [String: Any])
+            let values = localizedValues(in: entry)
+            #expect(values["ko"] == expectedValues["ko"])
+            #expect(values["en"] == expectedValues["en"])
         }
 
         for url in expectedURLs {

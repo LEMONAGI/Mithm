@@ -705,13 +705,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ACOG PMS"
+            "value" : "ACOG"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ACOG PMS"
+            "value" : "ACOG"
           }
         }
       }
@@ -722,13 +722,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mayo Clinic Cramps"
+            "value" : "Mayo Clinic"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mayo Clinic 월경통"
+            "value" : "Mayo Clinic"
           }
         }
       }
@@ -739,13 +739,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "NICHD Menstruation"
+            "value" : "NICHD"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "NICHD 월경"
+            "value" : "NICHD"
           }
         }
       }
