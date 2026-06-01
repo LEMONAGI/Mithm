@@ -7,5 +7,5 @@
 
 protocol SyncMenstrualCalendarUseCase {
     func execute(records: [MenstrualRecord], isEnabled: Bool) async throws
-    func removeCalendar() async throws
+    func clearExportedEvents() async throws
 }

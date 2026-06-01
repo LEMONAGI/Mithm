@@ -900,6 +900,24 @@ struct AppStateRefreshTests {
         #expect(appState.menstrualRecordError != nil)
     }
 
+    @Test("내보내기 비활성화는 캘린더 삭제 대신 내보낸 이벤트 비우기를 요청한다")
+    func disablingCalendarExportClearsExportedEvents() async {
+        let syncUseCase = FakeSyncMenstrualCalendarUseCase()
+        let appState = AppState(
+            menstrualRecordUseCase: FakeMenstrualRecordUseCase(),
+            refreshMenstrualCycleUseCase: FakeRefreshMenstrualCycleUseCase(),
+            loadUserSettingsUseCase: FakeLoadUserSettingsUseCase(),
+            userSettingUseCase: FakeUserSettingUseCase(),
+            syncMenstrualCalendarUseCase: syncUseCase
+        )
+
+        appState.saveCalendarExportEnabled(false)
+        await Task.yield()
+
+        #expect(syncUseCase.clearExportedEventsCallCount == 1)
+        #expect(syncUseCase.calls.isEmpty)
+    }
+
     private func record(_ start: String, _ end: String) -> MenstrualRecord {
         MenstrualRecord(
             type: .menstrualRecord,
@@ -1949,12 +1967,15 @@ private final class FakeMenstrualRecordUseCase: MenstrualRecordUseCase {
 
 private final class FakeSyncMenstrualCalendarUseCase: SyncMenstrualCalendarUseCase {
     private(set) var calls: [(records: [MenstrualRecord], isEnabled: Bool)] = []
+    private(set) var clearExportedEventsCallCount = 0
 
     func execute(records: [MenstrualRecord], isEnabled: Bool) async throws {
         calls.append((records: records, isEnabled: isEnabled))
     }
 
-    func removeCalendar() async throws { }
+    func clearExportedEvents() async throws {
+        clearExportedEventsCallCount += 1
+    }
 }
 
 private final class FakeRecordCurrentMenstrualPeriodUseCase: RecordCurrentMenstrualPeriodUseCase {

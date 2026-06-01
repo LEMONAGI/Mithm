@@ -139,7 +139,7 @@ final class AppState: ObservableObject {
 
         if !enabled {
             Task {
-                try? await syncMenstrualCalendarUseCase.removeCalendar()
+                try? await syncMenstrualCalendarUseCase.clearExportedEvents()
             }
         } else {
             Task {

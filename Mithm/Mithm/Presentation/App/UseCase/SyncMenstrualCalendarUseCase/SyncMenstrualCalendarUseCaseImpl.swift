@@ -24,9 +24,9 @@ struct SyncMenstrualCalendarUseCaseImpl: SyncMenstrualCalendarUseCase {
         try await eventKitRepository.syncRecordsToCalendar(records)
     }
 
-    func removeCalendar() async throws {
+    func clearExportedEvents() async throws {
         let hasAccess = try await eventKitRepository.verifyCalendarAccess()
         guard hasAccess else { return }
-        try await eventKitRepository.removeCalendar()
+        try await eventKitRepository.clearExportedEvents()
     }
 }

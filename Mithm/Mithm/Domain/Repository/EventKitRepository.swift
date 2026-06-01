@@ -15,9 +15,9 @@ protocol EventKitRepository {
     func verifyCalendarAccess() async throws -> Bool
     
     /// 월경 기록을 앱 전용 캘린더에 동기화한다.
-    /// 기존 이벤트를 모두 삭제하고, 입력받은 records 기반으로 새로 생성한다.
+    /// 앱이 생성한 기존 이벤트를 삭제하고, 입력받은 records 기반으로 새로 생성한다.
     func syncRecordsToCalendar(_ records: [MenstrualRecord]) async throws
 
-    /// 앱 전용 캘린더를 삭제한다. 캘린더가 없으면 아무것도 하지 않는다.
-    func removeCalendar() async throws
+    /// 앱 전용 캘린더 안에서 앱이 생성한 이벤트만 삭제한다. 캘린더가 없으면 아무것도 하지 않는다.
+    func clearExportedEvents() async throws
 }

@@ -6,10 +6,16 @@
 //
 
 import EventKit
+import os
 import UIKit
 
 actor EventKitDataStoreImpl: EventKitDataStore {
     
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.mithm",
+        category: "EventKitDataStore"
+    )
+
     let eventStore: EKEventStore
     
     /// 앱 전용 캘린더 이름
@@ -81,6 +87,10 @@ actor EventKitDataStoreImpl: EventKitDataStore {
         }
         return eventStore.calendar(withIdentifier: id)
     }
+
+    func fetchCalendarIfExists() throws -> EKCalendar? {
+        loadSavedCalendar()
+    }
     
     private func preferredSource() throws -> EKSource {
         if let icloud = eventStore.sources.first(where: {
@@ -143,22 +153,30 @@ actor EventKitDataStoreImpl: EventKitDataStore {
         event.startDate = start
         event.endDate = end
         event.isAllDay = true
-        
+
         let ts = Int(start.timeIntervalSince1970)
         event.url = URL(string: "\(eventURLBase)?type=\(type)&start=\(ts)")
-        
+
         return event
     }
     
     nonisolated func fetchOurEvents(
         matching predicate: NSPredicate
     ) -> [EKEvent] {
-        eventStore.events(matching: predicate).filter { event in
-            guard let url = event.url else { return false }
-            return url.scheme == "mithm"
-        }
+        let events = eventStore.events(matching: predicate)
+        let matchedEvents = events.filter { EventKitEventIdentifier.isMithmEvent($0) }
+
+        Self.logger.info(
+            """
+            EventKit 미리듬 이벤트 식별 요약: \
+            total=\(events.count, privacy: .public), \
+            matched=\(matchedEvents.count, privacy: .public)
+            """
+        )
+
+        return matchedEvents
     }
-    
+
     func removeEvents(_ events: [EKEvent]) throws {
         for event in events {
             try eventStore.remove(event, span: .thisEvent, commit: false)
@@ -208,5 +226,36 @@ actor EventKitDataStoreImpl: EventKitDataStore {
                 NotificationCenter.default.removeObserver(observer)
             }
         }
+    }
+}
+
+enum EventKitEventIdentifier {
+    private static let supportedURLHosts: Set<String> = [
+        "event",
+        "mithm.app"
+    ]
+
+    /// 미리듬이 생성한 이벤트인지 식별한다.
+    /// - 미리듬은 최초 출시부터 모든 이벤트에 `mithm://event...` URL을 부여해 왔으므로,
+    ///   URL만으로 식별이 가능하다. (제목/메모 기반 fallback은 사용자 이벤트 오삭제 위험이 있어 사용하지 않는다.)
+    static func isMithmEvent(_ event: EKEvent) -> Bool {
+        guard let url = event.url else {
+            return false
+        }
+        return isMithmEventURL(url)
+    }
+
+    private static func isMithmEventURL(_ url: URL) -> Bool {
+        if url.scheme == "mithm" {
+            return true
+        }
+
+        guard url.scheme == "https",
+              let host = url.host else {
+            return false
+        }
+
+        return supportedURLHosts.contains(host)
+            && url.path.hasPrefix("/event")
     }
 }
