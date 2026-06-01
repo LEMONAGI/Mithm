@@ -152,16 +152,6 @@ final class EventKitRepositoryImpl: EventKitRepository {
                 }
             try dataStore.saveEvents(newEvents)
 
-            logger.info(
-                """
-                EventKit 증분 동기화 요약: \
-                desired=\(desiredByKey.count, privacy: .public), \
-                existing=\(existingEvents.count, privacy: .public), \
-                removed=\(eventsToRemove.count, privacy: .public), \
-                created=\(newEvents.count, privacy: .public)
-                """
-            )
-
             if !eventsToRemove.isEmpty || !newEvents.isEmpty {
                 try dataStore.commit()
             }
@@ -185,25 +175,12 @@ final class EventKitRepositoryImpl: EventKitRepository {
                 calendars: [targetCalendar]
             )
             let matchedEvents = dataStore.fetchOurEvents(matching: predicate)
-            logger.info(
-                """
-                EventKit 미리듬 이벤트 조회 범위 결과: \
-                start=\(String(describing: queryWindow.start), privacy: .public), \
-                end=\(String(describing: queryWindow.end), privacy: .public), \
-                matched=\(matchedEvents.count, privacy: .public)
-                """
-            )
-
             for event in matchedEvents {
                 existingEventsByKey[dedupeKey(for: event)] = event
             }
         }
 
-        let existingEvents = Array(existingEventsByKey.values)
-        logger.info(
-            "EventKit 미리듬 이벤트 조회 요약: uniqueMatched=\(existingEvents.count, privacy: .public)"
-        )
-        return existingEvents
+        return Array(existingEventsByKey.values)
     }
 
     // MARK: - Content Diff

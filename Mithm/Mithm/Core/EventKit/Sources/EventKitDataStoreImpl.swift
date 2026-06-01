@@ -6,15 +6,9 @@
 //
 
 import EventKit
-import os
 import UIKit
 
 actor EventKitDataStoreImpl: EventKitDataStore {
-    
-    private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "com.mithm",
-        category: "EventKitDataStore"
-    )
 
     let eventStore: EKEventStore
     
@@ -163,18 +157,8 @@ actor EventKitDataStoreImpl: EventKitDataStore {
     nonisolated func fetchOurEvents(
         matching predicate: NSPredicate
     ) -> [EKEvent] {
-        let events = eventStore.events(matching: predicate)
-        let matchedEvents = events.filter { EventKitEventIdentifier.isMithmEvent($0) }
-
-        Self.logger.info(
-            """
-            EventKit 미리듬 이벤트 식별 요약: \
-            total=\(events.count, privacy: .public), \
-            matched=\(matchedEvents.count, privacy: .public)
-            """
-        )
-
-        return matchedEvents
+        eventStore.events(matching: predicate)
+            .filter { EventKitEventIdentifier.isMithmEvent($0) }
     }
 
     func removeEvents(_ events: [EKEvent]) throws {
