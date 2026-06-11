@@ -14,13 +14,16 @@ struct OnboardingView: View {
         NavigationStack(path: $viewModel.navigationPath) {
             OnboardingStep1View()
                 .navigationDestination(for: OnboardingViewModel.Step.self) { step in
-                    switch step {
-                    case .step1: OnboardingStep1View()
-                    case .step2: OnboardingStep2View()
-                    case .step3: OnboardingStep3View()
-                    case .step4: OnboardingStep4View()
-                    case .step5: OnboardingStep5View()
+                    Group {
+                        switch step {
+                        case .step1: OnboardingStep1View()
+                        case .step2: OnboardingStep2View()
+                        case .step3: OnboardingStep3View()
+                        case .step4: OnboardingStep4View()
+                        case .step5: OnboardingStep5View()
+                        }
                     }
+                    .toolbarRole(.editor)
                 }
         }
         .alert(item: $viewModel.permissionAlert) { alert in

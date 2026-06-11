@@ -18,6 +18,7 @@ struct MenstrualRecordSheetView: View {
                         row: row
                     )
                     .navigationBarTitleDisplayMode(.inline)
+                    .toolbarRole(.editor)
                 }
         }
     }
@@ -125,7 +126,7 @@ private struct MenstrualRecordEditView: View {
         .navigationTitle("월경 기록 수정")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button(role: .confirm) {
+                ConfirmToolbarButton {
                     guard row.record.isEditable else {
                         showNotEditableAlert = true
                         return

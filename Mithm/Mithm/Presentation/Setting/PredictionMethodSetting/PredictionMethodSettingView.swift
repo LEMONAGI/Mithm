@@ -48,7 +48,7 @@ struct PredictionMethodSettingView: View {
         .background(Color.secondaryPurple.ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button(role: .confirm) {
+                ConfirmToolbarButton {
                     settingViewModel.savePredictionMethodDraft()
                     dismiss()
                 }

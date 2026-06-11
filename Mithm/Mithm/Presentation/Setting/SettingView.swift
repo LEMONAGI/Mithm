@@ -32,9 +32,11 @@ struct SettingView: View {
             .navigationDestination(isPresented: $showPredictionMethodSetting) {
                 PredictionMethodSettingView()
                     .environmentObject(settingViewModel)
+                    .toolbarRole(.editor)
             }
             .navigationDestination(isPresented: $showCycleSetting) {
                 CycleSettingView()
+                    .toolbarRole(.editor)
             }
         }
     }
