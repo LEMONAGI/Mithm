@@ -2439,6 +2439,116 @@ private struct MockHealthKitRepository: HealthKitRepository {
     func deleteMenstrualCycleRecords(from startDate: Date, to endDate: Date) async throws {}
 }
 
+// MARK: - 19. OvulationRecordGenerator
+
+struct OvulationRecordGeneratorTests {
+    private let calendar = TestCalendar.make()
+    private let generator = OvulationRecordGenerator()
+
+    @Test("주기가 20일 미만인 실제 월경 기록에는 배란기 추정을 생성하지 않는다 (직전 기록은 생성)")
+    func shortCycleSkipsEstimatedOvulation() {
+        // 1/1 시작, 1/19 시작 → 주기 18일 (< 20)
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-19", end: "2025-01-23")
+        ]
+
+        let result = generator.generate(from: records, calendar: calendar)
+
+        // 첫 기록(직전 없음)만 배란기 추정 생성, 두 번째(주기 18일)는 제외
+        #expect(result.filter { $0.type == .ovulationEstimated }.count == 1)
+        #expect(result.filter { $0.type == .ovulationFertileWindowEstimated }.count == 1)
+    }
+
+    @Test("주기가 정확히 20일이면 배란기 추정을 생성한다 (경계값)")
+    func boundaryCycleTwentyGeneratesOvulation() {
+        // 1/1 시작, 1/21 시작 → 주기 20일
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-21", end: "2025-01-25")
+        ]
+
+        let result = generator.generate(from: records, calendar: calendar)
+
+        #expect(result.filter { $0.type == .ovulationEstimated }.count == 2)
+        #expect(result.filter { $0.type == .ovulationFertileWindowEstimated }.count == 2)
+    }
+
+    @Test("정상 주기(28일) 기록은 모두 배란기 추정을 생성한다")
+    func normalCycleGeneratesOvulationForAll() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-01-29", end: "2025-02-02"),
+            makeRecord(start: "2025-02-26", end: "2025-03-02")
+        ]
+
+        let result = generator.generate(from: records, calendar: calendar)
+
+        #expect(result.filter { $0.type == .ovulationEstimated }.count == 3)
+        #expect(result.filter { $0.type == .ovulationFertileWindowEstimated }.count == 3)
+    }
+
+    @Test("첫 기록(직전 기록 없음)은 주기를 알 수 없으므로 항상 배란기 추정을 생성한다")
+    func firstRecordAlwaysGeneratesOvulation() {
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05")
+        ]
+
+        let result = generator.generate(from: records, calendar: calendar)
+
+        #expect(result.filter { $0.type == .ovulationEstimated }.count == 1)
+        #expect(result.filter { $0.type == .ovulationFertileWindowEstimated }.count == 1)
+    }
+
+    @Test("주기가 너무 긴(45일 초과) 기록은 여전히 배란기 추정을 생성한다 (짧은 것만 제외)")
+    func longCycleStillGeneratesOvulation() {
+        // 1/1 시작, 2/20 시작 → 주기 50일
+        let records = [
+            makeRecord(start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(start: "2025-02-20", end: "2025-02-24")
+        ]
+
+        let result = generator.generate(from: records, calendar: calendar)
+
+        #expect(result.filter { $0.type == .ovulationEstimated }.count == 2)
+        #expect(result.filter { $0.type == .ovulationFertileWindowEstimated }.count == 2)
+    }
+
+    @Test("예측 월경(.menstrualPrediction)은 주기가 짧아도 배란 예측을 생성한다 (실제 기록만 제외 대상)")
+    func predictionRecordsAreNotAffectedByShortCycle() {
+        let records = [
+            makeRecord(type: .menstrualPrediction, start: "2025-01-01", end: "2025-01-05"),
+            makeRecord(type: .menstrualPrediction, start: "2025-01-19", end: "2025-01-23")
+        ]
+
+        let result = generator.generate(from: records, calendar: calendar)
+
+        #expect(result.filter { $0.type == .ovulationPrediction }.count == 2)
+        #expect(result.filter { $0.type == .ovulationFertileWindowPrediction }.count == 2)
+    }
+
+    private func makeRecord(
+        type: MenstrualRecordType = .menstrualRecord,
+        start: String,
+        end: String
+    ) -> MenstrualRecord {
+        MenstrualRecord(
+            type: type,
+            startDate: Self.date(start, calendar: calendar),
+            endDate: Self.date(end, calendar: calendar)
+        )
+    }
+
+    private static func date(_ value: String, calendar: Calendar) -> Date {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)!
+    }
+}
+
 // MARK: - Test Calendar Helper
 
 private enum TestCalendar {
