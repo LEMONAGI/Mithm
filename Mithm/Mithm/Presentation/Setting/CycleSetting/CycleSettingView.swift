@@ -81,7 +81,7 @@ struct CycleSettingView: View {
         .background(Color(.secondaryPink).ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button(role: .confirm) {
+                ConfirmToolbarButton {
                     viewModel.save()
                     dismiss()
                 }
