@@ -30,6 +30,11 @@ private struct MenstrualRecordListView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
+                Text("월경 기록")
+                    .font(.pretendardBold(36))
+                    .foregroundStyle(.textPrimary)
+                    .padding(.bottom, 26)
+
                 if viewModel.menstrualRecordRows.isEmpty {
                     Text("표시할 월경 기록이 없어요.")
                         .font(.pretendardMedium(18))
@@ -46,14 +51,13 @@ private struct MenstrualRecordListView: View {
                     }
                 }
             }
-            .padding(.top, 30)
+            .padding(.top, 56)
             .padding(.horizontal, 20)
             .padding(.bottom, 28)
         }
         .scrollIndicators(.hidden)
         .background(Color.gray50.ignoresSafeArea())
-        .navigationTitle("월경 기록")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
