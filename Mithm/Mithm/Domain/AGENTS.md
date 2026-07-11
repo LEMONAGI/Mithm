@@ -11,11 +11,11 @@
 
 ## 2. CONTENTS — 파일/디렉토리와 기술 스택
 
-- `Model/` — `PhaseType`, `PhaseWindow`(Home), `CycleCalendarMonth`(Calendar), `MenstrualUserInput`, `UserInputMode`(Setting), `AlertPresentable`(Share), `Item`(SwiftData 템플릿 잔재)
+- `Model/` — `PhaseType`, `PhaseWindow`(Home), `CycleCalendarMonth`(Calendar), `MenstrualUserInput`, `UserInputMode`(Setting), `AlertPresentable`(Share)
 - `Health/` — `MenstrualRecord`, `MenstrualRecordType`, `HealthDataType`, `WristTemperatureRecord`, `HealthKitError`
 - `Event/` — `EventKitError`
 - `State/` — `MenstrualOverview`, `MenstrualCycleSnapshot`, `UserSettingState`(`CurrentMenstrualEpisode` 포함)
-- `Repository/` — `HealthKitRepository`, `EventKitRepository`, `UserSettingRepository` 프로토콜 정의
+- `Repository/` — `HealthKitRepository`, `EventKitRepository`, `UserSettingRepository`, `CurrentMenstrualEpisodeStore` 프로토콜 정의(Domain ↔ Data 계약은 전부 여기 모은다)
 - `Helper/` — `MenstrualPredictionEngine`, `OpenPeriodAutoCloser`(`CurrentMenstrualStatusResolver` 포함), `OvulationRecordGenerator`
 
 기술 스택: 순수 Swift (Foundation만 허용)
@@ -30,7 +30,7 @@
 ## 4. ⛔ HOW NOT — 시스템을 깨뜨리는 비명백한 함정
 
 - **Domain이 Data 또는 Core를 import 금지** — 의존성 방향은 반드시 `Presentation → Domain ← Data ← Core`. Domain이 구현 계층을 알면 테스트 격리가 불가능해지고 아키텍처 전체가 무너진다
-- **SwiftData / CoreData 사용 금지** — HealthKit이 단일 진실 공급원. `Domain/Model/SwiftData/Item.swift`는 초기 Xcode 템플릿 잔재로 실사용하지 않는다. 새 영속 저장소를 만들지 말 것
+- **SwiftData / CoreData 사용 금지** — HealthKit이 단일 진실 공급원이다. Domain은 Foundation만 import한다(초기 Xcode 템플릿 잔재였던 `Model/SwiftData/Item.swift`는 삭제했다). 새 영속 저장소를 만들지 말 것
 - **HealthKit 샘플 날짜를 Domain에서 임의 조작 금지** — Mapper(Data 계층)가 샘플 날짜 범위를 그대로 닫힌 record로 변환한다. Domain에서 `endDate`를 nil로 바꾸거나 재해석하면 `CurrentMenstrualStatusResolver` 로직이 깨진다
 - **`Config.default` 외부에서 예측 파라미터 하드코딩 금지** — 알고리즘 파라미터는 모두 `MenstrualPredictionEngine.Config.default`에 집중. 분산되면 동작 예측이 불가능해진다
 - **`HomePhaseUseCaseImpl.execute()` 판정 순서 임의 변경 금지** — 파일 위치는 `Presentation/App/UseCase/HomePhaseUseCase/`이지만 내용은 도메인 비즈니스 규칙이다. 핵심 우선순위(진행 중 월경 → 배란기 → 난포기 → 황체기 → fallback)를 이유 없이 바꾸면 기존 테스트가 한꺼번에 깨진다

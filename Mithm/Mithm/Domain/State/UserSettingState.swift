@@ -87,9 +87,3 @@ struct CurrentMenstrualStatus: Equatable {
         )
     }
 }
-
-protocol CurrentMenstrualEpisodeStore {
-    func loadCurrentEpisode() -> CurrentMenstrualEpisode?
-    func saveCurrentEpisode(_ episode: CurrentMenstrualEpisode)
-    func clearCurrentEpisode()
-}

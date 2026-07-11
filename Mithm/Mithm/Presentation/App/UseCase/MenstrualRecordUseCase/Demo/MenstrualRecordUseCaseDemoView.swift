@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MenstrualRecordUseCaseDemoView: View {
 
-    @StateObject private var viewModel = MenstrualRecordUseCaseDemoViewModel()
+    @StateObject private var viewModel = AppDIContainer.makeMenstrualRecordUseCaseDemoViewModel()
     @State private var startDate = Date()
     @State private var endDate = Date()
 

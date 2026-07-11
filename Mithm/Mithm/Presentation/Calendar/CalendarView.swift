@@ -364,7 +364,8 @@ extension CalendarView {
 }
 
 #Preview {
-    let appState = AppDIContainer.makeAppState()
+    let graph = AppDIContainer.makeAppDependencyGraph()
     CalendarView()
-        .environmentObject(AppDIContainer.makeCalendarViewModel(appState: appState))
+        .environmentObject(graph.appState)
+        .environmentObject(graph.calendarViewModel)
 }

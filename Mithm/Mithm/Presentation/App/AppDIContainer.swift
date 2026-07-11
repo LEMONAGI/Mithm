@@ -20,15 +20,13 @@ struct AppDIContainer {
 
     static func makeAppDependencyGraph() -> AppDependencyGraph {
         let calendar = Calendar.current
-        let healthKitDataStore = HealthKitDataStoreImpl()
-        let healthKitRepository = HealthKitRepositoryImpl(dataStore: healthKitDataStore)
+        let healthKitRepository = makeHealthKitRepository()
         let menstrualRecordUseCase = MenstrualRecordUseCaseImpl(
             healthKitRepository: healthKitRepository,
             calendar: calendar
         )
 
-        let eventKitDataStore = EventKitDataStoreImpl()
-        let eventKitRepository = EventKitRepositoryImpl(dataStore: eventKitDataStore)
+        let eventKitRepository = makeEventKitRepository()
         let syncMenstrualCalendarUseCase = SyncMenstrualCalendarUseCaseImpl(
             eventKitRepository: eventKitRepository
         )
@@ -101,54 +99,22 @@ struct AppDIContainer {
         )
     }
 
-    static func makeAppState() -> AppState {
-        makeAppDependencyGraph().appState
-    }
+    /// 개발/디버깅용 Demo 화면 전용. 본 앱 흐름(`makeAppDependencyGraph`)과 분리된 그래프다.
+    static func makeMenstrualRecordUseCaseDemoViewModel() -> MenstrualRecordUseCaseDemoViewModel {
+        let healthKitRepository = makeHealthKitRepository()
 
-    static func makeHomeViewModel(appState: AppState) -> HomeViewModel {
-        let calendar = Calendar.current
-        let healthKitRepository = HealthKitRepositoryImpl(
-            dataStore: HealthKitDataStoreImpl()
-        )
-        let menstrualRecordUseCase = MenstrualRecordUseCaseImpl(
+        return MenstrualRecordUseCaseDemoViewModel(
             healthKitRepository: healthKitRepository,
-            calendar: calendar
-        )
-        let recordCurrentMenstrualPeriodUseCase = RecordCurrentMenstrualPeriodUseCaseImpl(
-            menstrualRecordUseCase: menstrualRecordUseCase,
-            currentMenstrualEpisodeStore: UserDefaultsCurrentMenstrualEpisodeStore(),
-            calendar: calendar
-        )
-
-        return HomeViewModel(
-            appState: appState,
-            calendar: calendar,
-            recordCurrentMenstrualPeriodUseCase: recordCurrentMenstrualPeriodUseCase,
-            homePhaseUseCase: HomePhaseUseCaseImpl()
+            eventKitRepository: makeEventKitRepository(),
+            useCase: MenstrualRecordUseCaseImpl(healthKitRepository: healthKitRepository)
         )
     }
 
-    static func makeCalendarViewModel(appState: AppState) -> CalendarViewModel {
-        let calendar = Calendar.current
-        let healthKitRepository = HealthKitRepositoryImpl(
-            dataStore: HealthKitDataStoreImpl()
-        )
-        let menstrualRecordUseCase = MenstrualRecordUseCaseImpl(
-            healthKitRepository: healthKitRepository,
-            calendar: calendar
-        )
-        let currentMenstrualEpisodeStore = UserDefaultsCurrentMenstrualEpisodeStore()
-        let menstrualRecordEditingUseCase = MenstrualRecordEditingUseCaseImpl(
-            menstrualRecordUseCase: menstrualRecordUseCase,
-            currentMenstrualEpisodeStore: currentMenstrualEpisodeStore,
-            calendar: calendar
-        )
+    private static func makeHealthKitRepository() -> HealthKitRepository {
+        HealthKitRepositoryImpl(dataStore: HealthKitDataStoreImpl())
+    }
 
-        return CalendarViewModel(
-            appState: appState,
-            cycleCalendarUseCase: CycleCalendarUseCaseImpl(calendar: calendar),
-            menstrualRecordEditingUseCase: menstrualRecordEditingUseCase,
-            calendar: calendar
-        )
+    private static func makeEventKitRepository() -> EventKitRepository {
+        EventKitRepositoryImpl(dataStore: EventKitDataStoreImpl())
     }
 }

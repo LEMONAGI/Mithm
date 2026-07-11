@@ -22,22 +22,13 @@ final class MenstrualRecordUseCaseDemoViewModel: ObservableObject {
     private let useCase: any MenstrualRecordUseCase
 
     init(
-        healthKitRepository: HealthKitRepository? = nil,
-        eventKitRepository: EventKitRepository? = nil,
-        useCase: (any MenstrualRecordUseCase)? = nil
+        healthKitRepository: HealthKitRepository,
+        eventKitRepository: EventKitRepository,
+        useCase: any MenstrualRecordUseCase
     ) {
-        let resolvedRepository = healthKitRepository ?? HealthKitRepositoryImpl(
-            dataStore: HealthKitDataStoreImpl()
-        )
-        let resolvedEventKitRepository = eventKitRepository ?? EventKitRepositoryImpl(
-            dataStore: EventKitDataStoreImpl()
-        )
-
-        self.healthKitRepository = resolvedRepository
-        self.eventKitRepository = resolvedEventKitRepository
-        self.useCase = useCase ?? MenstrualRecordUseCaseImpl(
-            healthKitRepository: resolvedRepository
-        )
+        self.healthKitRepository = healthKitRepository
+        self.eventKitRepository = eventKitRepository
+        self.useCase = useCase
     }
 
     var groupedCounts: [(title: String, count: Int)] {

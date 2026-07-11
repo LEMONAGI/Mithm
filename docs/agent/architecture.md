@@ -24,22 +24,24 @@ Presentation -> Domain <- Data <- Core
 - `Domain`: 순수 비즈니스 로직, Model, State, Repository 프로토콜, 예측/판정 Helper
 - `Data`: Repository 구현체, HealthKit/EventKit Mapper, UserDefaults 변환
 - `Core`: HealthKit/EventKit 네이티브 API 래퍼
-
-UseCase와 `AppState`는 `Presentation/App/` 아래에 있다. UseCase 구현체는 Domain의 Repository 프로토콜에만 의존하므로 위 의존성 방향은 그대로 유지된다. Domain에 `UseCase/`나 `AppState`를 새로 만들지 않는다.
 - `Resource`: 폰트, 색상, 로컬라이징
 - `Utility`: 포매터 등 Presentation 보조 유틸리티
 - `MithmTests`: 예측 엔진, Phase 판정, UseCase 단위 테스트
 
+UseCase와 `AppState`는 `Presentation/App/` 아래에 있다. UseCase 구현체는 Domain의 Repository 프로토콜에만 의존하므로 위 의존성 방향은 그대로 유지된다. Domain에 `UseCase/`나 `AppState`를 새로 만들지 않는다.
+
 ## 주요 경계
 
-- `Domain/Repository/`: Domain과 Data 사이의 계약
+- `Domain/Repository/`: Domain과 Data 사이의 계약(`CurrentMenstrualEpisodeStore` 포함)
 - `Presentation/App/UseCase/`: 화면과 Domain 사이의 기능 계약
 - `Core/HealthKit/Sources/HealthKitDataStore`: Core와 Data 사이의 HealthKit 계약
 - `Core/EventKit/Sources/EventKitDataStore`: Core와 Data 사이의 EventKit 계약
 - `Presentation/App/AppDIContainer.swift`: 앱 전체 의존성 그래프 조립 지점(composition root)
 - `Presentation/App/AppState.swift`: 앱 전역 상태와 화면 갱신의 중심
 
-`AppDIContainer`는 composition root이므로 예외적으로 Data 구현체와 Core DataStore를 직접 생성한다. 이 예외는 `AppDIContainer` 한 파일에만 적용되며, 다른 Presentation 파일은 Data/Core를 직접 참조하지 않는다.
+`AppDIContainer`는 composition root이므로 예외적으로 Data 구현체와 Core DataStore를 직접 생성한다. 이 예외는 `AppDIContainer` 한 파일에만 적용되며, 다른 Presentation 파일은 Data/Core를 직접 참조하지 않는다. `Demo/` 화면과 `#Preview`도 예외가 아니며 `AppDIContainer`의 팩토리를 거친다.
+
+앱이 쓰는 그래프 조립 경로는 `makeAppDependencyGraph()` 하나뿐이다. ViewModel마다 별도 조립 팩토리를 두면 같은 그래프를 두 번 조립하게 되므로 만들지 않는다.
 
 ## 작업 시작 위치
 

@@ -256,8 +256,7 @@ private struct MenstrualRecordEditView: View {
 
 
 #Preview {
-    let appState = AppDIContainer.makeAppState()
     MenstrualRecordSheetView(
-        viewModel: AppDIContainer.makeCalendarViewModel(appState: appState)
+        viewModel: AppDIContainer.makeAppDependencyGraph().calendarViewModel
     )
 }

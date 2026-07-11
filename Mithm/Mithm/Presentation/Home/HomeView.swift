@@ -232,7 +232,8 @@ private extension HomeView {
 // MARK: - Preview
 
 #Preview {
-    let appState = AppDIContainer.makeAppState()
+    let graph = AppDIContainer.makeAppDependencyGraph()
     HomeView()
-        .environmentObject(AppDIContainer.makeHomeViewModel(appState: appState))
+        .environmentObject(graph.appState)
+        .environmentObject(graph.homeViewModel)
 }
