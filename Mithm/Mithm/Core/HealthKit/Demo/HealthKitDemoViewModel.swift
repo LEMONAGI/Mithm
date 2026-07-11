@@ -9,13 +9,22 @@ import Foundation
 import HealthKit
 import Combine
 
+/// Demo 화면 표시 전용 손목온도 샘플.
+/// Core는 Domain 타입을 참조할 수 없으므로 Domain의 손목온도 모델 대신 Core 안에서 자체 정의한다.
+struct HealthKitDemoWristTemperatureSample: Identifiable, Hashable {
+    let id = UUID()
+    let startDate: Date
+    let endDate: Date
+    let valueInCelsius: Double
+}
+
 @MainActor
 final class HealthKitDemoViewModel: ObservableObject {
-    
+
     // MARK: - Published
-    
+
     @Published var menstrualSamples: [HKCategorySample] = []
-    @Published var wristTemperatureSamples: [WristTemperatureRecord] = []
+    @Published var wristTemperatureSamples: [HealthKitDemoWristTemperatureSample] = []
     @Published var lastSyncDate: Date?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
@@ -83,7 +92,7 @@ final class HealthKitDemoViewModel: ObservableObject {
             wristTemperatureSamples = fetchedWristTemperatureSamples
                 .sorted { $0.startDate < $1.startDate }
                 .map {
-                    WristTemperatureRecord(
+                    HealthKitDemoWristTemperatureSample(
                         startDate: $0.startDate,
                         endDate: $0.endDate,
                         valueInCelsius: $0.quantity.doubleValue(for: .degreeCelsius())
