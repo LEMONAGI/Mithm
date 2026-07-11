@@ -15,8 +15,10 @@
 - HealthKit 기록이 없어지면 로컬 episode만으로 월경 중이라고 판단하지 않는다.
 - stale episode는 refresh 흐름에서 정리한다.
 
-## ADR-003 예측과 Phase 판정은 Domain의 책임이다
+## ADR-003 예측 알고리즘은 Domain, Phase 판정 UseCase는 Presentation에 둔다
 
+- 예측 엔진과 상태 판정 Helper(`MenstrualPredictionEngine`, `CurrentMenstrualStatusResolver`, `OpenPeriodAutoCloser`)는 `Domain/Helper/`에 둔다.
+- UseCase(`HomePhaseUseCase` 등)는 `Presentation/App/UseCase/`에 둔다. Domain의 Repository 프로토콜에만 의존하므로 UI 프레임워크에 묶이지 않고 단위 테스트가 가능하다.
 - 예측 파라미터는 `MenstrualPredictionEngine.Config.default`에 모은다.
 - Home Phase 판정 순서는 비즈니스 우선순위이므로 임의로 바꾸지 않는다.
 - 예측/판정 변경은 먼저 Swift Testing 테스트로 고정한다.
@@ -30,6 +32,7 @@
 ## ADR-005 의존성 주입은 수동 팩토리로 유지한다
 
 - `AppDIContainer`가 앱 전체 의존성 그래프를 조립한다.
+- `AppDIContainer`는 composition root이므로 Data 구현체와 Core DataStore를 직접 생성하는 유일한 Presentation 파일이다. 다른 View/ViewModel/UseCase는 주입받은 프로토콜만 사용한다.
 - DI 프레임워크는 도입하지 않는다.
 - 새 UseCase나 Repository 구현체를 추가할 때는 DI 그래프 연결을 함께 확인한다.
 

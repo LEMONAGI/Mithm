@@ -47,7 +47,7 @@
 
 - Core의 EventKit DataStore는 시스템 캘린더 CRUD를 담당한다.
 - Data의 EventKit Repository는 도메인 요청을 캘린더 이벤트로 변환한다.
-- Domain의 `SyncMenstrualCalendarUseCase`는 동기화 의도를 조율한다.
+- `Presentation/App/UseCase/`의 `SyncMenstrualCalendarUseCase`는 동기화 의도를 조율한다.
 - 실제 권한, 캘린더 생성, 이벤트 반영은 시뮬레이터만으로 충분하지 않을 수 있다.
 
 ### 동기화는 증분(set-diff)이다 — 전부 삭제+재생성 금지

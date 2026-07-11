@@ -10,8 +10,9 @@ HealthKit/EventKit 원시 데이터와 UserDefaults를 Domain 모델로 변환�
 ## 2. CONTENTS — 파일/디렉토리와 기술 스택
 
 - `HealthKit/HealthKitRepositoryImpl.swift` — HealthKit Repository 구현체 (읽기/쓰기 조율)
-- `HealthKit/Mapper/` — HealthKit 샘플 ↔ 도메인 모델(`MenstrualRecord` 등) 변환
+- `HealthKit/HealthKitMapper.swift` — HealthKit 샘플 ↔ 도메인 모델(`MenstrualRecord` 등) 변환
 - `EventKit/EventKitRepositoryImpl.swift` — 캘린더 동기화 Repository 구현체
+- `EventKit/EventKitMapper.swift` — 도메인 모델 ↔ 캘린더 이벤트 변환
 - `UserSetting/UserSettingRepositoryImpl.swift` — UserDefaults ↔ `UserSettingState` 변환
 
 기술 스택: Swift, HealthKit, EventKit, Foundation(UserDefaults)
@@ -19,9 +20,9 @@ HealthKit/EventKit 원시 데이터와 UserDefaults를 Domain 모델로 변환�
 ## 3. HOW — 일반적인 수정은 어떻게 하는가
 
 - **새 HealthKit 데이터 읽기**: `Core/HealthKit/Sources/`의 DataStore에 메서드 추가 → `HealthKitRepositoryImpl`에서 호출 → Domain Repository 프로토콜에 인터페이스 추가
-- **Mapper 수정**: HealthKit 샘플의 `startDate`/`endDate`를 도메인 `MenstrualRecord`로 변환하는 로직. 샘플 날짜 범위를 그대로 닫힌 record로 읽는 것이 원칙
+- **Mapper 수정**: `HealthKit/HealthKitMapper.swift`에서 샘플의 `startDate`/`endDate`를 도메인 `MenstrualRecord`로 변환한다. 샘플 날짜 범위를 그대로 닫힌 record로 읽는 것이 원칙
 - **사용자 설정 추가**: `Domain/Repository/UserSettingRepository.swift`에 프로토콜 메서드 추가 → `UserSettingRepositoryImpl`에 구현 → `Domain/State/UserSettingState.swift` 반영
-- **캘린더 동기화 수정**: `EventKitRepositoryImpl` + `Domain/UseCase/`의 `SyncMenstrualCalendarUseCase` 함께 확인. 동기화는 증분(set-diff)이다 — 캘린더에서 읽어온 기존 미리듬 이벤트와 내보낼 집합의 차이만 반영한다(변동 없으면 commit도 안 함)
+- **캘린더 동기화 수정**: `EventKitRepositoryImpl` + `Presentation/App/UseCase/SyncMenstrualCalendarUseCase/` 함께 확인. 동기화는 증분(set-diff)이다 — 캘린더에서 읽어온 기존 미리듬 이벤트와 내보낼 집합의 차이만 반영한다(변동 없으면 commit도 안 함)
 
 ## 4. ⛔ HOW NOT — 시스템을 깨뜨리는 비명백한 함정
 
@@ -34,7 +35,7 @@ HealthKit/EventKit 원시 데이터와 UserDefaults를 Domain 모델로 변환�
 ## 5. WHERE — 다른 모듈과의 의존성
 
 - **의존**: `Core/`(HealthKit/EventKit DataStore 호출), `Domain/`(Repository 프로토콜 준수, 도메인 모델 사용)
-- **피의존**: `Presentation/App/AppDIContainer.swift`에서 구현체를 생성하여 Domain UseCase에 주입
+- **피의존**: `Presentation/App/AppDIContainer.swift`(composition root)에서 구현체를 생성하여 `Presentation/App/UseCase/`의 UseCase에 주입
 - **경계**: `Domain/Repository/` 프로토콜이 Data ↔ Domain 계약 지점. `Core/HealthKit/Sources/`의 DataStore 프로토콜이 Data ↔ Core 계약 지점
 
 ## 6. WHY — 코드에 안 적힌 배경 지식

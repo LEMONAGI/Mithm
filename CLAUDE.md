@@ -43,7 +43,9 @@
 
 - 의존성 방향은 `Presentation -> Domain <- Data <- Core`를 유지한다.
 - Domain은 Data/Core/Presentation을 import하지 않는다.
-- Core는 Domain/Data/Presentation을 import하지 않는다.
+- Core는 Domain/Data/Presentation을 import하지 않는다(`Demo/`도 예외 없음).
+- UseCase와 `AppState`는 `Presentation/App/`에 있다. Domain에 `UseCase/`나 `AppState`를 새로 만들지 않는다.
+- Data 구현체와 Core DataStore를 직접 생성하는 파일은 composition root인 `Presentation/App/AppDIContainer.swift` 하나뿐이다.
 - HealthKit이 월경 기록의 단일 진실 공급원이다.
 - UserDefaults는 월경 기록 저장소가 아니다.
 - 외부 라이브러리, DI 프레임워크, DB 프레임워크를 추가하지 않는다.

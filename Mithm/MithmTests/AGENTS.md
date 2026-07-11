@@ -9,11 +9,14 @@ Swift Testing(`@Test` 매크로) 기반 단위 테스트 타겟이다. 비즈니
 
 ## 2. CONTENTS — 파일/디렉토리와 기술 스택
 
-- `MithmTests.swift` — 예측 엔진 80+케이스 (record 필터링/검증, 표본화, 이상치 가중치, variability 분류, EWMA, blend 로직, 신뢰도 산정)
+- `MithmTests.swift` — 예측 엔진 (record 필터링/검증, 표본화, 이상치 가중치, variability 분류, EWMA, blend 로직, 신뢰도 산정)
 - `HomePhaseUseCaseTests.swift` — Phase window 계산 (진행 중 월경, 예측 record 제외, 배란기 포함, gap 기반 follicular/luteal, fallback)
 - `MaintainabilityRefactorTests.swift` — 월경 시작/종료 UseCase, refresh 오케스트레이션, stale `CurrentMenstrualEpisode` 정리, 자동 종료 흐름
+- `EventKitRepositoryImplTests.swift` — 캘린더 증분 동기화(set-diff), 종일 이벤트 종료일 보정, 미리듬 이벤트 식별
+- `CalendarPredictionSourceNoticeTests.swift` — 캘린더 화면의 예측 출처 안내 노출 조건
+- `SettingMenuItemURLTests.swift` — 설정 메뉴 항목의 URL 매핑
 
-기술 스택: Swift Testing (`@Test`, `#expect`), Swift
+기술 스택: Swift Testing (`@Test`, `#expect`), Swift. 현재 `@Test` 케이스 220개.
 
 ## 3. HOW — 일반적인 수정은 어떻게 하는가
 
@@ -31,7 +34,7 @@ Swift Testing(`@Test` 매크로) 기반 단위 테스트 타겟이다. 비즈니
 
 ## 5. WHERE — 다른 모듈과의 의존성
 
-- **의존**: `Domain/`(UseCase, Helper, Model), `Data/`(Repository 구현체, Mapper — 일부 통합 테스트용)
+- **의존**: `Domain/`(Model, State, Helper), `Presentation/App/UseCase/`(UseCase 오케스트레이션), `Data/`(Repository 구현체, Mapper — 일부 통합 테스트용)
 - **피의존**: 없음 (테스트 타겟은 다른 모듈에서 import하지 않음)
 - **경계**: Xcode 타겟 `MithmTests`. 앱 타겟 `Mithm`과 별개로 빌드됨
 

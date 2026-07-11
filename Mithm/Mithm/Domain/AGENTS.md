@@ -5,25 +5,26 @@
 
 ## 1. WHAT — 이 모듈은 무엇을 하는가
 
-앱의 비즈니스 로직 전체를 담당하는 순수 Swift 계층이다. UseCase(기능 단위 오케스트레이션), State(앱 전역 상태), Model(도메인 타입), Repository 프로토콜(Data 계층 인터페이스), 예측 엔진 등이 여기 있다. 외부 프레임워크(HealthKit/EventKit)를 직접 알지 않으며, Data 계층이 Domain의 Repository 프로토콜을 구현하는 방식으로 의존성이 역전된다.
+앱의 비즈니스 규칙과 도메인 타입을 담당하는 순수 Swift 계층이다. Model(도메인 타입), State(도메인 상태 스냅샷), Repository 프로토콜(Data 계층 인터페이스), 예측/판정 Helper가 여기 있다. 외부 프레임워크(HealthKit/EventKit)를 직접 알지 않으며, Data 계층이 Domain의 Repository 프로토콜을 구현하는 방식으로 의존성이 역전된다.
+
+**UseCase와 `AppState`는 이 영역에 없다.** 둘 다 `Presentation/App/`에 있다. UseCase 구현체가 Domain의 Repository 프로토콜에만 의존하므로 의존성 방향은 그대로 유지된다.
 
 ## 2. CONTENTS — 파일/디렉토리와 기술 스택
 
-- `UseCase/` — 기능별 UseCase 인터페이스 + 구현체 (MenstrualRecord, HomePhase, RefreshMenstrualCycle, SyncMenstrualCalendar 등)
-- `UseCase/MenstrualRecordUseCase/Demo/` — 개발/디버깅용 Demo 화면 (본 앱 흐름 미포함)
-- `State/` — `AppState`(@MainActor, ObservableObject), `UserSettingState`
-- `Model/` — `MenstrualRecord`, `MenstrualOverview`, `MenstrualRecordType`, `CurrentMenstrualEpisode`, `HomePhase` 등
-- `Repository/` — `HealthKitRepository`, `UserSettingRepository` 등 프로토콜 정의
-- `Helper/` — `MenstrualPredictionEngine`, `CurrentMenstrualStatusResolver`, `OpenPeriodAutoCloser`, `OvulationRecordGenerator`
-- `Event/`, `Health/` — 도메인 이벤트/헬스 관련 타입
+- `Model/` — `PhaseType`, `PhaseWindow`(Home), `CycleCalendarMonth`(Calendar), `MenstrualUserInput`, `UserInputMode`(Setting), `AlertPresentable`(Share), `Item`(SwiftData 템플릿 잔재)
+- `Health/` — `MenstrualRecord`, `MenstrualRecordType`, `HealthDataType`, `WristTemperatureRecord`, `HealthKitError`
+- `Event/` — `EventKitError`
+- `State/` — `MenstrualOverview`, `MenstrualCycleSnapshot`, `UserSettingState`(`CurrentMenstrualEpisode` 포함)
+- `Repository/` — `HealthKitRepository`, `EventKitRepository`, `UserSettingRepository` 프로토콜 정의
+- `Helper/` — `MenstrualPredictionEngine`, `OpenPeriodAutoCloser`(`CurrentMenstrualStatusResolver` 포함), `OvulationRecordGenerator`
 
 기술 스택: 순수 Swift (Foundation만 허용)
 
 ## 3. HOW — 일반적인 수정은 어떻게 하는가
 
-- **새 기능 추가**: UseCase 인터페이스를 `Domain/UseCase/`에 정의 → `Data/` 또는 `Domain/UseCase/`에 구현체 추가 → `Presentation/App/AppDIContainer.swift`에 등록
+- **새 기능 추가**: Domain에는 필요한 Model/Repository 프로토콜만 추가한다. UseCase 인터페이스와 구현체는 `Presentation/App/UseCase/`에 만들고 `Presentation/App/AppDIContainer.swift`에 등록한다
 - **예측 알고리즘 튜닝**: `Helper/MenstrualPredictionEngine.swift`의 `Config.default`만 수정 — 로직이 아닌 파라미터 조정은 이 한 곳에서만
-- **상태 추가**: `State/AppState.swift`에 `@Published` 프로퍼티 추가 → `AppDIContainer` 연결
+- **도메인 상태 추가**: `State/`에 값 타입을 추가한다. 앱 전역 `@Published` 상태가 필요하면 `Presentation/App/AppState.swift`를 수정한다
 - **비즈니스 로직 수정**: 반드시 `MithmTests/`에 단위 테스트 추가 후 검증
 
 ## 4. ⛔ HOW NOT — 시스템을 깨뜨리는 비명백한 함정
@@ -32,13 +33,13 @@
 - **SwiftData / CoreData 사용 금지** — HealthKit이 단일 진실 공급원. `Domain/Model/SwiftData/Item.swift`는 초기 Xcode 템플릿 잔재로 실사용하지 않는다. 새 영속 저장소를 만들지 말 것
 - **HealthKit 샘플 날짜를 Domain에서 임의 조작 금지** — Mapper(Data 계층)가 샘플 날짜 범위를 그대로 닫힌 record로 변환한다. Domain에서 `endDate`를 nil로 바꾸거나 재해석하면 `CurrentMenstrualStatusResolver` 로직이 깨진다
 - **`Config.default` 외부에서 예측 파라미터 하드코딩 금지** — 알고리즘 파라미터는 모두 `MenstrualPredictionEngine.Config.default`에 집중. 분산되면 동작 예측이 불가능해진다
-- **`HomePhaseUseCaseImpl.execute()` 판정 순서 임의 변경 금지** — 비즈니스 로직의 핵심 우선순위(진행 중 월경 → 배란기 → 난포기 → 황체기 → fallback)가 있다. 이유 없이 바꾸면 기존 테스트가 한꺼번에 깨진다
+- **`HomePhaseUseCaseImpl.execute()` 판정 순서 임의 변경 금지** — 파일 위치는 `Presentation/App/UseCase/HomePhaseUseCase/`이지만 내용은 도메인 비즈니스 규칙이다. 핵심 우선순위(진행 중 월경 → 배란기 → 난포기 → 황체기 → fallback)를 이유 없이 바꾸면 기존 테스트가 한꺼번에 깨진다
 
 ## 5. WHERE — 다른 모듈과의 의존성
 
 - **의존**: 없음 (순수 Swift, Foundation만)
-- **피의존**: `Data/`(Repository 프로토콜 구현), `Presentation/`(UseCase 호출, State 관찰)
-- **경계**: Repository 프로토콜이 Domain ↔ Data 계약 지점. UseCase 인터페이스가 Domain ↔ Presentation 계약 지점
+- **피의존**: `Data/`(Repository 프로토콜 구현), `Presentation/`(UseCase가 Model/Helper 사용, State 관찰)
+- **경계**: Repository 프로토콜이 Domain ↔ Data 계약 지점. Domain Model/Helper가 Domain ↔ Presentation(UseCase) 계약 지점
 
 ## 6. WHY — 코드에 안 적힌 배경 지식
 
